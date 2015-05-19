@@ -1,6 +1,6 @@
 # Directories
 
-base_d = $(abspath ..)
+base_d = $(abspath .)
 test_d = $(abspath test)
 tmp_d  = $(abspath tmp)
 bin_d  = $(abspath bin)
@@ -18,11 +18,11 @@ load_files       = $(patsubst %,-l %, $(utils))
 load_unit_tests  = $(patsubst %,-l %, $(unit_tests))
 load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 
-# HACK: Vars for manually building the ac binary.
-# We should be really able to use the top-level makefile for this...
-ac_exe    = $(bin_d)/fsautocomplete.exe
-ac_fsproj = $(base_d)/FSharp.AutoComplete/FSharp.AutoComplete.fsproj
-ac_out    = $(base_d)/FSharp.AutoComplete/bin/Debug/
+# Autocomplete binary distribution.
+ac_exe     = $(bin_d)/fsautocomplete.exe
+ac_archive = fsautocomplete.zip
+ac_version = 0.14.0
+ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_archive)
 
 # Installation paths.
 dest_root = $(HOME)/.emacs.d/fsharp-mode/
@@ -34,8 +34,10 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # Building
 
-$(ac_exe) : $(bin_d) ~/.config/.mono/certs
-	xbuild $(ac_fsproj) /property:OutputPath="$(bin_d)"
+$(ac_exe) : $(bin_d)
+	curl -L "$(ac_url)" -o "$(bin_d)/$(ac_archive)"
+	unzip "$(bin_d)/$(ac_archive)" -d "$(bin_d)"
+	touch "$(ac_exe)"
 
 ~/.config/.mono/certs:
 	mozroots --import --sync --quiet
@@ -84,20 +86,20 @@ packages :
 byte-compile : packages
 	HOME=$(tmp_d) ;\
 	$(emacs) -batch --eval "(package-initialize)"\
-          --eval "(add-to-list 'load-path \"$(base_d)/emacs\")" \
+          --eval "(add-to-list 'load-path \"$(base_d)\")" \
           -f batch-byte-compile $(src_files)
 
 check-declares : packages
 	HOME=$(tmp_d) ;\
 	$(emacs) -batch --eval "(package-initialize)"\
-          --eval '(when (check-declare-directory "$(base_d)/emacs") (kill-emacs 1)))'
+          --eval '(when (check-declare-directory "$(base_d)") (kill-emacs 1)))'
 
 check-compile : packages $(obj_files)
 
 .el.elc:
 	HOME=$(tmp_d) ;\
 	$(emacs) -batch --eval "(package-initialize)"\
-          --eval "(add-to-list 'load-path \"$(base_d)/emacs\")" \
+          --eval "(add-to-list 'load-path \"$(base_d)\")" \
 	  --eval '(setq byte-compile-error-on-warn t)' \
           -f batch-byte-compile $<
 
