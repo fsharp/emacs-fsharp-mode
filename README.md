@@ -14,6 +14,12 @@ The following features are under development:
 Requires Emacs 24+ and F# 3.0. Without F# 3.0 the background compiler
 process will not function correctly.
 
+## Build Status
+
+### Travis [![Travis build status](https://travis-ci.org/fsharp/emacs-fsharp-mode.png)](https://travis-ci.org/fsharp/emacs-fsharp-mode)
+
+See [.travis.yml](.travis.yml) for details.
+
 ## Installation
 
 ### Package
