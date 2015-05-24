@@ -126,7 +126,7 @@
 
             ;; F# keywords (3.4)
             "abstract" "and" "as" "assert" "base" "begin"
-            "class" "default" "delegate" "do" "done"
+            "class" "default" "delegate" "do" "do!" "done"
             "downcast" "downto" "elif" "else" "end"
             "exception" "extern" "false" "finally" "for" "fun"
             "function" "global" "if" "in" "inherit" "inline"
