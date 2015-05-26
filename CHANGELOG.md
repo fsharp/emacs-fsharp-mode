@@ -1,3 +1,18 @@
+## 1.5.3 (2015-05-26)
+
+Note that in since 1.5.2 fsharp-mode has been migrated from
+https://github.com/fsharp/fsharpbinding to a
+[separate repository](https://github.com/fsharp/emacs-fsharp-mode).
+The issue number `#2` below, and all future issue numbers, refer to the
+new repository.
+
+Features:
+  - #993: Push the mark before going to definition (using etags)
+
+Bugfixes:
+  - #1005: Fix issue with compile-command quoting
+  - #2: Add `do!` as a keyword.
+
 ## 1.5.2 (2015-03-20)
 
 Bugfixes:

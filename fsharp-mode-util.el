@@ -1,6 +1,6 @@
-;;; fsharp-mode-util.el --- Support for F# interactive
+;;; fsharp-mode-util.el --- utility functions
 
-;; Copyright (C) 1997 INRIA
+;; Copyright (C) 2015 Robin Neatherway
 
 ;; Author: 2015 Robin Neatherway <robin.neatherway@gmail.com>
 ;; Maintainer: Robin Neatherway <robin.neatherway@gmail.com>

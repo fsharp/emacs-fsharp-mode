@@ -106,3 +106,26 @@ check-compile : packages $(obj_files)
 run : $(ac_exe) packages
 	HOME=$(tmp_d) ;\
 	$(emacs) $(load_files) -f configure-fsharp-tests
+
+# Releasing
+
+cur_release := $(shell grep '\#\#' CHANGELOG.md | cut -d' ' -f2 | head -n 1)
+prev_release := $(shell grep '\#\#' CHANGELOG.md | cut -d' ' -f2 | head -n 2 | tail -n 1)
+
+update-version:
+	sed -i -r "s/$(prev_release)/$(cur_release)/" *.el
+	git add *.el
+	git commit -m "Bump version number to $(cur_release)"
+	git tag -a $(cur_release) -m "Tag release $(cur_release)"
+
+emacs-fsharp-mode-bin:
+	git clone git@github.com:/rneatherway/emacs-fsharp-mode-bin
+
+release: update-version emacs-fsharp-mode-bin $(ac_exe)
+	cp $(bin_d)/*.exe $(bin_d)/*.dll emacs-fsharp-mode-bin
+	cp $(src_files) emacs-fsharp-mode-bin
+	cd emacs-fsharp-mode-bin && git add --all
+	cd emacs-fsharp-mode-bin && git commit -m "Update to version $(cur_release)"
+	cd emacs-fsharp-mode-bin && git tag -a $(cur_release) -m "Tag release $(cur_release)"
+
+
