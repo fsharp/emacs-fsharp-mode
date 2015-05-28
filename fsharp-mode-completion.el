@@ -86,6 +86,8 @@ If set to nil, display in a help buffer instead.")
 (defvar fsharp-ac-current-helptext (make-hash-table :test 'equal))
 (defvar fsharp-ac-last-parsed-ticks 0
   "BUFFER's tick counter, when the file was parsed.")
+(defvar fsharp-ac--last-parsed-buffer nil
+  "Last parsed BUFFER, so that we reparse if we switch buffers.")
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
@@ -113,7 +115,9 @@ If set to nil, display in a help buffer instead.")
 When used, the buffer is parsed even if it has not changed
 since the last request."
   (when (or (/= (buffer-chars-modified-tick) fsharp-ac-last-parsed-ticks)
+            (not (eq fsharp-ac--last-parsed-buffer (current-buffer)))
             force-sync)
+    (setq fsharp-ac--last-parsed-buffer (current-buffer))
     (save-restriction
       (let ((file (fsharp-ac--buffer-truename)))
         (widen)
