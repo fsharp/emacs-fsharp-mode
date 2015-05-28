@@ -500,8 +500,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 (defun fsharp-ac/complete-at-point (&optional quiet)
   (interactive)
   (when (and (fsharp-ac-can-make-request quiet)
-           (eq fsharp-ac-status 'idle))
-      (fsharp-ac--ac-start)))
+             (eq fsharp-ac-status 'idle))
+    (fsharp-ac--ac-start)))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
@@ -698,9 +698,12 @@ around to the start of the buffer."
     (setq msg (fsharp-ac--get-msg proc)))))
 
 (defun fsharp-ac-handle-completion (data)
-  (setq fsharp-ac-current-candidate (-map (lambda (s) (if (fsharp-ac--isNormalId s) s
-                                                   (s-append "``" (s-prepend "``" s))))
-                                          data)
+  (setq fsharp-ac-current-candidate
+        (-map (lambda (candidate)
+                (let ((s (gethash "Name" candidate)))
+                  (if (fsharp-ac--isNormalId s) s
+                    (s-append "``" (s-prepend "``" s)))))
+              data)
         fsharp-ac-status 'acknowledged)
   (fsharp-ac--ac-start :force-init t)
   (ac-update)

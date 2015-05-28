@@ -71,8 +71,13 @@
    (lambda ()
      (find-file-and-wait-for-project-load "test/Test1/Program.fs")
      (search-forward "X.func")
-     (delete-char -2)
-     (auto-complete)
+     (delete-char -3)
+     (fsharp-ac-parse-current-buffer t)
+     ;; For some reason calling fsharp-ac/complete-at-point doesn't
+     ;; work in the test so we shortcut it here, don't know why
+     (fsharp-ac-candidate)
+     (wait-for-condition (lambda () (not (null fsharp-ac-current-candidate))))
+     ;; Use first candidate
      (ac-complete)
      (beginning-of-line)
      (should (search-forward "X.func")))))
