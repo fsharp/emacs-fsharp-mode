@@ -739,7 +739,7 @@ display a short summary in the minibuffer."
             (if fsharp-ac-use-popup
                 (fsharp-ac/show-popup data)
               (fsharp-ac/show-info-window data)))
-        (fsharp-ac-message-safely (fsharp-doc/format-for-minibuffer data))))))
+        (fsharp-ac-message-safely "%s" (fsharp-doc/format-for-minibuffer data))))))
 
 (defun fsharp-ac/show-popup (str)
   (if (display-graphic-p)
