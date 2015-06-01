@@ -39,7 +39,7 @@
 (defvar inferior-fsharp-program
   (if fsharp-ac-using-mono
       "fsharpi --readline-"
-    (shell-quote-argument (fsharp-mode--executable-find "fsi.exe")))
+    (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\""))
   "*Program name for invoking an inferior fsharp from Emacs.")
 
 ;; End of User modifiable variables
