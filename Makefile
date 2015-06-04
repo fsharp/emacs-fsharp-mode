@@ -19,10 +19,11 @@ load_unit_tests  = $(patsubst %,-l %, $(unit_tests))
 load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 
 # Autocomplete binary distribution.
-ac_exe     = $(bin_d)/fsautocomplete.exe
-ac_archive = fsautocomplete.zip
-ac_version = 0.14.0
-ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_archive)
+ac_name    = fsautocomplete
+ac_exe     = $(bin_d)/$(ac_name).exe
+ac_version = 0.18.0
+ac_archive = $(ac_name)-$(ac_version).zip
+ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
 # Installation paths.
 dest_root = $(HOME)/.emacs.d/fsharp-mode/
@@ -30,12 +31,14 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # ----------------------------------------------------------------------------
 
-.PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run
+.PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run update-version release
 
 # Building
 
-$(ac_exe) : $(bin_d)
+$(ac_archive):
 	curl -L "$(ac_url)" -o "$(bin_d)/$(ac_archive)"
+
+$(ac_exe) : $(bin_d) $(ac_archive)
 	unzip "$(bin_d)/$(ac_archive)" -d "$(bin_d)"
 	touch "$(ac_exe)"
 
@@ -62,6 +65,7 @@ $(bin_d)     :; mkdir -p $(bin_d)
 clean : clean-elc
 	rm -rf $(bin_d)
 	rm -rf $(tmp_d)
+	rm -f $(ac_archive)
 
 clean-elc :
 	rm -f  *.elc

@@ -86,6 +86,8 @@ If set to nil, display in a help buffer instead.")
 (defvar fsharp-ac-current-helptext (make-hash-table :test 'equal))
 (defvar fsharp-ac-last-parsed-ticks 0
   "BUFFER's tick counter, when the file was parsed.")
+(defvar fsharp-ac--last-parsed-buffer nil
+  "Last parsed BUFFER, so that we reparse if we switch buffers.")
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
@@ -113,7 +115,9 @@ If set to nil, display in a help buffer instead.")
 When used, the buffer is parsed even if it has not changed
 since the last request."
   (when (or (/= (buffer-chars-modified-tick) fsharp-ac-last-parsed-ticks)
+            (not (eq fsharp-ac--last-parsed-buffer (current-buffer)))
             force-sync)
+    (setq fsharp-ac--last-parsed-buffer (current-buffer))
     (save-restriction
       (let ((file (fsharp-ac--buffer-truename)))
         (widen)
@@ -334,7 +338,7 @@ For indirect buffers return the truename of the base buffer."
       "completion"
       (fsharp-ac--buffer-truename)
       (line-number-at-pos)
-      (current-column)))
+      (+ 1 (current-column))))
 
     (wait
      fsharp-ac-current-candidate)
@@ -448,7 +452,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
      (fsharp-ac-send-pos-request "tooltip"
                                  (fsharp-ac--buffer-truename)
                                  (line-number-at-pos)
-                                 (current-column))))
+                                 (+ 1 (current-column)))))
 
 (defun fsharp-ac/gotodefn-at-point ()
   "Find the point of declaration of the symbol at point and goto it."
@@ -458,7 +462,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (fsharp-ac-send-pos-request "finddecl"
                                 (fsharp-ac--buffer-truename)
                                 (line-number-at-pos)
-                                (current-column))))
+                                (+ 1 (current-column)))))
 
 (defun fsharp-ac/pop-gotodefn-stack ()
   "Go back to where point was before jumping to definition."
@@ -500,8 +504,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 (defun fsharp-ac/complete-at-point (&optional quiet)
   (interactive)
   (when (and (fsharp-ac-can-make-request quiet)
-           (eq fsharp-ac-status 'idle))
-      (fsharp-ac--ac-start)))
+             (eq fsharp-ac-status 'idle))
+    (fsharp-ac--ac-start)))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
@@ -698,9 +702,12 @@ around to the start of the buffer."
     (setq msg (fsharp-ac--get-msg proc)))))
 
 (defun fsharp-ac-handle-completion (data)
-  (setq fsharp-ac-current-candidate (-map (lambda (s) (if (fsharp-ac--isNormalId s) s
-                                                   (s-append "``" (s-prepend "``" s))))
-                                          data)
+  (setq fsharp-ac-current-candidate
+        (-map (lambda (candidate)
+                (let ((s (gethash "Name" candidate)))
+                  (if (fsharp-ac--isNormalId s) s
+                    (s-append "``" (s-prepend "``" s)))))
+              data)
         fsharp-ac-status 'acknowledged)
   (fsharp-ac--ac-start :force-init t)
   (ac-update)

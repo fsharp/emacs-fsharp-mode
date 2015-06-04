@@ -1,6 +1,5 @@
 environment:
-  EMACSBIN: emacs-24.4-bin-i686-mingw32.7z
-  FSACVERSION: 0.14.0
+  FSACVERSION: 0.18.0
   FSharpBinding_BlockingTimeout: 1000
   FSharpBinding_MaxTimeout: 10000
 matrix:
