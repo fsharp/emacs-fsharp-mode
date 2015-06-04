@@ -1,3 +1,13 @@
+## 1.5.4 (2015-06-04)
+
+Features
+  - #4: Update to FSharp.AutoComplete 0.18.0. All unsaved buffer
+    contents (not just the current buffer) will now be used for type
+    checking.
+
+Bugfixes:
+  - #9: Correct quoting of path to fsi.exe on Windows.
+
 ## 1.5.3 (2015-05-26)
 
 Note that in since 1.5.2 fsharp-mode has been migrated from
