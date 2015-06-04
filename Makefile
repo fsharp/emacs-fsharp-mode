@@ -21,7 +21,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.16.0
+ac_version = 0.18.0
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 

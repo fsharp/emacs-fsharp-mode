@@ -338,7 +338,7 @@ For indirect buffers return the truename of the base buffer."
       "completion"
       (fsharp-ac--buffer-truename)
       (line-number-at-pos)
-      (current-column)))
+      (+ 1 (current-column))))
 
     (wait
      fsharp-ac-current-candidate)
@@ -452,7 +452,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
      (fsharp-ac-send-pos-request "tooltip"
                                  (fsharp-ac--buffer-truename)
                                  (line-number-at-pos)
-                                 (current-column))))
+                                 (+ 1 (current-column)))))
 
 (defun fsharp-ac/gotodefn-at-point ()
   "Find the point of declaration of the symbol at point and goto it."
@@ -462,7 +462,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (fsharp-ac-send-pos-request "finddecl"
                                 (fsharp-ac--buffer-truename)
                                 (line-number-at-pos)
-                                (current-column))))
+                                (+ 1 (current-column)))))
 
 (defun fsharp-ac/pop-gotodefn-stack ()
   "Go back to where point was before jumping to definition."
