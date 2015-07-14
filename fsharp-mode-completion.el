@@ -288,7 +288,6 @@ For indirect buffers return the truename of the base buffer."
           (with-current-buffer (process-buffer proc)
             (delete-region (point-min) (point-max)))
           (add-to-list 'ac-modes 'fsharp-mode)
-          (log-psendstr proc "outputmode json\n")
           proc)
       (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
       nil)))
@@ -526,9 +525,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (save-excursion
     (goto-char (point-min))
     (forward-line (- line 1))
-    (if (< (point-max) (+ (point) col))
+    (if (< (point-max) (+ (point) (- col 1)))
         (point-max)
-      (forward-char col)
+      (forward-char (- col 1))
       (point))))
 
 (defun fsharp-ac-parse-errors (data)
@@ -536,9 +535,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (save-match-data
     (let (parsed)
       (dolist (err data parsed)
-        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLineAlternate" err)
+        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" err)
                                                  (gethash "StartColumn" err)))
-              (end (fsharp-ac-line-column-to-pos (gethash "EndLineAlternate" err)
+              (end (fsharp-ac-line-column-to-pos (gethash "EndLine" err)
                                                  (gethash "EndColumn" err)))
               (face (if (string= "Error" (gethash "Severity" err))
                         'fsharp-error-face
@@ -688,8 +687,8 @@ around to the start of the buffer."
                                 kind
                                 (hash-table-size msg)))
         (cond
-         ((s-equals? "ERROR" kind) (fsharp-ac-handle-process-error data))
-         ((s-equals? "INFO" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
+         ((s-equals? "error" kind) (fsharp-ac-handle-process-error data))
+         ((s-equals? "info" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
          ((s-equals? "completion" kind) (fsharp-ac-handle-completion data))
          ((s-equals? "helptext" kind) (fsharp-ac-handle-doctext data))
          ((s-equals? "errors" kind) (fsharp-ac-handle-errors data))
