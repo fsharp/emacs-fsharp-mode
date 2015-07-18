@@ -11,7 +11,7 @@ The following features are under development:
 
 - Intelligent indentation
 
-Requires Emacs 24+ and F# 3.0. Without F# 3.0 the background compiler
+Requires Emacs 24+, Mono 3.10.X and F# 3.0. Without F# 3.0 the background compiler
 process will not function correctly.
 
 ## Build Status
