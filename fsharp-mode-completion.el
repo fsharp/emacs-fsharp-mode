@@ -453,6 +453,16 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
                                  (line-number-at-pos)
                                  (+ 1 (current-column)))))
 
+(defun fsharp-ac/symboluse-at-point ()
+  "Find the uses in this file of the symbol at point."
+  (interactive)
+  (when (fsharp-ac-can-make-request)
+    (fsharp-ac-parse-current-buffer)
+    (fsharp-ac-send-pos-request "symboluse"
+                                (fsharp-ac--buffer-truename)
+                                (line-number-at-pos)
+                                (+ 1 (current-column)))))
+
 (defun fsharp-ac/gotodefn-at-point ()
   "Find the point of declaration of the symbol at point and goto it."
   (interactive)
@@ -695,6 +705,7 @@ around to the start of the buffer."
          ((s-equals? "project" kind) (fsharp-ac-handle-project data))
          ((s-equals? "tooltip" kind) (fsharp-ac-handle-tooltip data))
          ((s-equals? "finddecl" kind) (fsharp-ac-visit-definition data))
+         ((s-equals? "symboluse" kind) (fsharp-ac--handle-symboluse data))
        (t
         (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind))))
 
@@ -713,7 +724,7 @@ around to the start of the buffer."
   (setq fsharp-ac-status 'idle))
 
 (defun fsharp-ac-handle-doctext (data)
-  (maphash (lambda (k v) (puthash k v fsharp-ac-current-helptext)) data))
+  (puthash (gethash "Name" data) (gethash "Text" data) fsharp-ac-current-helptext))
 
 (defun fsharp-ac-visit-definition (data)
   (let* ((file (gethash "File" data))
@@ -789,6 +800,9 @@ display a short summary in the minibuffer."
   (when (not (eq fsharp-ac-status 'idle))
     (setq fsharp-ac-status 'idle
           fsharp-ac-current-candidate nil)))
+
+(defun fsharp-ac--handle-symboluse (data)
+  (message "Received symboluse data: %s" data))
 
 (provide 'fsharp-mode-completion)
 
