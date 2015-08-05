@@ -35,7 +35,7 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # Building
 
-$(ac_archive):
+$(ac_archive): $(bin_d)
 	curl -L "$(ac_url)" -o "$(bin_d)/$(ac_archive)"
 
 $(ac_exe) : $(bin_d) $(ac_archive)

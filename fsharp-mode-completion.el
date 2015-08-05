@@ -519,7 +519,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
 
-(defstruct fsharp-error start end face text file)
+(defstruct fsharp-error start end face priority text file)
 
 (defvar fsharp-ac-errors)
 
@@ -552,41 +552,32 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
               (face (if (string= "Error" (gethash "Severity" err))
                         'fsharp-error-face
                       'fsharp-warning-face))
+              (priority (if (string= "Error" (gethash "Severity" err))
+                            1
+                          0))
               (msg (gethash "Message" err))
-              (file (gethash "FileName" err))
-              )
+              (file (gethash "FileName" err)))
           (add-to-list 'parsed (make-fsharp-error :start beg
                                                   :end   end
                                                   :face  face
+                                                  :priority priority
                                                   :text  msg
                                                   :file  file)))))))
 
 (defun fsharp-ac/show-error-overlay (err)
   "Draw overlays in the current buffer to represent fsharp-error ERR."
-  ;; Three cases
-  ;; 1. No overlays here yet: make it
-  ;; 2. new warning, exists error: do nothing
-  ;; 3. new error exists warning: rm warning and make it
   (let* ((beg  (fsharp-error-start err))
          (end  (fsharp-error-end err))
          (face (fsharp-error-face err))
+         (priority (fsharp-error-priority err))
          (txt  (fsharp-error-text err))
-         (file (fsharp-error-file err))
-         (ofaces (mapcar (lambda (o) (overlay-get o 'face))
-                         (overlays-in beg end)))
-         )
+         (file (fsharp-error-file err)))
     (unless (or (not (string= (fsharp-ac--buffer-truename)
                               (file-truename file)))
-             (and (eq face 'fsharp-warning-face)
-                 (memq 'fsharp-error-face ofaces)))
-
-      (when (and (eq face 'fsharp-error-face)
-                 (memq 'fsharp-warning-face ofaces))
-        (remove-overlays beg end 'face 'fsharp-warning-face))
-
       (let ((ov (make-overlay beg end)))
         (overlay-put ov 'face face)
-        (overlay-put ov 'help-echo txt)))))
+        (overlay-put ov 'help-echo txt)
+        (overlay-put ov 'priority priority))))))
 
 (defun fsharp-ac-clear-errors ()
   (interactive)
