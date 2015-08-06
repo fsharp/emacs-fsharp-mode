@@ -21,7 +21,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.18.0
+ac_version = 0.21.0
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
@@ -35,7 +35,7 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # Building
 
-$(ac_archive):
+$(ac_archive): $(bin_d)
 	curl -L "$(ac_url)" -o "$(bin_d)/$(ac_archive)"
 
 $(ac_exe) : $(bin_d) $(ac_archive)

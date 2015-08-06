@@ -288,7 +288,6 @@ For indirect buffers return the truename of the base buffer."
           (with-current-buffer (process-buffer proc)
             (delete-region (point-min) (point-max)))
           (add-to-list 'ac-modes 'fsharp-mode)
-          (log-psendstr proc "outputmode json\n")
           proc)
       (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
       nil)))
@@ -454,6 +453,16 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
                                  (line-number-at-pos)
                                  (+ 1 (current-column)))))
 
+(defun fsharp-ac/symboluse-at-point ()
+  "Find the uses in this file of the symbol at point."
+  (interactive)
+  (when (fsharp-ac-can-make-request)
+    (fsharp-ac-parse-current-buffer)
+    (fsharp-ac-send-pos-request "symboluse"
+                                (fsharp-ac--buffer-truename)
+                                (line-number-at-pos)
+                                (+ 1 (current-column)))))
+
 (defun fsharp-ac/gotodefn-at-point ()
   "Find the point of declaration of the symbol at point and goto it."
   (interactive)
@@ -510,7 +519,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
 
-(defstruct fsharp-error start end face text file)
+(defstruct fsharp-error start end face priority text file)
 
 (defvar fsharp-ac-errors)
 
@@ -526,9 +535,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (save-excursion
     (goto-char (point-min))
     (forward-line (- line 1))
-    (if (< (point-max) (+ (point) col))
+    (if (< (point-max) (+ (point) (- col 1)))
         (point-max)
-      (forward-char col)
+      (forward-char (- col 1))
       (point))))
 
 (defun fsharp-ac-parse-errors (data)
@@ -536,48 +545,39 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (save-match-data
     (let (parsed)
       (dolist (err data parsed)
-        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLineAlternate" err)
+        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" err)
                                                  (gethash "StartColumn" err)))
-              (end (fsharp-ac-line-column-to-pos (gethash "EndLineAlternate" err)
+              (end (fsharp-ac-line-column-to-pos (gethash "EndLine" err)
                                                  (gethash "EndColumn" err)))
               (face (if (string= "Error" (gethash "Severity" err))
                         'fsharp-error-face
                       'fsharp-warning-face))
+              (priority (if (string= "Error" (gethash "Severity" err))
+                            1
+                          0))
               (msg (gethash "Message" err))
-              (file (gethash "FileName" err))
-              )
+              (file (gethash "FileName" err)))
           (add-to-list 'parsed (make-fsharp-error :start beg
                                                   :end   end
                                                   :face  face
+                                                  :priority priority
                                                   :text  msg
                                                   :file  file)))))))
 
 (defun fsharp-ac/show-error-overlay (err)
   "Draw overlays in the current buffer to represent fsharp-error ERR."
-  ;; Three cases
-  ;; 1. No overlays here yet: make it
-  ;; 2. new warning, exists error: do nothing
-  ;; 3. new error exists warning: rm warning and make it
   (let* ((beg  (fsharp-error-start err))
          (end  (fsharp-error-end err))
          (face (fsharp-error-face err))
+         (priority (fsharp-error-priority err))
          (txt  (fsharp-error-text err))
-         (file (fsharp-error-file err))
-         (ofaces (mapcar (lambda (o) (overlay-get o 'face))
-                         (overlays-in beg end)))
-         )
+         (file (fsharp-error-file err)))
     (unless (or (not (string= (fsharp-ac--buffer-truename)
                               (file-truename file)))
-             (and (eq face 'fsharp-warning-face)
-                 (memq 'fsharp-error-face ofaces)))
-
-      (when (and (eq face 'fsharp-error-face)
-                 (memq 'fsharp-warning-face ofaces))
-        (remove-overlays beg end 'face 'fsharp-warning-face))
-
       (let ((ov (make-overlay beg end)))
         (overlay-put ov 'face face)
-        (overlay-put ov 'help-echo txt)))))
+        (overlay-put ov 'help-echo txt)
+        (overlay-put ov 'priority priority))))))
 
 (defun fsharp-ac-clear-errors ()
   (interactive)
@@ -688,14 +688,15 @@ around to the start of the buffer."
                                 kind
                                 (hash-table-size msg)))
         (cond
-         ((s-equals? "ERROR" kind) (fsharp-ac-handle-process-error data))
-         ((s-equals? "INFO" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
+         ((s-equals? "error" kind) (fsharp-ac-handle-process-error data))
+         ((s-equals? "info" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
          ((s-equals? "completion" kind) (fsharp-ac-handle-completion data))
          ((s-equals? "helptext" kind) (fsharp-ac-handle-doctext data))
          ((s-equals? "errors" kind) (fsharp-ac-handle-errors data))
          ((s-equals? "project" kind) (fsharp-ac-handle-project data))
          ((s-equals? "tooltip" kind) (fsharp-ac-handle-tooltip data))
          ((s-equals? "finddecl" kind) (fsharp-ac-visit-definition data))
+         ((s-equals? "symboluse" kind) (fsharp-ac--handle-symboluse data))
        (t
         (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind))))
 
@@ -714,7 +715,7 @@ around to the start of the buffer."
   (setq fsharp-ac-status 'idle))
 
 (defun fsharp-ac-handle-doctext (data)
-  (maphash (lambda (k v) (puthash k v fsharp-ac-current-helptext)) data))
+  (puthash (gethash "Name" data) (gethash "Text" data) fsharp-ac-current-helptext))
 
 (defun fsharp-ac-visit-definition (data)
   (let* ((file (gethash "File" data))
@@ -790,6 +791,9 @@ display a short summary in the minibuffer."
   (when (not (eq fsharp-ac-status 'idle))
     (setq fsharp-ac-status 'idle
           fsharp-ac-current-candidate nil)))
+
+(defun fsharp-ac--handle-symboluse (data)
+  (message "Received symboluse data: %s" data))
 
 (provide 'fsharp-mode-completion)
 

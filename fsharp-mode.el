@@ -96,6 +96,7 @@
   (define-key fsharp-mode-map (kbd "M-,")     'fsharp-ac/pop-gotodefn-stack)
   (define-key fsharp-mode-map (kbd "C-c C-q") 'fsharp-ac/stop-process)
   (define-key fsharp-mode-map (kbd "C-c C-.") 'fsharp-ac/complete-at-point)
+  (define-key fsharp-mode-map (kbd "C-c C-u") 'fsharp-ac/symboluse-at-point)
 
   (unless running-xemacs
     (let ((map (make-sparse-keymap "fsharp"))
