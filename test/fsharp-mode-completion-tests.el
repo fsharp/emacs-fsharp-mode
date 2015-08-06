@@ -90,11 +90,10 @@
          (face (overlay-get (car ov) 'face)))
     (should (eq 'fsharp-warning-face face))))
 
-(check-filter "second overlay should have the error face"
+(check-filter "third overlay should have the error face"
   (let* ((ov (overlays-at (next-overlay-change
                            (next-overlay-change
-                            (next-overlay-change (point-min))))
-                          t))
+                            (next-overlay-change (point-min))))))
          (face (overlay-get (cadr ov) 'face)))
     (should (eq 'fsharp-error-face face))))
 
