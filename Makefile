@@ -35,11 +35,11 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # Building
 
-$(ac_archive): $(bin_d)
-	curl -L "$(ac_url)" -o "$(bin_d)/$(ac_archive)"
+$(ac_archive): | $(bin_d)
+	curl -L "$(ac_url)" -o "$(ac_archive)"
 
 $(ac_exe) : $(bin_d) $(ac_archive)
-	unzip "$(bin_d)/$(ac_archive)" -d "$(bin_d)"
+	unzip "$(ac_archive)" -d "$(bin_d)"
 	touch "$(ac_exe)"
 
 ~/.config/.mono/certs:
