@@ -69,6 +69,7 @@
   (define-key fsharp-mode-map "\C-cx" 'fsharp-run-executable-file)
   (define-key fsharp-mode-map "\M-\C-x" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-c\C-e" 'fsharp-eval-phrase)
+  (define-key fsharp-mode-map "\C-x\C-e" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-c\C-r" 'fsharp-eval-region)
   (define-key fsharp-mode-map "\C-c\C-f" 'fsharp-load-buffer-file)
   (define-key fsharp-mode-map "\C-c\C-s" 'fsharp-show-subshell)
