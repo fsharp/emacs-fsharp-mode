@@ -288,7 +288,7 @@ Otherwise, treat as a stand-alone file."
     (cond
      (makefile          compile-command)
      (proj              (combine-and-quote-strings (list fsharp-build-command "/nologo" proj)))
-     ((equal ext "fs")  (combine-and-quote-strings (list fsharp-compile-command "--nologo" file)))
+     ((or (equal ext "fs") (equal ext "fsx"))  (combine-and-quote-strings (list fsharp-compile-command "--nologo" file)))
      ((equal ext "fsl") (combine-and-quote-strings (list "fslex" file)))
      ((equal ext "fsy") (combine-and-quote-strings (list "fsyacc" file)))
      (t                 compile-command))))
