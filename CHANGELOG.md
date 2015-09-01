@@ -1,3 +1,15 @@
+## 1.6.0 (2015-09-01)
+
+Features
+  - Update to FSharp.AutoComplete 0.23.0. Contains many improvements,
+    which can be found in the changelog at
+    https://github.com/fsharp/FsAutoComplete/releases
+  - #20: Add C-x C-e as default keybinding for eval.
+  - #22: Allow .fsx files to be compiled as well.
+
+Bugfixes:
+  - #16: Remove BOM from process output.
+
 ## 1.5.4 (2015-06-04)
 
 Features
