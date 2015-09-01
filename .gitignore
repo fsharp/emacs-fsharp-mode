@@ -1,3 +1,9 @@
 *.elc
 bin
 tmp
+
+# Useful for doing releases
+emacs-fsharp-mode-bin/
+
+# Dependency archive
+fsautocomplete-*.zip
