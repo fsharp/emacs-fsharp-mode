@@ -21,7 +21,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.23.0
+ac_version = 0.23.1
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
@@ -118,7 +118,7 @@ prev_release := $(shell grep '\#\#' CHANGELOG.md | cut -d' ' -f2 | head -n 2 | t
 
 update-version:
 	sed -i -r "s/$(prev_release)/$(cur_release)/" *.el
-	git add *.el
+	git add *.el CHANGELOG.md Makefile
 	git commit -m "Bump version number to $(cur_release)"
 	git tag -a $(cur_release) -m "Tag release $(cur_release)"
 

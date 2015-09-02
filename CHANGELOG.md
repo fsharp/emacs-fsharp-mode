@@ -1,6 +1,12 @@
+## 1.6.1 (2015-09-02)
+
+Bugfixes:
+  - Update to FsAutoComplete 0.23.1. Fixed MSBuild v14 on non-English
+    systems.
+
 ## 1.6.0 (2015-09-01)
 
-Features
+Features:
   - Update to FSharp.AutoComplete 0.23.0. Contains many improvements,
     which can be found in the changelog at
     https://github.com/fsharp/FsAutoComplete/releases
@@ -12,7 +18,7 @@ Bugfixes:
 
 ## 1.5.4 (2015-06-04)
 
-Features
+Features:
   - #4: Update to FSharp.AutoComplete 0.18.0. All unsaved buffer
     contents (not just the current buffer) will now be used for type
     checking.
