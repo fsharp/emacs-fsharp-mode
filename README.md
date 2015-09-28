@@ -216,6 +216,10 @@ You have requested some intellisense information (such as completions or a toolt
 
 In this case you have requested intellisense for the visited file, which is a standard `.fs` file *not* included in the current loaded project. Try loading the appropriate project with <kbd>C-c C-p</kbd>.
 
+### `(void-function -any)` or similar
+
+MELPA's use of dates instead of proper version numbers means that the libraries that `fsharp-mode` depends on -- `dash.el` and `s.el` -- may be out of date if you have previously installed them. Try updating all your packages to the latest versions using `M-x package-list-packages U x`.
+
 ### Windows completion menu performance
 
 There are some issues with the `pos-tip` library used to display the documentation tooltips for completions. This can cause sluggish performance when scrolling through the list if you try to move up or down just before the tooltip is displayed. We are looking into proper solutions for this with the `pos-tip` maintainer. For now you can work around the issue with `(setq ac-quick-help-prefer-pos-tip nil)`. This will use an alternative method for displaying these tooltips that is faster but uglier.
