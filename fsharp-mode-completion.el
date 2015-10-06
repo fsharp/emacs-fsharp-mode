@@ -717,7 +717,9 @@ around to the start of the buffer."
   (setq fsharp-ac-status 'idle))
 
 (defun fsharp-ac-handle-doctext (data)
-  (puthash (gethash "Name" data) (gethash "Text" data) fsharp-ac-current-helptext))
+  (puthash (gethash "Name" data)
+           (fsharp-ac--format-tooltip (gethash "Overloads" data))
+           fsharp-ac-current-helptext))
 
 (defun fsharp-ac-visit-definition (data)
   (let* ((file (gethash "File" data))
@@ -736,6 +738,25 @@ around to the start of the buffer."
         (setq fsharp-ac-errors errs)
         (mapc 'fsharp-ac/show-error-overlay errs)))))
 
+(defun fsharp-ac--format-tooltip-overload (overload)
+  "Format a single overload"
+  (let ((sig (gethash "Signature" overload))
+        (cmt (gethash "Comment" overload)))
+    (s-concat sig "\n" cmt (if (s-blank? cmt) "" "\n"))))
+
+(defun fsharp-ac--format-tooltip-overloads (single? overloads)
+  "Format a list of overloads"
+  (let ((header (if (and single? (> (length overloads) 1)) "Multiple overloads\n" ""))
+        (body (s-join "\n" (-map #'fsharp-ac--format-tooltip-overload (-take 10 overloads))))
+        (footer (if (> (length overloads) 10) (format "(+%d other overloads)" (length overloads)) "")))
+    (s-concat header body footer)))
+
+(defun fsharp-ac--format-tooltip (items)
+  "Format a list of items as a tooltip"
+  (let ((result (s-join "\n--------------------\n"
+                           (-map (lambda (i) (fsharp-ac--format-tooltip-overloads (< (length items) 2) i)) items))))
+      (s-chomp result)))
+
 (defun fsharp-ac-handle-tooltip (data)
   "Display information from the background process. If the user
 has requested a popup tooltip, display a popup. Otherwise,
@@ -743,13 +764,14 @@ display a short summary in the minibuffer."
   ;; Do not display if the current buffer is not an fsharp buffer.
   (when (eq major-mode 'fsharp-mode)
     (unless (or (active-minibuffer-window) cursor-in-echo-area)
-      (if fsharp-ac-awaiting-tooltip
-          (progn
-            (setq fsharp-ac-awaiting-tooltip nil)
-            (if fsharp-ac-use-popup
-                (fsharp-ac/show-popup data)
-              (fsharp-ac/show-info-window data)))
-        (fsharp-ac-message-safely "%s" (fsharp-doc/format-for-minibuffer data))))))
+      (let ((data (fsharp-ac--format-tooltip data)))
+        (if fsharp-ac-awaiting-tooltip
+            (progn
+              (setq fsharp-ac-awaiting-tooltip nil)
+              (if fsharp-ac-use-popup
+                  (fsharp-ac/show-popup data)
+                (fsharp-ac/show-info-window data)))
+          (fsharp-ac-message-safely "%s" (fsharp-doc/format-for-minibuffer data)))))))
 
 (defun fsharp-ac/show-popup (str)
   (if (display-graphic-p)

@@ -21,9 +21,9 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.23.1
+ac_version = 0.24.1
 ac_archive = $(ac_name)-$(ac_version).zip
-ac_url     = https://github.com/fsharp/FSharp.AutoComplete/releases/download/$(ac_version)/$(ac_name).zip
+ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
 # Installation paths.
 dest_root = $(HOME)/.emacs.d/fsharp-mode/

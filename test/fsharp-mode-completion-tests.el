@@ -149,7 +149,7 @@ function bound to VAR in BODY. "
 ;;; Tooltips and typesigs
 
 (defconst tooltip-msg
-  "{\"Kind\": \"tooltip\", \"Data\": \"foo\"}\n"
+  "{\"Kind\": \"tooltip\", \"Data\": [[{ \"Signature\": \"foo\", \"Comment\": \"\" }]] }\n"
   "A simple tooltip message")
 
 (check-handler "uses popup in terminal if tooltip is requested"
