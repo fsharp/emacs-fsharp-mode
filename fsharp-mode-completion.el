@@ -653,10 +653,10 @@ around to the start of the buffer."
       (when eofloc
         (when (numberp fsharp-ac-debug)
           (cond
-           ((eq 1 fsharp-ac-debug)
+           ((eq fsharp-ac-debug 1)
             (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
 
-           ((>= 2 fsharp-ac-debug)
+           ((>= fsharp-ac-debug 2)
             (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
 
         (let ((json-array-type 'list)
