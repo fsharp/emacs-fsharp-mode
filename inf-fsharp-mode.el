@@ -168,7 +168,7 @@ Input and output via buffer `*inferior-fsharp*'."
   (save-excursion
     ;; send location to fsi
     (let* (
-          (name (file-truename (buffer-name (current-buffer))))
+          (name (file-truename (buffer-file-name (current-buffer))))
           (dir (file-name-directory name))
           (line (number-to-string (line-number-at-pos start)))
           (loc (concat "# " line " \"" name "\"\n"))
