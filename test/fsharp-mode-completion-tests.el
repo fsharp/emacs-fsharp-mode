@@ -192,7 +192,7 @@ function bound to VAR in BODY. "
       (should-match "fsharp info" (buffer-name (window-buffer win))))))
 
 (check-handler "displays typesig in minibuffer if typesig is requested"
-  (stub-fn message sig
+  (noflet ((message (fmt &rest args) (setq sig (apply 'format fmt args))))
     (fsharp-ac/show-typesig-at-point)
     (fsharp-ac-filter-output nil tooltip-msg)
     (should= "foo" sig)))
