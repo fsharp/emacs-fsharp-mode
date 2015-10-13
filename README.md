@@ -236,3 +236,11 @@ on [GitHub](https://github.com/fsharp/fsharpbinding).
 
 Pull requests are welcome. Please run the test-suite with `make
 test-all` before submitting a pull request.
+
+Maintainers
+-----------
+
+Tha maintainers of this repository appointed by the F# Core Engineering Group are:
+
+ - [Robin Neatherway](https://github.com/rneatherway), [Steffen Forkmann](http://github.com/forki), [Karl Nilsson](http://github.com/kjnilsson), [Dave Thomas](http://github.com/7sharp9) and [Guillermo López-Anglada](http://github.com/guillermooo)
+ - The primary maintainer for this repository is [Robin Neatherway](https://github.com/rneatherway)
