@@ -1,3 +1,11 @@
+## 1.6.2 (2015-10-20)
+
+Bugfixes:
+  - Update to FsAutoComplete 0.26.0.
+  - #30: Allow use of symbols containing '%'
+  - #28: Fix FSI usage in buffers whose name differs from filename
+  - #27: Fix test of fsharp-ac-debug
+
 ## 1.6.1 (2015-09-02)
 
 Bugfixes:
