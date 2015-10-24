@@ -1,3 +1,8 @@
+## 1.6.3 (2015-10-24)
+
+Bugfixes:
+  - Update to FsAutoComplete 0.26.1, which fixes Windows support.
+
 ## 1.6.2 (2015-10-20)
 
 Bugfixes:
