@@ -75,7 +75,8 @@
      (fsharp-ac-parse-current-buffer t)
      ;; For some reason calling fsharp-ac/complete-at-point doesn't
      ;; work in the test so we shortcut it here, don't know why
-     (fsharp-ac-candidate)
+     (let ((fsharp-ac-blocking-timeout 5))
+       (fsharp-ac-candidate))
      (wait-for-condition (lambda () (not (null fsharp-ac-current-candidate))))
      ;; Use first candidate
      (ac-complete)
@@ -158,6 +159,16 @@
          (wait-for-condition (lambda () tiptext))
          (should-match "val funky : x:int -> int\n\nFull name: Script.XA.funky"
                        tiptext))))))
+
+(ert-deftest check-script-tooltip ()
+  "Check the symbol highlighting works"
+  (fsharp-mode-wrapper '("Script.fsx")
+   (lambda ()
+     (find-file-and-wait-for-project-load "test/Test1/Script.fsx")
+     (search-forward "funky")
+     (wait-for-condition (lambda () (> (length (overlays-at (point))) 0)))
+     (let ((ovs (overlays-in (point-min) (point-max))))
+       (mapc (lambda (ov) (should= (overlay-get ov 'face) 'fsharp-usage-face)) ovs)))))
 
 (ert-deftest check-inf-fsharp ()
   "Check that FSI can be used to evaluate"

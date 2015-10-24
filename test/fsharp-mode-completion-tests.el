@@ -259,7 +259,7 @@ function bound to VAR in BODY. "
    (stub-fn message msg
      (noflet ((fsharp-ac--process-live-p ()))
        (using-temp-file "test.fsx"
-         (fsharp-doc-show-tooltip)
+         (fsharp-doc--request-info)
          (should (null msg)))))))
 
 (check "no error message if failed request from parsing"
