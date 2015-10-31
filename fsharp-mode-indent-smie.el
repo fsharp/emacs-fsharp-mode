@@ -24,7 +24,7 @@
 (require 'smie)
 
 
-(defcustom fsharp-indent-level 2
+(defcustom fsharp-indent-level 4
   "Basic indentation step for fsharp mode"
   :type 'integer)
 
@@ -38,20 +38,25 @@
 	     ("if" expr "then" expr "else" expr)
 	     ("for" expr "in" expr "do" expr)
 	     ("for" expr "to" expr "do" expr)
-	     ("try" id "with" branches)
+	     ("try" expr "with" branches)
+	     ("try" expr "finally" expr)
 	     ("match" expr "with" branches)
 	     ("type" expr "=" branches)
 	     ("begin" exprs "end")
 	     ("[" exprs "]")
 	     ("[|" exprs "|]")
+	     ("{" exprs "}")
+	     ("<@" exprs "@>")
+	     ("<@@" exprs "@@>")
 	     ("let" sexp "=" expr)
-	     ("fun" expr "f->" expr))
+	     ("fun" expr "->" expr))
        (sexp ("rec")
        	     (sexp ":" type)
        	     (sexp "||" sexp)
        	     (sexp "&&" sexp)
        	     ("(" exprs ")"))
        (exprs (exprs ";" exprs)
+	      (exprs "," exprs)
 	      (expr))
        (type (type "->" type)
        	     (type "*" type))
@@ -59,11 +64,13 @@
        (decls (sexp "=" expr)))
      '((assoc "|"))
      '((assoc "->") (assoc "*"))
-     '((assoc "let" "fun" "type" "open" "f->"))
+     '((assoc "let" "fun" "type" "open" "->"))
      '((assoc "let") (assoc "="))
-     '((assoc "[" "]" "[|" "|]"))
+     '((assoc "[" "]" "[|" "|]" "{" "}"))
+     '((assoc "<@" "@>"))
+     '((assoc "<@@" "@@>"))
      '((assoc "&&") (assoc "||") (noassoc ":"))
-     '((assoc ";")))
+     '((assoc ";") (assoc ",")))
     (smie-precs->prec2
      '((nonassoc (">" ">=" "<>" "<" "<=" "="))
        (assoc "::")
@@ -79,12 +86,13 @@
     (`(:after . "else") fsharp-indent-level)
     (`(:after . "try") fsharp-indent-level)
     (`(:after . "with") fsharp-indent-level)
+    (`(:after . "finally") fsharp-indent-level)
     (`(:after . "in") 0)
     (`(:after . ,(or `"[" `"]" `"[|" `"|]")) fsharp-indent-level)
-    (`(,_ . ";") (if (smie-rule-parent-p "begin")
-		     0
-		   (smie-rule-separator kind)))
-    (`(:after . "=") fsharp-inent-level)
+    (`(,_ . ,(or `";" `",")) (if (smie-rule-parent-p "begin")
+				 0
+			       (smie-rule-separator kind)))
+    (`(:after . "=") fsharp-indent-level)
     ))
 
 
