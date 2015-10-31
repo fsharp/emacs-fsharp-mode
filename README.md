@@ -73,21 +73,6 @@ Emacs 24 will not add it to your PATH. One option is:
 
 `alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'`
 
-### SMIE indentation configure for F# mode
-
-Add the following configure to your `.emacs` file to use the SMIE 
-indentation for fsharp mode. Currently this is a very basic indentation
-implementation, automatic like correct indent after function definition
-is not work. You still need to manually indent at the begin of function
-body, but then it will indent the remaining code. There are more work 
-need to be done for the indentation code. 
-
-```elisp
-;;; SMIE indentation for fshapr mode config. 
-(require 'fsharp-mode-indent-smie)
-
-(fsharp-mode-indent-smie-setup)
-```
 
 ## Usage
 

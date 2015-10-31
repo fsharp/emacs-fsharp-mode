@@ -43,14 +43,14 @@ regardless of where in the line point is when the TAB command is used."
   :type 'boolean
   :group 'fsharp)
 
-(defcustom fsharp-indent-offset 2
+(defcustom fsharp-indent-offset 4
   "*Amount of offset per level of indentation.
 `\\[fsharp-guess-indent-offset]' can usually guess a good value when
 you're editing someone else's Fsharp code."
   :type 'integer
   :group 'fsharp)
 
-(defcustom fsharp-continuation-offset 2
+(defcustom fsharp-continuation-offset 4
   "*Additional amount of offset to give for some continuation lines.
 Continuation lines are those that immediately follow a backslash
 terminated line.  Only those continuation lines for a block opening
