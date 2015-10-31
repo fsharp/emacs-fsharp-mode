@@ -61,7 +61,10 @@
        (type (type "->" type)
        	     (type "*" type))
        (branches (branches "|" branches))
-       (decls (sexp "=" expr)))
+       (decls (sexp "=" expr))
+       (toplevel (decls)
+		 (expr)
+		 (toplevel ";;" toplevel)))
      '((assoc "|"))
      '((assoc "->") (assoc "*"))
      '((assoc "let" "fun" "type" "open" "->"))
@@ -70,7 +73,8 @@
      '((assoc "<@" "@>"))
      '((assoc "<@@" "@@>"))
      '((assoc "&&") (assoc "||") (noassoc ":"))
-     '((assoc ";") (assoc ",")))
+     '((assoc ";") (assoc ","))
+     '((assoc ";;")))
     (smie-precs->prec2
      '((nonassoc (">" ">=" "<>" "<" "<=" "="))
        (assoc "::")
@@ -93,6 +97,9 @@
 				 0
 			       (smie-rule-separator kind)))
     (`(:after . "=") fsharp-indent-level)
+    (`(:after . ";;") (smie-rule-separator kind))
+    (`(:before . ";;") (if (smie-rule-bolp)
+			   0))
     ))
 
 
