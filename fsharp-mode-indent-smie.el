@@ -26,6 +26,7 @@
 
 (defcustom fsharp-indent-level 4
   "Basic indentation step for fsharp mode"
+  :group 'fsharp
   :type 'integer)
 
 (defconst fsharp-smie-grammar
