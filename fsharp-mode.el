@@ -32,6 +32,7 @@
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'dash)
+(require 'fsharp-mode-indent-smie)
 
 ;;; Compilation
 
@@ -192,7 +193,7 @@
   (require 'fsharp-mode-font)
   (require 'fsharp-doc)
   (require 'fsharp-mode-completion)
-  (require 'fsharp-mode-indent-smie)
+
 
   (fsharp-mode-indent-smie-setup)
 
