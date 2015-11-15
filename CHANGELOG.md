@@ -1,3 +1,8 @@
+## 1.6.4 (2015-11-15)
+
+Bugfixes:
+  - Correct deployment of FsAutoComplete 0.26.1
+
 ## 1.6.3 (2015-10-24)
 
 Bugfixes:
