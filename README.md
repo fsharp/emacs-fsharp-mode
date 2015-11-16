@@ -47,8 +47,8 @@ If you're not already using MELPA, add the following to your init.el:
 
 1. Clone this repo and run `make install`:
     ```
-    git clone git://github.com/fsharp/fsharpbinding.git
-    cd fsharpbinding/emacs
+    git clone git://github.com/fsharp/emacs-fsharp-mode.git
+    cd emacs-fsharp-mode/emacs
     make test-all # optional
     make install
     ```
@@ -93,7 +93,7 @@ fsharp-mode offers intellisense for projects using the MSBuild/`.fsproj`
 format. This allows project files to be shared with other developers using
 Visual Studio and Xamarin Studio/Monodevelop. To create a new project file,
 it is recommended that you take an existing project file and modify the list
-of source files. One such project file can be found in the fsharp-mode repository [here](https://github.com/fsharp/fsharpbinding/blob/master/emacs/test/Test1/Test1.fsproj).
+of source files. One such project file can be found in the fsharp-mode repository [here](https://github.com/fsharp/emacs-fsharp-mode/blob/master/test/Test1/Test1.fsproj).
 
 If, on loading a new `.fs` file, a `.fsproj` file is found in the
 current or an enclosing directory, the intellisense process will be
@@ -198,7 +198,7 @@ the following to your `init.el` may be a good start:
 
 ## Troubleshooting
 
-`fsharp-mode` is still under development, so you may encounter some issues. Please report them so we can improve things! Either open an issue on [Github](https://github.com/fsharp/fsharpbinding/) with the label `Emacs`, or email the [mailing list](http://groups.google.com/group/fsharp-opensource).
+`fsharp-mode` is still under development, so you may encounter some issues. Please report them so we can improve things! Either open an issue on [Github](https://github.com/fsharp/emacs-fsharp-mode/) with the label `Emacs`, or email the [mailing list](http://groups.google.com/group/fsharp-opensource).
 
 ### `fsharp-ac-debug`
 
@@ -232,7 +232,7 @@ If you installed by cloning the git repository and you are having problems, plea
 
 This project is maintained by the
 [F# Software Foundation](http://fsharp.org/), with the repository hosted
-on [GitHub](https://github.com/fsharp/fsharpbinding).
+on [GitHub](https://github.com/fsharp/emacs-fsharp-mode).
 
 Pull requests are welcome. Please run the test-suite with `make
 test-all` before submitting a pull request.
