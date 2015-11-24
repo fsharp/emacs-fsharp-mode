@@ -1,3 +1,9 @@
+## 1.7.0 (2015-11-24)
+
+Features:
+  - #34: Switch to SMIE-based indentation engine (thanks to m00nlight).
+  - #31: Add highlighting of other usages of symbol at point.
+
 ## 1.6.3 (2015-10-24)
 
 Bugfixes:
