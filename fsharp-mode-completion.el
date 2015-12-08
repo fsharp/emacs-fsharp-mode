@@ -176,7 +176,12 @@ For indirect buffers return the truename of the base buffer."
     ;; Load given project.
     (when (fsharp-ac--process-live-p)
       (log-psendstr fsharp-ac-completion-process
-                    (format "project \"%s\"\n" (file-truename file))))
+                    (format "project \"%s\"%s\n"
+                            (file-truename file)
+                            (if (and (numberp fsharp-ac-debug)
+                                     (>= fsharp-ac-debug 2))
+                                " verbose"
+                              ""))))
     file))
 
 (defun fsharp-ac/load-file (file)
@@ -856,7 +861,12 @@ display a short summary in the minibuffer."
     (-map (lambda (f) (puthash f project fsharp-ac--project-files)) files)
 
     (when (not oldprojdata)
-      (fsharp-ac-message-safely "Loaded F# project '%s'" (file-relative-name project)))))
+      (fsharp-ac-message-safely "Loaded F# project '%s'" (file-relative-name project)))
+
+    (when (and (numberp fsharp-ac-debug)
+               (>= fsharp-ac-debug 2))
+      (maphash (lambda (file msg) (fsharp-ac-message-safely "%s:\n%s\n" file msg))
+               (gethash "Logs" data)))))
 
 (defun fsharp-ac-handle-process-error (str)
   (fsharp-ac-message-safely str)
