@@ -207,6 +207,30 @@ the following to your `init.el` may be a good start:
 
 If you set the variable `fsharp-ac-debug` to a non-`nil` value, e.g. `(setq fsharp-ac-debug 0)`, then some debug output will be seen in the buffer `*fsharp-debug*`. Setting `fsharp-ac-debug` to an 1 or 2 will cause a truncated or complete copy of communication between Emacs and the background intellisense process to be logged in `*fsharp-debug*`. This can make things rather slow, but would be useful for bug reports.
 
+### Project file issues
+
+If your project file does not seem to be being parsed correctly, so that you have missing references or other incorrect intellisense results, it is possible to obtain a detailed log of the project file loading process as follows:
+
+* Open the F# file where the problems are visible.
+* Set `fsharp-ac-debug` to 2, for example by `M-: (setq fsharp-ac-debug 2)`.
+* Reload the project file using `C-c C-p`.
+* Attach the detailed log output from your `*Messages*` buffer to a [new issue](https://github.com/fsharp/emacs-fsharp-mode/issues/new).
+
+As an example, the log output will start similarly to:
+
+```
+<full path to>/MyProject.fsproj:
+Loading default tasks for ToolsVersion: 4.0 from /usr/lib/mono/4.5/Microsoft.Common.tasks
+<full path to>/MyProject.fsproj: Importing project
+...
+```
+
+As an alternative, the command line tool responsible can be invoked directly to obtain the same log. Assuming you have installed from MELPA and are running on Linux or OS X, the following should work:
+
+    mono ~/.emacs.d/elpa/fsharp-mode-<date>/bin/FSharp.Compiler.Service.ProjectCrackerTool.exe --text <path to>/MyProject.fsproj true
+
+On Windows the `mono` prefix is not required, and if you have installed using a different method then the files will be in a different location.
+
 ### `Error: F# completion process produced malformed JSON.`
 
 This is probably the result of the background intellisense process crashing and printing a stacktrace in plain text. Please report the crash, preferably with how to reproduce, and the contents of the `*fsharp-complete*` buffer.
