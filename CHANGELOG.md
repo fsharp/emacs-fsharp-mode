@@ -1,3 +1,8 @@
+## 1.7.1 (2015-11-24)
+
+Features:
+  - #45: Update FSAC to 0.27, enable project cracking logs.
+
 ## 1.7.0 (2015-11-24)
 
 Features:
