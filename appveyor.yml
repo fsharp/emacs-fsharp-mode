@@ -6,7 +6,7 @@ matrix:
   fast_finish: true
 install:
   - ps: Start-FileDownload "https://github.com/fsharp/FSharp.AutoComplete/releases/download/$env:FSACVERSION/fsautocomplete.zip"
-  - ps: 7z x fsautocomplete.zip -oemacs-fsharp-mode\bin | FIND /V "ing  "
+  - ps: 7z x fsautocomplete.zip -oemacs-fsharp-mode\bin | FIND /V "Extracting"
   - cinst emacs
 build_script:
   - cmd: .\.appveyor\test.bat
