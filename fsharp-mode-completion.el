@@ -367,6 +367,28 @@ For indirect buffers return the truename of the base buffer."
      (setq fsharp-ac-status 'idle)
      fsharp-ac-current-candidate)))
 
+(require 'cl-lib)
+
+(defun fsharp-ac/company-backend (command &optional arg &rest ignored)
+    (interactive (list 'interactive))
+    (cl-case command
+        (interactive (company-begin-backend 'fsharp-ac/company-backend))
+        (prefix (company-grab-word))
+        (candidates 
+                    (setq fsharp-ac-status 'wait)
+                    (setq fsharp-ac-current-candidate nil)
+                    (clrhash fsharp-ac-current-helptext)
+
+                    (fsharp-ac-parse-current-buffer)
+                    (fsharp-ac-send-pos-request
+                    "completion"
+                    (fsharp-ac--buffer-truename)
+                    (line-number-at-pos)
+                        (+ 1 (current-column)))
+                      (list "foobar" "foobaz" "foobarbaz")
+     )
+    (meta (format "This value is named %s" arg))))
+
 (defconst fsharp-ac--ident
   (rx (one-or-more (not (any ".` \t\r\n"))))
   "Regexp for normal identifiers.")

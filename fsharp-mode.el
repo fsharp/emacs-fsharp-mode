@@ -125,6 +125,8 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.fs[iylx]?$" . fsharp-mode))
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'fsharp-ac/company-backend))
 
 (defvar fsharp-mode-syntax-table nil
   "Syntax table in use in fsharp mode buffers.")
@@ -274,9 +276,9 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (auto-complete-mode 1)
-    (setq ac-auto-start nil
-          ac-use-comphist nil)
+    ;; (auto-complete-mode 1)
+    ;; (setq ac-auto-start nil
+    ;;       ac-use-comphist nil)
     (when (and (display-graphic-p)
                (featurep 'pos-tip))
       (setq popup-tip-max-width 240))))
