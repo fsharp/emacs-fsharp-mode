@@ -15,7 +15,7 @@
 ;;; root of this repo.
 
 (check "should not find fsharp project if none present"
-  (should-not (fsharp-mode/find-sln-or-fsproj "/bin/")))
+  (should-not (fsharp-mode/find-sln-or-fsproj "/")))
 
 (check "should find fsproj in test project directory"
   (should-match "Test1.fsproj"
