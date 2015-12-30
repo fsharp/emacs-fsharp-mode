@@ -284,11 +284,21 @@ For indirect buffers return the truename of the base buffer."
   (let ((fsac (car (last fsharp-ac-complete-command))))
     (unless (file-exists-p fsac)
       (error "%s not found" fsac)))
-  (let ((proc (let (process-connection-type)
-                (apply 'start-process
-                       fsharp-ac--completion-procname
-                       fsharp-ac--completion-bufname
-                       fsharp-ac-complete-command))))
+  (let* ((process-environment
+          (if (null fsharp-ac-using-mono)
+              process-environment
+            ;; workaround for Mono >= 4.2.1 thread pool bug
+            ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
+            (let ((x (getenv "MONO_THREADS_PER_CPU")))
+              (if (or (null x)
+                      (< (string-to-number x) 8))
+                  (cons "MONO_THREADS_PER_CPU=8" process-environment)
+                process-environment))))
+         (proc (let (process-connection-type)
+                 (apply 'start-process
+                        fsharp-ac--completion-procname
+                        fsharp-ac--completion-bufname
+                        fsharp-ac-complete-command))))
     (sleep-for 0.1)
     (if (process-live-p proc)
         (progn
