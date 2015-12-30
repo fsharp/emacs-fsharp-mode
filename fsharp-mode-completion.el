@@ -523,7 +523,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (insert-char ?. 1)
   (unless (company-in-string-or-comment)
-    (company-auto-begin)))
+    (company-complete)))
   ;; (when ac-completing
   ;;   (ac-complete))
 
@@ -786,7 +786,7 @@ around to the start of the buffer."
               data)
         fsharp-ac-status 'acknowledged)
   ;; (fsharp-ac--ac-start :force-init t)
-  (company-auto-begin)
+  (company-complete)
   ;; (ac-update)
   (setq fsharp-ac-status 'idle))
 
