@@ -125,8 +125,6 @@
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.fs[iylx]?$" . fsharp-mode))
-(eval-after-load 'company
-  '(add-to-list 'company-backends 'fsharp-ac/company-backend))
 
 (defvar fsharp-mode-syntax-table nil
   "Syntax table in use in fsharp mode buffers.")
