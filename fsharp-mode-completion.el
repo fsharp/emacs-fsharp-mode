@@ -375,18 +375,8 @@ For indirect buffers return the truename of the base buffer."
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
         (prefix (company-grab-word))
         (candidates 
-                    (setq fsharp-ac-status 'wait)
-                    (setq fsharp-ac-current-candidate nil)
-                    (clrhash fsharp-ac-current-helptext)
-
-                    (fsharp-ac-parse-current-buffer)
-                    (fsharp-ac-send-pos-request
-                    "completion"
-                    (fsharp-ac--buffer-truename)
-                    (line-number-at-pos)
-                        (+ 1 (current-column)))
-                      (list "foobar" "foobaz" "foobarbaz")
-     )
+          (fsharp-ac-candidate))
+        
     (meta (format "This value is named %s" arg))))
 
 (defconst fsharp-ac--ident
@@ -530,16 +520,19 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 
 (defun fsharp-ac/electric-dot ()
   (interactive)
-  (when ac-completing
-    (ac-complete))
+  (insert-char ?. 1)
+  (unless (company-in-string-or-comment)
+    (company-auto-begin)))
+  ;; (when ac-completing
+  ;;   (ac-complete))
 
-  (let ((residue (fsharp-ac--residue))
-        (pt (point)))
-    (when (or (not (eq ?. (char-before)))
-              (not ac-completing))
-      (self-insert-command 1))
-    (unless (eq pt residue)
-      (fsharp-ac/complete-at-point t))))
+  ;; (let ((residue (fsharp-ac--residue))
+  ;;       (pt (point)))
+  ;;   (when (or (not (eq ?. (char-before)))
+  ;;             (not ac-completing))
+  ;;     (self-insert-command 1))
+  ;;   (unless (eq pt residue)
+  ;;     (fsharp-ac/complete-at-point t))))
 
 
 (defun fsharp-ac/electric-backspace ()
@@ -791,8 +784,9 @@ around to the start of the buffer."
                     (s-append "``" (s-prepend "``" s)))))
               data)
         fsharp-ac-status 'acknowledged)
-  (fsharp-ac--ac-start :force-init t)
-  (ac-update)
+  ;; (fsharp-ac--ac-start :force-init t)
+  (company-auto-begin)
+  ;; (ac-update)
   (setq fsharp-ac-status 'idle))
 
 (defun fsharp-ac-handle-doctext (data)
