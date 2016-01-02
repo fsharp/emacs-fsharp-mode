@@ -84,9 +84,9 @@
 
   (define-key fsharp-mode-map "\C-m"      'fsharp-newline-and-indent)
   (define-key fsharp-mode-map "\C-c:"     'fsharp-guess-indent-offset)
-  (define-key fsharp-mode-map [delete]    'fsharp-electric-delete)
-  (define-key fsharp-mode-map [backspace] 'fsharp-electric-backspace)
-  (define-key fsharp-mode-map (kbd ".") 'fsharp-ac/electric-dot)
+  ;; (define-key fsharp-mode-map [delete]    'fsharp-electric-delete)
+  ;; (define-key fsharp-mode-map [backspace] 'fsharp-electric-backspace)
+  ;; (define-key fsharp-mode-map (kbd ".") 'fsharp-ac/electric-dot)
 
   (define-key fsharp-mode-map (kbd "C-c <up>") 'fsharp-goto-block-up)
 
@@ -274,7 +274,8 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (company-mode-on)
+    (company-mode 1)
+
     ;; (auto-complete-mode 1)
     ;; (setq ac-auto-start nil
     ;;       ac-use-comphist nil)
