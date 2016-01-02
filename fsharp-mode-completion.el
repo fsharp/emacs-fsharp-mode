@@ -354,7 +354,7 @@ For indirect buffers return the truename of the base buffer."
     (interactive (list 'interactive))
     (cl-case command
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
-        (prefix (fsharp-ac--residue))
+        (prefix (company-grab-word))
         (ignore-case 't)
         (candidates (cons :async
                           (lambda (callback)
