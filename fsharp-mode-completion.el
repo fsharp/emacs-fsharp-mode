@@ -358,10 +358,17 @@ For indirect buffers return the truename of the base buffer."
         (ignore-case 't)
         (candidates (cons :async
                           (lambda (callback)
+                            (when (eq (company-grab-word) "")
+                              ;; discard any pending requests as we
+                              ;; just pressed '.' or are at the start of a new line
+                              (setq fsharp-ac-status 'idle))
+
                             (when (and (fsharp-ac-can-make-request 't)
                                        (eq fsharp-ac-status 'idle))
+
                             (fsharp-ac-make-completion-request)
                             (setq company-callback callback)))))
+
         (post-completion (message "done") (setq fsharp-ac-status 'idle))
         ;; (no-cache (equal arg ""))
         
