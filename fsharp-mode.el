@@ -194,6 +194,7 @@
   (require 'fsharp-doc)
   (require 'fsharp-mode-completion)
 
+  (require 'company)
 
   (fsharp-mode-indent-smie-setup)
 
@@ -243,13 +244,17 @@
         add-log-current-defun-function 'fsharp-current-defun
         fsharp-last-noncomment-pos     nil
         fsharp-last-comment-start      (make-marker)
-        fsharp-last-comment-end        (make-marker)
-
-        )
+        fsharp-last-comment-end        (make-marker))
 
   ; Syntax highlighting
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
+  ; Some reasonable defaults for company mode
+  (setq company-auto-complete 't)
+  ;; (setq company-auto-complete-chars "(){}[],.:")
+  (setq company-idle-delay 1.00)
+  (setq company-minimum-prefix-length 0)
+
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
   (add-hook 'next-error-hook 'fsharp-ac/show-error-at-point nil t)
@@ -274,7 +279,7 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (company-mode 1)
+    (company-mode-on)
 
     ;; (auto-complete-mode 1)
     ;; (setq ac-auto-start nil
