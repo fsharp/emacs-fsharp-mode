@@ -321,7 +321,6 @@ For indirect buffers return the truename of the base buffer."
                              t
                              'fsharp-ac--parse-current-file)))
 
-
 (defun fsharp-ac-document (item)
   (let* ((ticks (s-match "^``\\(.*\\)``$" item))
          (key (if ticks (cadr ticks) item))
@@ -334,7 +333,7 @@ For indirect buffers return the truename of the base buffer."
                (accept-process-output fsharp-ac-completion-process 0 100))
              (gethash key fsharp-ac-current-helptext
                       "Loading documentation..."))))
-      (pos-tip-fill-string help popup-tip-max-width))))
+             help)))
 
 (defun fsharp-ac-make-completion-request ()
   (interactive)
@@ -349,6 +348,18 @@ For indirect buffers return the truename of the base buffer."
    (+ 1 (current-column))))
 
 (require 'cl-lib)
+ 
+(defun fsharp-company-candidates (callback)
+  (when (eq company-prefix "")
+    ;; discard any pending requests as we
+    ;; just pressed '.' or are at the start of a new line
+    (setq fsharp-ac-status 'idle))
+
+  (when (and (fsharp-ac-can-make-request 't)
+             (eq fsharp-ac-status 'idle))
+
+    (fsharp-ac-make-completion-request)
+    (setq company-callback callback)))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -356,23 +367,8 @@ For indirect buffers return the truename of the base buffer."
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
         (prefix (company-grab-word))
         (ignore-case 't)
-        (candidates (cons :async
-                          (lambda (callback)
-                            (when (eq (company-grab-word) "")
-                              ;; discard any pending requests as we
-                              ;; just pressed '.' or are at the start of a new line
-                              (setq fsharp-ac-status 'idle))
-
-                            (when (and (fsharp-ac-can-make-request 't)
-                                       (eq fsharp-ac-status 'idle))
-
-                            (fsharp-ac-make-completion-request)
-                            (setq company-callback callback)))))
-
-        (post-completion (message "done") (setq fsharp-ac-status 'idle))
-        ;; (no-cache (equal arg ""))
-        
-    (meta (format "This value is named %s" arg))))
+        (candidates (cons :async 'fsharp-company-candidates))
+        (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
 
 (defconst fsharp-ac--ident
   (rx (one-or-more (not (any ".` \t\r\n"))))
