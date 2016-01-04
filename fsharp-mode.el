@@ -251,7 +251,7 @@
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
   ; Some reasonable defaults for company mode
   (setq company-auto-complete 't)
-  ;; (setq company-auto-complete-chars "(){}[],.:")
+  (setq company-auto-complete-chars ".")
   (setq company-idle-delay 1.00)
   (setq company-minimum-prefix-length 0)
 
