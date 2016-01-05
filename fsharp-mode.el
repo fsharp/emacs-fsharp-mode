@@ -262,7 +262,6 @@
   (setq company-idle-delay 0.5)
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
-  (message "Added fsharp backend here")
 
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)

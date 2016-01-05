@@ -356,15 +356,14 @@ For indirect buffers return the truename of the base buffer."
     (setq fsharp-ac-status 'idle))
 
   (when (and (fsharp-ac-can-make-request 't)
-             (eq fsharp-ac-status 'idle)
-             (not (eq (string (char-before)) " ")))
+             (eq fsharp-ac-status 'idle))
     (setq company-callback callback)
     (fsharp-ac-make-completion-request)))
 
 (defun fsharp-ac-get-prefix ()
   (if (char-equal (char-before) ?\s)
       nil
-    (company-grab-word))
+    (company-grab-word)))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
