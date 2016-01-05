@@ -356,26 +356,21 @@ For indirect buffers return the truename of the base buffer."
     (setq fsharp-ac-status 'idle))
 
   (when (and (fsharp-ac-can-make-request 't)
-             (eq fsharp-ac-status 'idle))
-
-    (fsharp-ac-make-completion-request)
-    (setq company-callback callback)))
+             (eq fsharp-ac-status 'idle)
+             (not (eq (string (char-before)) " ")))
+    (setq company-callback callback)
+    (fsharp-ac-make-completion-request)))
 
 (defun fsharp-ac-get-prefix ()
-  (let ((prefix (company-grab-word)))
-    (unless (eq prefix nil)
-      (if (string-match "^[[:space:]]*$" prefix)
-          (when (eq (string (char-before)) ".")
-            prefix)
-        ;; returning nil here passes off completion to any other backends
-        ;; that could be configured
-    prefix))))
+  (if (char-equal (char-before) ?\s)
+      nil
+    (company-grab-word))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
     (cl-case command
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
-        (prefix (fsharp-ac-get-prefix))
+        (prefix  (fsharp-ac-get-prefix))
         (ignore-case 't)
         (candidates (cons :async 'fsharp-company-candidates))
         (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
