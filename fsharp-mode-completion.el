@@ -363,13 +363,13 @@ For indirect buffers return the truename of the base buffer."
 
 (defun fsharp-ac-get-prefix ()
   (let ((prefix (company-grab-word)))
-    (if (string-match "^[[:space:]]*$" prefix)
-        (when (eq (string (char-before)) ".")
-          prefix)
-          ;; returning nil here passes off completion to any other backends
-          ;; that could be configured
-          )
-    prefix))
+    (unless (eq prefix nil)
+      (if (string-match "^[[:space:]]*$" prefix)
+          (when (eq (string (char-before)) ".")
+            prefix)
+        ;; returning nil here passes off completion to any other backends
+        ;; that could be configured
+    prefix))))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
