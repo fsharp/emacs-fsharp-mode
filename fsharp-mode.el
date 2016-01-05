@@ -215,6 +215,7 @@
           underline-minimum-offset
           compile-command
           syntax-propertize-function
+          company-backends
 
           ac-sources
           ac-auto-start
@@ -254,6 +255,8 @@
   (setq company-auto-complete-chars ".")
   (setq company-idle-delay 0.5)
   (setq company-minimum-prefix-length 0)
+  (setq company-backends (list 'fsharp-ac/company-backend))
+  (message "Added fsharp backend here")
 
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
