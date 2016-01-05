@@ -252,7 +252,7 @@
   ; Some reasonable defaults for company mode
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
-  (setq company-idle-delay 1.00)
+  (setq company-idle-delay 0.5)
   (setq company-minimum-prefix-length 0)
 
   ;; Error navigation

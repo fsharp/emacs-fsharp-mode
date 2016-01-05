@@ -361,11 +361,21 @@ For indirect buffers return the truename of the base buffer."
     (fsharp-ac-make-completion-request)
     (setq company-callback callback)))
 
+(defun fsharp-ac-get-prefix ()
+  (let ((prefix (company-grab-word)))
+    (if (string-match "^[[:space:]]*$" prefix)
+        (when (eq (string (char-before)) ".")
+          prefix)
+          ;; returning nil here passes off completion to any other backends
+          ;; that could be configured
+          )
+    prefix))
+
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
     (cl-case command
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
-        (prefix (company-grab-word))
+        (prefix (fsharp-ac-get-prefix))
         (ignore-case 't)
         (candidates (cons :async 'fsharp-company-candidates))
         (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
