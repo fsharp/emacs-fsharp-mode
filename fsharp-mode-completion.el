@@ -368,7 +368,13 @@ For indirect buffers return the truename of the base buffer."
     (fsharp-ac-make-completion-request)))
 
 (defun fsharp-ac-completion-done ()
-  (funcall company-callback (fsharp-company-filter company-prefix fsharp-ac-current-candidate)))
+  (let ((mapped-completion
+    (-map (lambda (candidate)
+            (let ((s (gethash "Name" candidate)))
+              (if (fsharp-ac--isNormalId s) (propertize s 'annotation (gethash "GlyphChar" candidate))
+                (s-append "``" (s-prepend "``" s)))))
+          fsharp-ac-current-candidate)))
+    (funcall company-callback (fsharp-company-filter company-prefix mapped-completion))))
 
 (defun fsharp-ac-get-prefix ()
   (if (char-equal (char-before) ?\s)
@@ -382,6 +388,7 @@ For indirect buffers return the truename of the base buffer."
         (prefix  (fsharp-ac-get-prefix))
         (ignore-case 't)
         (candidates (cons :async 'fsharp-company-candidates))
+        (annotation (get-text-property 0 'annotation arg))
         (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
 
 (defconst fsharp-ac--ident
@@ -760,12 +767,7 @@ around to the start of the buffer."
     (setq msg (fsharp-ac--get-msg proc)))))
 
 (defun fsharp-ac-handle-completion (data)
-  (setq fsharp-ac-current-candidate
-        (-map (lambda (candidate)
-                (let ((s (gethash "Name" candidate)))
-                  (if (fsharp-ac--isNormalId s) s
-                    (s-append "``" (s-prepend "``" s)))))
-              data)
+  (setq fsharp-ac-current-candidate data
         fsharp-ac-status 'idle)
   (fsharp-ac-completion-done))
 

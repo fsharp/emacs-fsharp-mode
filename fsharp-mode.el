@@ -221,7 +221,7 @@
           company-idle-delay
           company-minimum-prefix-length
           company-require-match
-
+          company-tooltip-align-annotations
           ac-sources
           ac-auto-start
           ac-use-comphist
@@ -262,6 +262,7 @@
   (setq company-idle-delay 0.5)
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
+  (setq company-tooltip-align-annotations 't)
 
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
