@@ -1,4 +1,4 @@
-;;; fsharp-mode-completion.el --- Autocompletion support for F#
+;;; fsharp-mode-completion.el --- Autocompletion support for F#  -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2013 Robin Neatherway
 
@@ -348,17 +348,27 @@ For indirect buffers return the truename of the base buffer."
    (+ 1 (current-column))))
 
 (require 'cl-lib)
- 
+
+(defun fsharp-company-filter (prefix candidates)
+  (if prefix
+    (cl-loop for candidate in candidates
+             when (string-prefix-p prefix candidate 't)
+             collect candidate)))
+
 (defun fsharp-company-candidates (callback)
   (when (eq company-prefix "")
     ;; discard any pending requests as we
     ;; just pressed '.' or are at the start of a new line
     (setq fsharp-ac-status 'idle))
 
+  (lambda callback)
   (when (and (fsharp-ac-can-make-request 't)
              (eq fsharp-ac-status 'idle))
     (setq company-callback callback)
     (fsharp-ac-make-completion-request)))
+
+(defun fsharp-ac-completion-done ()
+  (funcall company-callback (fsharp-company-filter company-prefix fsharp-ac-current-candidate)))
 
 (defun fsharp-ac-get-prefix ()
   (if (char-equal (char-before) ?\s)
@@ -757,7 +767,7 @@ around to the start of the buffer."
                     (s-append "``" (s-prepend "``" s)))))
               data)
         fsharp-ac-status 'idle)
-  (funcall company-callback fsharp-ac-current-candidate))
+  (fsharp-ac-completion-done))
 
 (defun fsharp-ac-handle-doctext (data)
   (puthash (gethash "Name" data)
