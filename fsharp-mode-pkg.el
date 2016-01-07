@@ -3,6 +3,7 @@
   "1.7.3"
   "F# mode for Emacs"
   '((auto-complete "1.4")
+    (company    "0.8.0")
     (popup      "0.5")
     (pos-tip    "0.4.5")
     (s          "1.3.1")

@@ -270,14 +270,6 @@ function bound to VAR in BODY. "
          (fsharp-ac--parse-current-file)
          (should (null msg)))))))
 
-(check "no error message if failed request from electric dot"
-  (stubbing-process-functions
-   (stub-fn message msg
-     (noflet ((fsharp-ac--process-live-p ()))
-       (using-temp-file "test.fsx"
-         (fsharp-ac/electric-dot)
-         (should (null msg)))))))
-
 ;;; Only parse if the file has changed
 
 (check "do not reparse if file has not changed"

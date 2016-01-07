@@ -526,12 +526,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (pop-tag-mark))
 
-
-(defun fsharp-ac/electric-dot ()
-  (interactive)
-  (insert-char ?. 1)
-  (company-complete))
-
 (defun fsharp-ac/electric-backspace ()
   (interactive)
   (when (eq (char-before) ?.)
