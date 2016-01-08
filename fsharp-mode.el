@@ -214,6 +214,7 @@
           underline-minimum-offset
           compile-command
           syntax-propertize-function
+          electric-indent-inhibit
 
           ac-sources
           ac-auto-start
