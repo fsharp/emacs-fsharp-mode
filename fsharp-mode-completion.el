@@ -1,4 +1,4 @@
-;;; fsharp-mode-completion.el --- Autocompletion support for F#  -*- lexical-binding: t -*-
+;;; fsharp-mode-completion.el --- Autocompletion support for F#
 
 ;; Copyright (C) 2012-2013 Robin Neatherway
 
@@ -361,11 +361,11 @@ For indirect buffers return the truename of the base buffer."
     ;; just pressed '.' or are at the start of a new line
     (setq fsharp-ac-status 'idle))
 
-  (lambda callback)
   (when (and (fsharp-ac-can-make-request 't)
              (eq fsharp-ac-status 'idle))
     (setq company-callback callback)
     (fsharp-ac-make-completion-request)))
+
 (defun fsharp-ac-add-annotation-prop (s candidate)
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 

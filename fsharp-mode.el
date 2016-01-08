@@ -288,11 +288,8 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (company-mode-on)
+    (company-mode 1)
 
-    ;; (auto-complete-mode 1)
-    ;; (setq ac-auto-start nil
-    ;;       ac-use-comphist nil)
     (when (and (display-graphic-p)
                (featurep 'pos-tip))
       (setq popup-tip-max-width 240))))
