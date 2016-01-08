@@ -1,3 +1,8 @@
+## 1.7.2 (2016-01-08)
+
+Bugfixes:
+  - #50: Inhibit electric-indent for fsharp-mode buffers (thanks to @joranvar).
+
 ## 1.7.1 (2015-11-24)
 
 Features:

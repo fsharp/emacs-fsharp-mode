@@ -1,6 +1,6 @@
 (define-package
   "fsharp-mode"
-  "1.7.1"
+  "1.7.2"
   "F# mode for Emacs"
   '((auto-complete "1.4")
     (popup      "0.5")
