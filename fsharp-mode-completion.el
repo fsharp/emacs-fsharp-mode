@@ -27,6 +27,7 @@
 (require 's)
 (require 'dash)
 (require 'auto-complete)
+(require 'company)
 (require 'json)
 (require 'etags)
 (require 'fsharp-mode-util)
@@ -93,6 +94,9 @@ If set to nil, display in a help buffer instead.")
   "BUFFER's tick counter, when the file was parsed.")
 (defvar fsharp-ac--last-parsed-buffer nil
   "Last parsed BUFFER, so that we reparse if we switch buffers.")
+
+(defvar-local company-prefix nil)
+(defvar-local fsharp-company-callback nil)
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
@@ -363,7 +367,7 @@ For indirect buffers return the truename of the base buffer."
 
   (when (and (fsharp-ac-can-make-request 't)
              (eq fsharp-ac-status 'idle))
-    (setq company-callback callback)
+    (setq fsharp-company-callback callback)
     (fsharp-ac-make-completion-request)))
 
 (defun fsharp-ac-add-annotation-prop (s candidate)
@@ -376,7 +380,7 @@ For indirect buffers return the truename of the base buffer."
               (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
                 (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
           fsharp-ac-current-candidate)))
-    (funcall company-callback (fsharp-company-filter company-prefix mapped-completion))))
+    (funcall fsharp-company-callback (fsharp-company-filter company-prefix mapped-completion))))
 
 (defun fsharp-ac-get-prefix ()
   (if (char-equal (char-before) ?\s)
