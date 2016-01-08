@@ -238,6 +238,7 @@
         indent-region-function   'fsharp-indent-region
         indent-line-function     'fsharp-indent-line
         underline-minimum-offset  4
+        electric-indent-inhibit   t
 
         paragraph-ignore-fill-prefix   t
         add-log-current-defun-function 'fsharp-current-defun
