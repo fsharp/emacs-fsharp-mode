@@ -214,7 +214,6 @@
           underline-minimum-offset
           compile-command
           syntax-propertize-function
-          electric-indent-inhibit
 
           ac-sources
           ac-auto-start
@@ -239,7 +238,6 @@
         indent-region-function   'fsharp-indent-region
         indent-line-function     'fsharp-indent-line
         underline-minimum-offset  4
-        electric-indent-inhibit   t
 
         paragraph-ignore-fill-prefix   t
         add-log-current-defun-function 'fsharp-current-defun
@@ -256,6 +254,10 @@
   (setq next-error-function 'fsharp-ac/next-error)
   (add-hook 'next-error-hook 'fsharp-ac/show-error-at-point nil t)
   (add-hook 'post-command-hook 'fsharp-ac/show-error-at-point nil t)
+
+  ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
+  ;; has no deterministic indentation.
+  (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
 
   (let ((file (buffer-file-name)))
     (when file
