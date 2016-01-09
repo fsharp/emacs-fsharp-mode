@@ -2,7 +2,7 @@
 
 base_d = $(abspath .)
 test_d = $(abspath test)
-tmp_d  = $(abspath tmp)
+tmp_d  = /tmp/fsharp-mode
 bin_d  = $(abspath bin)
 
 # Elisp files required for tests.
