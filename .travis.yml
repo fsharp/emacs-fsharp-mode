@@ -4,11 +4,13 @@ matrix:
   fast_finish: true
 
 before_install:
-  - sudo add-apt-repository -y ppa:cassou/emacs
-  - sudo apt-get update -qq
+  - sudo add-apt-repository -y ppa:ubuntu-elisp/ppa
+  - sudo apt-get -qq update
 
 install:
-  - sudo apt-get install -yq emacs24 emacs24-el emacs24-common-non-dfsg
+  - sudo apt-get -qq -f install
+  - sudo apt-get -qq install emacs-snapshot
+  - sudo apt-get -qq install emacs-snapshot-el
 
 script:
   - make test-all
