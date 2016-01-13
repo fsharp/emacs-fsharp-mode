@@ -104,7 +104,11 @@ check-compile : packages $(obj_files)
 	HOME=$(tmp_d) ;\
 	$(emacs) -batch --eval "(package-initialize)"\
           --eval "(add-to-list 'load-path \"$(base_d)\")" \
-	  --eval '(setq byte-compile-error-on-warn t)' \
+          --eval '(setq byte-compile-error-on-warn t)'    \
+          --eval "(eval-after-load \"bytecomp\"           \
+                    '(add-to-list                         \
+                        'byte-compile-not-obsolete-vars   \
+                        'find-tag-marker-ring))"          \
           -f batch-byte-compile $<
 
 run : $(ac_exe) packages
