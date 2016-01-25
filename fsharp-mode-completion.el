@@ -382,10 +382,17 @@ For indirect buffers return the truename of the base buffer."
           fsharp-ac-current-candidate)))
     (funcall fsharp-company-callback (fsharp-company-filter company-prefix mapped-completion))))
 
+(defun completion-char-p (c)
+  "True if the character before the point is a word char or ."
+  (or (= c ?.)
+      (= ?w (char-syntax c))))
+
 (defun fsharp-ac-get-prefix ()
-  (if (char-equal (char-before) ?\s)
-      nil
-    (company-grab-word)))
+  (message (fsharp-ac--residue))
+  (if (completion-char-p (char-before))
+      (company-grab-word)
+    ;; returning nil here causes company mode to not fetch completions
+    nil))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
