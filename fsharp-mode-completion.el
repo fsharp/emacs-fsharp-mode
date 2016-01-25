@@ -388,9 +388,8 @@ For indirect buffers return the truename of the base buffer."
       (= ?w (char-syntax c))))
 
 (defun fsharp-ac-get-prefix ()
-  (message (fsharp-ac--residue))
   (if (completion-char-p (char-before))
-      (company-grab-word)
+      (buffer-substring-no-properties (fsharp-ac--residue) (point))
     ;; returning nil here causes company mode to not fetch completions
     nil))
 
