@@ -1,3 +1,8 @@
+## 1.7.3 (2016-01-26)
+
+Bugfixes:
+  - Update to FsAutoComplete 0.27.1, fixes Windows VS2015-only support.
+
 ## 1.7.2 (2016-01-08)
 
 Bugfixes:
