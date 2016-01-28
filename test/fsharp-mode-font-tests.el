@@ -62,6 +62,10 @@ FILE is interpreted as relative to this source directory."
 
 (ert-deftest fsharp-mode-face-test-snippets ()
   (should (fsharp-font-lock-test "«k:let» «v:x» = is a keyword"))
-  (should (fsharp-font-lock-test "«k:open» «t:FSharp.Charting»")))
+  (should (fsharp-font-lock-test "«k:open» «t:FSharp.Charting»"))
+  (should (fsharp-font-lock-test "«k:let» (*) «v:x» «v:y» = x + y «m:// »«x:*)»"))
+  (should (fsharp-font-lock-test "«k:let» ( * ) «v:x» «v:y» = x + y «m:// »«x:*)»"))
+  (should (fsharp-font-lock-test "«k:let» ( *!=> ) x y = x + y «m:// »«x:*)»"))
+  )
 
 ;;; fsharp-mode-font-tests.el ends here
