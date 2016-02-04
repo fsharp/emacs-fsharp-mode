@@ -73,13 +73,8 @@
      (search-forward "X.func")
      (delete-char -3)
      (fsharp-ac-parse-current-buffer t)
-     ;; For some reason calling fsharp-ac/complete-at-point doesn't
-     ;; work in the test so we shortcut it here, don't know why
-     (let ((fsharp-ac-blocking-timeout 5))
-       (fsharp-ac-candidate))
+     (company-complete)
      (wait-for-condition (lambda () (not (null fsharp-ac-current-candidate))))
-     ;; Use first candidate
-     (ac-complete)
      (beginning-of-line)
      (should (search-forward "X.func")))))
 

@@ -84,9 +84,6 @@
 
   (define-key fsharp-mode-map "\C-m"      'fsharp-newline-and-indent)
   (define-key fsharp-mode-map "\C-c:"     'fsharp-guess-indent-offset)
-  (define-key fsharp-mode-map [delete]    'fsharp-electric-delete)
-  (define-key fsharp-mode-map [backspace] 'fsharp-electric-backspace)
-  (define-key fsharp-mode-map (kbd ".") 'fsharp-ac/electric-dot)
 
   (define-key fsharp-mode-map (kbd "C-c <up>") 'fsharp-goto-block-up)
 
@@ -194,6 +191,7 @@
   (require 'fsharp-doc)
   (require 'fsharp-mode-completion)
 
+  (require 'company)
 
   (fsharp-mode-indent-smie-setup)
 
@@ -214,11 +212,13 @@
           underline-minimum-offset
           compile-command
           syntax-propertize-function
-
-          ac-sources
-          ac-auto-start
-          ac-use-comphist
-          ac-auto-show-menu
+          company-backends
+          company-auto-complete
+          company-auto-complete-chars
+          company-idle-delay
+          company-minimum-prefix-length
+          company-require-match
+          company-tooltip-align-annotations
           popup-tip-max-width
           fsharp-ac-last-parsed-ticks
           fsharp-ac-errors))
@@ -243,13 +243,21 @@
         add-log-current-defun-function 'fsharp-current-defun
         fsharp-last-noncomment-pos     nil
         fsharp-last-comment-start      (make-marker)
-        fsharp-last-comment-end        (make-marker)
-
-        )
+        fsharp-last-comment-end        (make-marker))
 
   ; Syntax highlighting
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
+  ; Some reasonable defaults for company mode
+  (setq company-backends (list 'fsharp-ac/company-backend))
+  (setq company-auto-complete 't)
+  (setq company-auto-complete-chars ".")
+  (setq company-idle-delay 0.5)
+  (setq company-minimum-prefix-length 0)
+  (setq company-require-match 'nil)
+  (setq company-tooltip-align-annotations 't)
+  
+
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
   (add-hook 'next-error-hook 'fsharp-ac/show-error-at-point nil t)
@@ -258,6 +266,7 @@
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
+  (when (boundp 'company-quickhelp-mode) (company-quickhelp-mode 1))
 
   (let ((file (buffer-file-name)))
     (when file
@@ -274,12 +283,7 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (auto-complete-mode 1)
-    (setq ac-auto-start nil
-          ac-use-comphist nil)
-    (when (and (display-graphic-p)
-               (featurep 'pos-tip))
-      (setq popup-tip-max-width 240))))
+    (company-mode 1)))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:

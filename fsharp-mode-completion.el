@@ -26,7 +26,7 @@
 (with-no-warnings (require 'cl))
 (require 's)
 (require 'dash)
-(require 'auto-complete)
+(require 'company)
 (require 'json)
 (require 'etags)
 (require 'fsharp-mode-util)
@@ -93,6 +93,9 @@ If set to nil, display in a help buffer instead.")
   "BUFFER's tick counter, when the file was parsed.")
 (defvar fsharp-ac--last-parsed-buffer nil
   "Last parsed BUFFER, so that we reparse if we switch buffers.")
+
+(defvar-local company-prefix nil)
+(defvar-local fsharp-company-callback nil)
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
@@ -308,7 +311,6 @@ For indirect buffers return the truename of the base buffer."
           (set-process-query-on-exit-flag proc nil)
           (with-current-buffer (process-buffer proc)
             (delete-region (point-min) (point-max)))
-          (add-to-list 'ac-modes 'fsharp-mode)
           proc)
       (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
       nil)))
@@ -320,16 +322,6 @@ For indirect buffers return the truename of the base buffer."
         (run-with-idle-timer fsharp-ac-idle-timeout
                              t
                              'fsharp-ac--parse-current-file)))
-
-
-(defvar fsharp-ac-source
-  '((candidates . fsharp-ac-candidate)
-    (prefix . fsharp-ac--residue)
-    (requires . 0)
-    (document . fsharp-ac-document)
-    ;(action . fsharp-ac-action)
-    (cache) ; this prevents multiple re-calls, critical
-    ))
 
 (defun fsharp-ac-document (item)
   (let* ((ticks (s-match "^``\\(.*\\)``$" item))
@@ -343,29 +335,71 @@ For indirect buffers return the truename of the base buffer."
                (accept-process-output fsharp-ac-completion-process 0 100))
              (gethash key fsharp-ac-current-helptext
                       "Loading documentation..."))))
-      (pos-tip-fill-string help popup-tip-max-width))))
+             help)))
 
-(defun fsharp-ac-candidate ()
+(defun fsharp-ac-make-completion-request ()
   (interactive)
-  (case fsharp-ac-status
-    (idle
-     (setq fsharp-ac-status 'wait)
-     (setq fsharp-ac-current-candidate nil)
-     (clrhash fsharp-ac-current-helptext)
+  (setq fsharp-ac-status 'wait)
+  (setq fsharp-ac-current-candidate nil)
+  (clrhash fsharp-ac-current-helptext)
+  (fsharp-ac-parse-current-buffer)
+  (fsharp-ac-send-pos-request
+   "completion"
+   (fsharp-ac--buffer-truename)
+   (line-number-at-pos)
+   (+ 1 (current-column))))
 
-     (fsharp-ac-parse-current-buffer)
-     (fsharp-ac-send-pos-request
-      "completion"
-      (fsharp-ac--buffer-truename)
-      (line-number-at-pos)
-      (+ 1 (current-column))))
+(require 'cl-lib)
 
-    (wait
-     fsharp-ac-current-candidate)
+(defun fsharp-company-filter (prefix candidates)
+  (if prefix
+    (cl-loop for candidate in candidates
+             when (string-prefix-p prefix candidate 't)
+             collect candidate)))
 
-    (acknowledged
-     (setq fsharp-ac-status 'idle)
-     fsharp-ac-current-candidate)))
+(defun fsharp-company-candidates (callback)
+  (when (eq company-prefix "")
+    ;; discard any pending requests as we
+    ;; just pressed '.' or are at the start of a new line
+    (setq fsharp-ac-status 'idle))
+
+  (when (and (fsharp-ac-can-make-request 't)
+             (eq fsharp-ac-status 'idle))
+    (setq fsharp-company-callback callback)
+    (fsharp-ac-make-completion-request)))
+
+(defun fsharp-ac-add-annotation-prop (s candidate)
+  (propertize s 'annotation (gethash "GlyphChar" candidate)))
+
+(defun fsharp-ac-completion-done ()
+  (let ((mapped-completion
+    (-map (lambda (candidate)
+            (let ((s (gethash "Name" candidate)))
+              (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
+                (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
+          fsharp-ac-current-candidate)))
+    (funcall fsharp-company-callback (fsharp-company-filter company-prefix mapped-completion))))
+
+(defun completion-char-p (c)
+  "True if the character before the point is a word char or ."
+  (or (= c ?.)
+      (= ?w (char-syntax c))))
+
+(defun fsharp-ac-get-prefix ()
+  (if (completion-char-p (char-before))
+      (buffer-substring-no-properties (fsharp-ac--residue) (point))
+    ;; returning nil here causes company mode to not fetch completions
+    nil))
+
+(defun fsharp-ac/company-backend (command &optional arg &rest ignored)
+    (interactive (list 'interactive))
+    (cl-case command
+        (interactive (company-begin-backend 'fsharp-ac/company-backend))
+        (prefix  (fsharp-ac-get-prefix))
+        (ignore-case 't)
+        (candidates (cons :async 'fsharp-company-candidates))
+        (annotation (get-text-property 0 'annotation arg))
+        (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
 
 (defconst fsharp-ac--ident
   (rx (one-or-more (not (any ".` \t\r\n"))))
@@ -451,8 +485,7 @@ The current buffer must be an F# file that exists on disk."
 
      (t
       (and (not (syntax-ppss-context (syntax-ppss)))
-           (eq fsharp-ac-status 'idle)
-           (not ac-completing))))))
+           (eq fsharp-ac-status 'idle))))))
 
 (defvar fsharp-ac-awaiting-tooltip nil)
 
@@ -499,51 +532,22 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (pop-tag-mark))
 
-(defun fsharp-ac--ac-start (&rest ac-start-args)
-  "Start completion, using only the F# completion source for intellisense."
-  (interactive)
-  (let ((ac-sources '(fsharp-ac-source))
-        (ac-auto-show-menu t))
-    (apply 'ac-start ac-start-args)))
-
-(defun fsharp-ac/electric-dot ()
-  (interactive)
-  (when ac-completing
-    (ac-complete))
-
-  (let ((residue (fsharp-ac--residue))
-        (pt (point)))
-    (when (or (not (eq ?. (char-before)))
-              (not ac-completing))
-      (self-insert-command 1))
-    (unless (eq pt residue)
-      (fsharp-ac/complete-at-point t))))
-
-
 (defun fsharp-ac/electric-backspace ()
   (interactive)
   (when (eq (char-before) ?.)
     (ac-stop))
   (delete-char -1))
 
-(define-key ac-completing-map
-  (kbd "<backspace>") 'fsharp-ac/electric-backspace)
-(define-key ac-completing-map
-  (kbd ".") 'self-insert-command)
-
 (defun fsharp-ac/complete-at-point (&optional quiet)
   (interactive)
   (when (and (fsharp-ac-can-make-request quiet)
              (eq fsharp-ac-status 'idle))
-    (fsharp-ac--ac-start)))
+    (company-complete)))
 
 (defun fsharp-ac--parse-current-file ()
   (when (and (eq major-mode 'fsharp-mode)
              (fsharp-ac-can-make-request t))
-    (fsharp-ac-parse-current-buffer))
-  ; Perform some emergency fixup if things got out of sync
-  (when (not ac-completing)
-    (setq fsharp-ac-status 'idle)))
+    (fsharp-ac-parse-current-buffer)))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
@@ -762,16 +766,9 @@ around to the start of the buffer."
     (setq msg (fsharp-ac--get-msg proc)))))
 
 (defun fsharp-ac-handle-completion (data)
-  (setq fsharp-ac-current-candidate
-        (-map (lambda (candidate)
-                (let ((s (gethash "Name" candidate)))
-                  (if (fsharp-ac--isNormalId s) s
-                    (s-append "``" (s-prepend "``" s)))))
-              data)
-        fsharp-ac-status 'acknowledged)
-  (fsharp-ac--ac-start :force-init t)
-  (ac-update)
-  (setq fsharp-ac-status 'idle))
+  (setq fsharp-ac-current-candidate data
+        fsharp-ac-status 'idle)
+  (fsharp-ac-completion-done))
 
 (defun fsharp-ac-handle-doctext (data)
   (puthash (gethash "Name" data)
