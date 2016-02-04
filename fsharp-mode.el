@@ -84,9 +84,6 @@
 
   (define-key fsharp-mode-map "\C-m"      'fsharp-newline-and-indent)
   (define-key fsharp-mode-map "\C-c:"     'fsharp-guess-indent-offset)
-  ;; (define-key fsharp-mode-map [delete]    'fsharp-electric-delete)
-  ;; (define-key fsharp-mode-map [backspace] 'fsharp-electric-backspace)
-  ;; (define-key fsharp-mode-map (kbd ".") 'fsharp-ac/electric-dot)
 
   (define-key fsharp-mode-map (kbd "C-c <up>") 'fsharp-goto-block-up)
 
@@ -222,10 +219,6 @@
           company-minimum-prefix-length
           company-require-match
           company-tooltip-align-annotations
-          ac-sources
-          ac-auto-start
-          ac-use-comphist
-          ac-auto-show-menu
           popup-tip-max-width
           fsharp-ac-last-parsed-ticks
           fsharp-ac-errors))
@@ -263,6 +256,7 @@
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
+  
 
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
@@ -272,6 +266,7 @@
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
+  (when (boundp 'company-quickhelp-mode) (company-quickhelp-mode 1))
 
   (let ((file (buffer-file-name)))
     (when file
@@ -288,11 +283,7 @@ Otherwise, treat as a stand-alone file."
   (when fsharp-ac-intellisense-enabled
     (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
         (fsharp-ac/load-file file))
-    (company-mode 1)
-
-    (when (and (display-graphic-p)
-               (featurep 'pos-tip))
-      (setq popup-tip-max-width 240))))
+    (company-mode 1)))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:

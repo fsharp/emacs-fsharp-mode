@@ -26,7 +26,6 @@
 (with-no-warnings (require 'cl))
 (require 's)
 (require 'dash)
-(require 'auto-complete)
 (require 'company)
 (require 'json)
 (require 'etags)
@@ -312,7 +311,6 @@ For indirect buffers return the truename of the base buffer."
           (set-process-query-on-exit-flag proc nil)
           (with-current-buffer (process-buffer proc)
             (delete-region (point-min) (point-max)))
-          (add-to-list 'ac-modes 'fsharp-mode)
           proc)
       (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
       nil)))
@@ -452,7 +450,6 @@ For indirect buffers return the truename of the base buffer."
   "Regexp for a dotted ident with a raw residue.")
 
 (defun fsharp-ac--residue ()
-  (interactive)
   (let ((result
          (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
            (- (point)
@@ -488,8 +485,7 @@ The current buffer must be an F# file that exists on disk."
 
      (t
       (and (not (syntax-ppss-context (syntax-ppss)))
-           (eq fsharp-ac-status 'idle)
-           (not ac-completing))))))
+           (eq fsharp-ac-status 'idle))))))
 
 (defvar fsharp-ac-awaiting-tooltip nil)
 
@@ -552,9 +548,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (when (and (eq major-mode 'fsharp-mode)
              (fsharp-ac-can-make-request t))
     (fsharp-ac-parse-current-buffer)))
-  ; Perform some emergency fixup if things got out of sync
-  ;; (when (not ac-completing)
-  ;;   (setq fsharp-ac-status 'idle)))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Errors and Overlays
