@@ -1,3 +1,9 @@
+## 1.7.4 (2016-02-05)
+
+Bugfixes:
+  - Update to FsAutoComplete 0.27.2, fixes project cracking for files
+    with spaces in the path.
+
 ## 1.7.3 (2016-01-26)
 
 Bugfixes:

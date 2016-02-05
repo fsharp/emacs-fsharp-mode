@@ -2,7 +2,7 @@
 
 base_d = $(abspath .)
 test_d = $(abspath test)
-tmp_d  = /tmp/fsharp-mode
+tmp_d  = $(abspath tmp)
 bin_d  = $(abspath bin)
 
 # Elisp files required for tests.
@@ -21,7 +21,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.27.1
+ac_version = 0.27.2
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
