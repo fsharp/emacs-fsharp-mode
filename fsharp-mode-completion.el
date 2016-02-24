@@ -233,8 +233,9 @@ For indirect buffers return the truename of the base buffer."
 
 (defun fsharp-ac-send-pos-request (cmd file line col)
   (log-psendstr fsharp-ac-completion-process
-                (format "%s \"%s\" %d %d %d\n" cmd file line col
-                        (* 1000 fsharp-ac-blocking-timeout))))
+                (format "%s \"%s\" %d %d %d %s\n" cmd file line col
+                        (* 1000 fsharp-ac-blocking-timeout)
+			(if (string= cmd "completion") "filter=StartsWith" ""))))
 
 (defun fsharp-ac--process-live-p ()
   "Check whether the background process is live."
