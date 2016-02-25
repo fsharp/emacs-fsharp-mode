@@ -94,7 +94,6 @@ If set to nil, display in a help buffer instead.")
 (defvar fsharp-ac--last-parsed-buffer nil
   "Last parsed BUFFER, so that we reparse if we switch buffers.")
 
-(defvar-local company-prefix nil)
 (defvar-local fsharp-company-callback nil)
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
