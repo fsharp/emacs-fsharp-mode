@@ -94,7 +94,6 @@ If set to nil, display in a help buffer instead.")
 (defvar fsharp-ac--last-parsed-buffer nil
   "Last parsed BUFFER, so that we reparse if we switch buffers.")
 
-(defvar-local company-prefix nil)
 (defvar-local fsharp-company-callback nil)
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
@@ -233,8 +232,9 @@ For indirect buffers return the truename of the base buffer."
 
 (defun fsharp-ac-send-pos-request (cmd file line col)
   (log-psendstr fsharp-ac-completion-process
-                (format "%s \"%s\" %d %d %d\n" cmd file line col
-                        (* 1000 fsharp-ac-blocking-timeout))))
+                (format "%s \"%s\" %d %d %d %s\n" cmd file line col
+                        (* 1000 fsharp-ac-blocking-timeout)
+			(if (string= cmd "completion") "filter=StartsWith" ""))))
 
 (defun fsharp-ac--process-live-p ()
   "Check whether the background process is live."
@@ -351,12 +351,6 @@ For indirect buffers return the truename of the base buffer."
 
 (require 'cl-lib)
 
-(defun fsharp-company-filter (prefix candidates)
-  (if prefix
-    (cl-loop for candidate in candidates
-             when (string-prefix-p prefix candidate 't)
-             collect candidate)))
-
 (defun fsharp-company-candidates (callback)
   (when (eq company-prefix "")
     ;; discard any pending requests as we
@@ -372,13 +366,12 @@ For indirect buffers return the truename of the base buffer."
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 
 (defun fsharp-ac-completion-done ()
-  (let ((mapped-completion
-    (-map (lambda (candidate)
-            (let ((s (gethash "Name" candidate)))
-              (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
-                (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
-          fsharp-ac-current-candidate)))
-    (funcall fsharp-company-callback (fsharp-company-filter company-prefix mapped-completion))))
+  (->> (-map (lambda (candidate)
+		    (let ((s (gethash "Name" candidate)))
+		      (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
+			(s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
+		fsharp-ac-current-candidate)
+       (funcall fsharp-company-callback)))
 
 (defun completion-char-p (c)
   "True if the character before the point is a word char or ."
