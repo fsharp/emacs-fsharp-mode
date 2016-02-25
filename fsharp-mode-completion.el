@@ -351,12 +351,6 @@ For indirect buffers return the truename of the base buffer."
 
 (require 'cl-lib)
 
-(defun fsharp-company-filter (prefix candidates)
-  (if prefix
-    (cl-loop for candidate in candidates
-             when (string-prefix-p prefix candidate 't)
-             collect candidate)))
-
 (defun fsharp-company-candidates (callback)
   (when (eq company-prefix "")
     ;; discard any pending requests as we
@@ -372,13 +366,12 @@ For indirect buffers return the truename of the base buffer."
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 
 (defun fsharp-ac-completion-done ()
-  (let ((mapped-completion
-    (-map (lambda (candidate)
-            (let ((s (gethash "Name" candidate)))
-              (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
-                (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
-          fsharp-ac-current-candidate)))
-    (funcall fsharp-company-callback (fsharp-company-filter company-prefix mapped-completion))))
+  (->> (-map (lambda (candidate)
+		    (let ((s (gethash "Name" candidate)))
+		      (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
+			(s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
+		fsharp-ac-current-candidate)
+       (funcall fsharp-company-callback)))
 
 (defun completion-char-p (c)
   "True if the character before the point is a word char or ."
