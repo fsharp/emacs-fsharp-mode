@@ -95,7 +95,7 @@
 (defvar fsharp-var-pre-form
   (lambda ()
     (save-excursion
-      (re-search-forward "\\(:\\s-*\\w[^)]*\\)?=")
+      (re-search-forward "\\(:\\s-*\\w[^)]*\\)?=" nil t)
       (match-beginning 0))))
 
 (defvar fsharp-fun-pre-form
