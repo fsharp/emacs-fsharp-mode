@@ -6,11 +6,11 @@
     (while (not (funcall fun))
       (sleep-for 1))))
 
-(defun fsharp-mode-wrapper (bufs body)
+(defun fsharp-mode-wrapper (bufs fun)
   "Load fsharp-mode and make sure any completion process is killed after test"
   (unwind-protect
       ; Run the actual test
-      (funcall body)
+      (funcall fun)
 
     ; Clean up below
 
