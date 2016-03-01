@@ -1,16 +1,17 @@
 (require 'ert)
 
-(defun wait-for-condition (fun)
-  "Wait up to 5 seconds for (fun) to return non-nil"
-  (with-timeout (10)
-    (while (not (funcall fun))
+(defmacro wait-for-condition (&rest body)
+  "Wait up to 10 seconds for BODY to evaluate non-nil"
+  `(with-timeout (10)
+    (while (not (progn
+		  ,@body))
       (sleep-for 1))))
 
-(defun fsharp-mode-wrapper (bufs body)
+(defun fsharp-mode-wrapper (bufs fun)
   "Load fsharp-mode and make sure any completion process is killed after test"
   (unwind-protect
       ; Run the actual test
-      (funcall body)
+      (funcall fun)
 
     ; Clean up below
 
@@ -32,10 +33,10 @@
 
     ; Stop the fsautocomplete process and close its buffer
     (fsharp-ac/stop-process)
-    (wait-for-condition (lambda () (not (fsharp-ac--process-live-p))))
+    (wait-for-condition (not (fsharp-ac--process-live-p)))
     (when (fsharp-ac--process-live-p)
       (kill-process fsharp-ac-completion-process)
-      (wait-for-condition (lambda () (not (fsharp-ac--process-live-p)))))
+      (wait-for-condition (not (fsharp-ac--process-live-p))))
     (when (get-buffer "*fsharp-complete*")
       (kill-buffer "*fsharp-complete*"))
 
@@ -44,13 +45,13 @@
       (when inf-fsharp-process
         (when (process-live-p inf-fsharp-process)
           (kill-process inf-fsharp-process)
-          (wait-for-condition (lambda () (not (process-live-p
-                                          inf-fsharp-process)))))))))
+          (wait-for-condition (not (process-live-p
+				    inf-fsharp-process))))))))
 
 (defun find-file-and-wait-for-project-load (file)
   (find-file file)
-  (wait-for-condition (lambda () (and (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files)
-                                 (/= 0 (hash-table-count fsharp-ac--project-data))))))
+  (wait-for-condition (and (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files)
+			   (/= 0 (hash-table-count fsharp-ac--project-data)))))
 
 (ert-deftest check-project-files ()
   "Check the program files are set correctly"
@@ -72,9 +73,8 @@
      (find-file-and-wait-for-project-load "test/Test1/Program.fs")
      (search-forward "X.func")
      (delete-char -3)
-     (fsharp-ac-parse-current-buffer t)
-     (company-complete)
-     (wait-for-condition (lambda () (not (null fsharp-ac-current-candidate))))
+     (let ((company-async-timeout 5)) (company-complete))
+     (wait-for-condition (not (null fsharp-ac-current-candidate)))
      (beginning-of-line)
      (should (search-forward "X.func")))))
 
@@ -87,7 +87,7 @@
      (backward-char 2)
      (fsharp-ac-parse-current-buffer t)
      (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (lambda () (/= (point) 88)))
+     (wait-for-condition (/= (point) 88))
      (should= (point) 18)
      (fsharp-ac/pop-gotodefn-stack)
      (should= (point) 88)
@@ -97,12 +97,12 @@
      (backward-char 7)
      (fsharp-ac/gotodefn-at-point)
      (wait-for-condition
-      (lambda () (progn
-              ;; Command loop doesn't get executed so the buffer change
-              ;; in the filter function doesn't take effect. Prod it manually.
-              (set-buffer (window-buffer (selected-window)))
-              (and (/= (point) 64)
-                   (equal (buffer-name) "FileTwo.fs")))))
+      (progn
+	;; Command loop doesn't get executed so the buffer change
+	;; in the filter function doesn't take effect. Prod it manually.
+	(set-buffer (window-buffer (selected-window)))
+	(and (/= (point) 64)
+	     (equal (buffer-name) "FileTwo.fs"))))
      (should= (buffer-name) "FileTwo.fs")
      (should= (point) 97)
      (fsharp-ac/pop-gotodefn-stack)
@@ -121,7 +121,7 @@
          (backward-char 2)
          (fsharp-ac-parse-current-buffer t)
          (fsharp-ac/show-tooltip-at-point)
-         (wait-for-condition (lambda () tiptext))
+         (wait-for-condition tiptext)
          (should-match "val func : x:int -> int\n\nFull name: Program.X.func"
                        tiptext))))))
 
@@ -134,7 +134,7 @@
      (delete-char -1)
      (backward-char)
      (fsharp-ac-parse-current-buffer t)
-     (wait-for-condition (lambda () (> (length (overlays-at (point))) 0)))
+     (wait-for-condition (> (length (overlays-at (point))) 0))
      (should= (overlay-get (car (overlays-at (point))) 'face)
               'fsharp-error-face)
      (should= (overlay-get (car (overlays-at (point))) 'help-echo)
@@ -151,7 +151,7 @@
          (fsharp-ac-parse-current-buffer t)
          (search-forward "XA.fun")
          (fsharp-ac/show-tooltip-at-point)
-         (wait-for-condition (lambda () tiptext))
+         (wait-for-condition tiptext)
          (should-match "val funky : x:int -> int\n\nFull name: Script.XA.funky"
                        tiptext))))))
 
@@ -161,7 +161,7 @@
    (lambda ()
      (find-file-and-wait-for-project-load "test/Test1/Script.fsx")
      (search-forward "funky")
-     (wait-for-condition (lambda () (> (length (overlays-at (point))) 0)))
+     (wait-for-condition (> (length (overlays-at (point))) 0))
      (let ((ovs (overlays-in (point-min) (point-max))))
        (mapc (lambda (ov) (should= (overlay-get ov 'face) 'fsharp-usage-face)) ovs)))))
 
@@ -170,13 +170,13 @@
   (fsharp-mode-wrapper '("tmp.fsx")
    (lambda ()
      (fsharp-run-process-if-needed inferior-fsharp-program)
-     (wait-for-condition (lambda () (get-buffer inferior-fsharp-buffer-name)))
+     (wait-for-condition (get-buffer inferior-fsharp-buffer-name))
      (find-file "tmp.fsx")
      (goto-char (point-max))
      (insert "let myvariable = 123 + 456")
      (fsharp-eval-phrase)
      (switch-to-buffer inferior-fsharp-buffer-name)
-     (wait-for-condition (lambda () (search-backward "579" nil t)))
+     (wait-for-condition (search-backward "579" nil t))
      (should-match "579" (buffer-substring-no-properties (point-min) (point-max))))))
 
 (ert-deftest check-multi-project ()
@@ -190,12 +190,12 @@
      (search-forward "   y")
      (fsharp-ac-parse-current-buffer t)
      (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (lambda () (/= (point) 159)))
+     (wait-for-condition (/= (point) 159))
      (should= (point) 137)
 
      (switch-to-buffer "Main.fs")
      (search-forward "\" val2")
      (fsharp-ac-parse-current-buffer t)
      (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (lambda () (/= (point) 113)))
+     (wait-for-condition (/= (point) 113))
      (should= (point) 24))))

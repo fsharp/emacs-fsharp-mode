@@ -157,9 +157,8 @@ since the last request."
 (defun fsharp-ac--buffer-truename (&optional buf)
   "Get the truename of BUF, or the current buffer by default.
 For indirect buffers return the truename of the base buffer."
-  (if (buffer-base-buffer buf)
-      (file-truename (buffer-file-name (buffer-base-buffer buf)))
-    (file-truename (buffer-file-name buf))))
+  (-some-> (buffer-file-name (or (buffer-base-buffer buf) buf))
+	   (file-truename)))
 
 (defun fsharp-ac/load-project (file)
   "Load the specified fsproj FILE as a project."
