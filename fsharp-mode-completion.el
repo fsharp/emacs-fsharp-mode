@@ -295,9 +295,9 @@ For indirect buffers return the truename of the base buffer."
                   (cons "MONO_THREADS_PER_CPU=8" process-environment)
                 process-environment))))
          (proc (let (process-connection-type)
-                 (apply 'start-process
+                 (apply 'start-file-process
                         fsharp-ac--completion-procname
-                        fsharp-ac--completion-bufname
+                        (get-buffer-create fsharp-ac--completion-bufname)
                         fsharp-ac-complete-command))))
     (sleep-for 0.1)
     (if (process-live-p proc)
