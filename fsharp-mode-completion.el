@@ -219,7 +219,7 @@ For indirect buffers return the truename of the base buffer."
                        (downcase (file-name-extension file)))))
 
 (defun fsharp-ac--in-project-p (file)
-  (gethash file fsharp-ac--project-files))
+  (gethash (fsharp-ac--localname file) fsharp-ac--project-files))
 
 (defun fsharp-ac--reset ()
   (when fsharp-ac-idle-timer
