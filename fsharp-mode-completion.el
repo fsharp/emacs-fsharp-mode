@@ -130,7 +130,7 @@ since the last request."
             force-sync)
     (setq fsharp-ac--last-parsed-buffer (current-buffer))
     (save-restriction
-      (let ((file (fsharp-ac--buffer-truename)))
+      (let ((file (fsharp-ac--localname (fsharp-ac--buffer-truename))))
         (widen)
         (fsharp-ac--log (format "Parsing \"%s\"\n" file))
         (process-send-string
