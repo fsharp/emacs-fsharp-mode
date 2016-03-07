@@ -356,10 +356,10 @@ For indirect buffers return the truename of the base buffer."
           (setq fsharp-ac-last-parsed-line line)
           (fsharp-ac-parse-current-buffer)))
     (fsharp-ac-send-pos-request
-     "completion"
-     (fsharp-ac--buffer-truename)
-     line
-     (+ 1 (current-column)))))
+   "completion"
+   (fsharp-ac--localname (fsharp-ac--buffer-truename))
+   (line-number-at-pos)
+   (+ 1 (current-column)))))
 
 (require 'cl-lib)
 
