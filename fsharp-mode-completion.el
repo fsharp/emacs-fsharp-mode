@@ -845,7 +845,8 @@ display a short summary in the minibuffer."
 
 (defun fsharp-ac-handle-project (data)
   (let* ((project (gethash "Project" data))
-         (files (-map 'file-truename (gethash "Files" data)))
+         (files (--map (fsharp-ac--localname (file-truename (fsharp-ac--tramp-file it)))
+                       (gethash "Files" data)))
          (oldprojdata (gethash project fsharp-ac--project-data)))
 
     ;; Use the canonicalised filenames
