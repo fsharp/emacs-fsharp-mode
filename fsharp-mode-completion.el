@@ -505,7 +505,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request quiet)
      (fsharp-ac-send-pos-request "tooltip"
-                                 (fsharp-ac--buffer-truename)
+                                 (fsharp-ac--localname
+				  (fsharp-ac--buffer-truename))
                                  (line-number-at-pos)
                                  (+ 1 (current-column)))))
 
