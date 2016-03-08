@@ -150,6 +150,14 @@ since the last request."
 (defun fsharp-ac--isNormalId (s)
   (--all? it (mapcar 'fsharp-ac--isIdChar s)))
 
+(defun fsharp-ac--hostname (file)
+  "Return host of a Tramp filename.
+
+If FILENAME is not a Tramp filename return nil"
+  (when (tramp-tramp-file-p file)
+    (with-parsed-tramp-file-name file nil
+      host)))
+
 (defun fsharp-ac--localname (file)
   "Return localname of a Tramp filename.
 
