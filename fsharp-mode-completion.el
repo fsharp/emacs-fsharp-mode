@@ -525,7 +525,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request)
     (fsharp-ac-send-pos-request "finddecl"
-                                (fsharp-ac--buffer-truename)
+                                (fsharp-ac--localname
+				 (fsharp-ac--buffer-truename))
                                 (line-number-at-pos)
                                 (+ 1 (current-column)))))
 
@@ -771,7 +772,7 @@ around to the start of the buffer."
            fsharp-ac-current-helptext))
 
 (defun fsharp-ac-visit-definition (data)
-  (let* ((file (gethash "File" data))
+  (let* ((file (fsharp-ac--tramp-file (gethash "File" data)))
          (line (gethash "Line" data))
          (col (gethash "Column" data)))
     (ring-insert find-tag-marker-ring (point-marker))
