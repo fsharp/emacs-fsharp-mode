@@ -356,10 +356,12 @@ For indirect buffers return the truename of the base buffer."
     ;; just pressed '.' or are at the start of a new line
     (setq fsharp-ac-status 'idle))
 
-  (when (and (fsharp-ac-can-make-request 't)
+  (if (and (fsharp-ac-can-make-request 't)
              (eq fsharp-ac-status 'idle))
-    (setq fsharp-company-callback callback)
-    (fsharp-ac-make-completion-request)))
+      (progn
+	(setq fsharp-company-callback callback)
+	(fsharp-ac-make-completion-request))
+    (funcall callback nil)))
 
 (defun fsharp-ac-add-annotation-prop (s candidate)
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
