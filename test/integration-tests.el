@@ -78,6 +78,16 @@
      (beginning-of-line)
      (should (search-forward "X.func")))))
 
+(ert-deftest check-completion-no-project ()
+  "Check completion-at-point if File is not part of a Project."
+  (fsharp-mode-wrapper '("NoProject.fs")
+   (lambda ()
+     (find-file-and-wait-for-project-load "test/Test1/NoProject.fs")
+     (search-forward "open System.Collectio")
+     (company-complete)
+     (beginning-of-line)
+     (should (re-search-forward "open System\\.Collection$" nil t)))))
+
 (ert-deftest check-gotodefn ()
   "Check jump to (and back from) definition works"
   (fsharp-mode-wrapper '("Program.fs")
