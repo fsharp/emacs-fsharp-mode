@@ -74,7 +74,6 @@
      (search-forward "X.func")
      (delete-char -3)
      (let ((company-async-timeout 5)) (company-complete))
-     (wait-for-condition (not (null fsharp-ac-current-candidate)))
      (beginning-of-line)
      (should (search-forward "X.func")))))
 
