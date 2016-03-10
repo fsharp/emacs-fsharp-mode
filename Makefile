@@ -96,7 +96,7 @@ byte-compile : packages
 check-declares : packages
 	HOME=$(tmp_d) ;\
 	$(emacs) -batch --eval "(package-initialize)"\
-          --eval '(when (check-declare-directory "$(base_d)") (kill-emacs 1)))'
+          --eval "(dolist (file '($(foreach var,$(src_files),\"$(var)\"))) (when (check-declare-file file) (kill-emacs 1)))"
 
 check-compile : packages $(obj_files)
 
