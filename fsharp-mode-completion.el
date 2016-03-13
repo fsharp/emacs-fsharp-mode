@@ -475,7 +475,7 @@ For indirect buffers return the truename of the base buffer."
 (defun fsharp-ac-can-make-request (&optional quiet)
   "Test whether it is possible to make a request with the compiler binding.
 The current buffer must be an F# file that exists on disk."
-  (let ((file (fsharp-ac--buffer-truename)))
+  (let ((file (fsharp-ac--localname (fsharp-ac--buffer-truename))))
     (cond
      ((null file)
       (unless quiet
