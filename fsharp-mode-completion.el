@@ -265,7 +265,8 @@ the process is not valid (i.e. different Tramp host for this file)."
     (log-psendstr fsharp-ac-completion-process "quit\n")
     (sleep-for 1)
     (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process)))
+      (kill-process fsharp-ac-completion-process)
+      (kill-buffer fsharp-ac--completion-bufname)))
   (fsharp-ac--reset))
 
 (defun fsharp-ac/start-process ()
@@ -274,7 +275,8 @@ the process is not valid (i.e. different Tramp host for this file)."
 
   (when fsharp-ac-intellisense-enabled
     (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process))
+      (kill-process fsharp-ac-completion-process)
+      (kill-buffer fsharp-ac--completion-bufname))
 
     (condition-case err
         (progn
