@@ -187,7 +187,7 @@ For indirect buffers return the truename of the base buffer."
 
   (when (fsharp-ac--valid-project-p file)
     (setq fsharp-ac-intellisense-enabled t)
-    (when (not (fsharp-ac--process-live-p))
+    (unless (fsharp-ac--process-live-p (fsharp-ac--hostname file))
       (fsharp-ac/start-process))
     ;; Load given project.
     (when (fsharp-ac--process-live-p)
@@ -202,11 +202,10 @@ For indirect buffers return the truename of the base buffer."
 
 (defun fsharp-ac/load-file (file)
   "Start the compiler binding for an individual F# script FILE."
-  (when (fsharp-ac--script-file-p file)
-    (if (file-exists-p file)
-        (when (not (fsharp-ac--process-live-p))
-          (fsharp-ac/start-process))
-      (add-hook 'after-save-hook 'fsharp-ac--load-after-save nil 'local))))
+  (when (and (fsharp-ac--script-file-p file) (file-exists-p file))
+    (unless (fsharp-ac--process-live-p (fsharp-ac--hostname file))
+      (fsharp-ac/start-process))
+    (add-hook 'after-save-hook 'fsharp-ac--load-after-save nil 'local)))
 
 (defun fsharp-ac--load-after-save ()
   (remove-hook 'fsharp-ac--load-after-save 'local)
