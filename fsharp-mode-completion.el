@@ -166,6 +166,17 @@ If FILENAME is not a Tramp filename return FILENAME"
       (with-parsed-tramp-file-name file nil
 	localname)
     file))
+
+(defun fsharp-ac--tramp-file (file)
+  "Return Tramp filename of FILE
+
+When completion process is not started on a remote locate return FILE"
+  (with-current-buffer (process-buffer fsharp-ac-completion-process)
+    (if (tramp-tramp-file-p default-directory)
+      (with-parsed-tramp-file-name default-directory nil
+	(tramp-make-tramp-file-name method user host file))
+      file)))
+
 ;;; ----------------------------------------------------------------------------
 ;;; File Parsing and loading
 
