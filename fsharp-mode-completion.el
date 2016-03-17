@@ -604,18 +604,18 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 (defun fsharp-ac--parse-symbol-uses (data)
   "Extract the symbol uses from the given process response DATA."
   (save-match-data
-    (let (parsed)
-      (dolist (use data parsed)
-        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" use)
-                                                 (gethash "StartColumn" use)))
-              (end (fsharp-ac-line-column-to-pos (gethash "EndLine" use)
-                                                 (gethash "EndColumn" use)))
-              (face 'fsharp-usage-face)
-              (file (gethash "FileName" use)))
-          (add-to-list 'parsed (make-fsharp-symbol-use :start beg
-                                                       :end   end
-                                                       :face  face
-                                                       :file  file)))))))
+    (--map
+     (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
+					      (gethash "StartColumn" it)))
+	   (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
+					      (gethash "EndColumn" it)))
+	   (face 'fsharp-usage-face)
+	   (file (fsharp-ac--tramp-file (gethash "FileName" it))))
+       (make-fsharp-symbol-use :start beg
+			       :end   end
+			       :face  face
+			       :file  file))
+     data)))
 
 (defun fsharp-ac/show-error-overlay (err)
   "Draw overlays in the current buffer to represent fsharp-error ERR."
@@ -638,10 +638,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
          (end  (fsharp-symbol-use-end use))
          (face (fsharp-symbol-use-face use))
          (file (fsharp-symbol-use-file use)))
-    (unless (or (not (string= (fsharp-ac--buffer-truename)
-                              (file-truename file)))
-      (let ((ov (make-overlay beg end)))
-        (overlay-put ov 'face face))))))
+    (when (string= (fsharp-ac--buffer-truename) (file-truename file))
+      (-> (make-overlay beg end)
+          (overlay-put 'face face)))))
 
 (defun fsharp-ac-clear-errors ()
   (interactive)
