@@ -107,9 +107,7 @@ If set to nil, display in a help buffer instead.")
 
 (defun fsharp-ac--log (str)
   (when fsharp-ac-debug
-    (unless (get-buffer fsharp-ac--log-buf)
-      (generate-new-buffer fsharp-ac--log-buf))
-    (with-current-buffer fsharp-ac--log-buf
+    (with-current-buffer (get-buffer-create fsharp-ac--log-buf)
       (let ((pt (point))
             (atend (eq (point-max) (point))))
         (goto-char (point-max))
@@ -760,27 +758,24 @@ around to the start of the buffer."
       (insert-before-markers (if (string-prefix-p "\ufeff" str)
                  (substring str 1)
                    str))))
-  (let ((msg (fsharp-ac--get-msg proc)))
-    (while msg
+  (let (msg)
+    (while (setq msg (fsharp-ac--get-msg proc))
       (let ((kind (gethash "Kind" msg))
             (data (gethash "Data" msg)))
         (fsharp-ac--log (format "Received '%s' message of length %d\n"
                                 kind
                                 (hash-table-size msg)))
-        (cond
-         ((s-equals? "error" kind) (fsharp-ac-handle-process-error data))
-         ((s-equals? "info" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
-         ((s-equals? "completion" kind) (fsharp-ac-handle-completion data))
-         ((s-equals? "helptext" kind) (fsharp-ac-handle-doctext data))
-         ((s-equals? "errors" kind) (fsharp-ac-handle-errors data))
-         ((s-equals? "project" kind) (fsharp-ac-handle-project data))
-         ((s-equals? "tooltip" kind) (fsharp-ac-handle-tooltip data))
-         ((s-equals? "finddecl" kind) (fsharp-ac-visit-definition data))
-         ((s-equals? "symboluse" kind) (fsharp-ac--handle-symboluse data))
-       (t
-        (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind))))
-
-    (setq msg (fsharp-ac--get-msg proc)))))
+        (pcase kind
+         ("error" (fsharp-ac-handle-process-error data))
+         ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
+         ("completion" (fsharp-ac-handle-completion data))
+         ("helptext" (fsharp-ac-handle-doctext data))
+         ("errors" (fsharp-ac-handle-errors data))
+         ("project" (fsharp-ac-handle-project data))
+         ("tooltip" (fsharp-ac-handle-tooltip data))
+         ("finddecl" (fsharp-ac-visit-definition data))
+         ("symboluse" (fsharp-ac--handle-symboluse data))
+	 (_ (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind)))))))
 
 (defun fsharp-ac-handle-completion (data)
   (setq fsharp-ac-current-candidate data
