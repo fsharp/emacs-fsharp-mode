@@ -81,7 +81,18 @@ If set to nil, display in a help buffer instead.")
 
 (defvar fsharp-ac-debug nil)
 (defvar fsharp-ac-status 'idle)
-(defvar fsharp-ac-completion-process nil)
+(defvar fsharp-ac-completion-process-alist nil)
+
+(defun fsharp-ac-completion-process (host)
+  "Return completion process on HOST."
+  (cdr (assoc host fsharp-ac-completion-process-alist)))
+
+(defun fsharp-ac-completion-process-add (host process)
+  (push (cons host process) fsharp-ac-completion-process-alist))
+
+(defun fsharp-ac-completion-process-del (host)
+  (delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist))
+
 (defvar fsharp-ac--project-data (make-hash-table :test 'equal)
   "Data returned by fsautocomplete for loaded projects.")
 (defvar fsharp-ac--project-files (make-hash-table :test 'equal)
@@ -99,8 +110,6 @@ If set to nil, display in a help buffer instead.")
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
-(defconst fsharp-ac--completion-bufname
-  (concat "*" fsharp-ac--completion-procname "*"))
 
 (defvar-local fsharp-ac-last-parsed-line -1
   "The line number that we last requested a parse for completions")
@@ -128,13 +137,13 @@ since the last request."
             force-sync)
     (setq fsharp-ac--last-parsed-buffer (current-buffer))
     (save-restriction
-      (let ((file (fsharp-ac--localname (fsharp-ac--buffer-truename))))
+      (let ((file (fsharp-ac--buffer-truename)))
         (widen)
         (fsharp-ac--log (format "Parsing \"%s\"\n" file))
         (process-send-string
-         fsharp-ac-completion-process
+         (fsharp-ac-completion-process (fsharp-ac--hostname file))
          (format "parse \"%s\" %s\n%s\n<<EOF>>\n"
-                 file
+                 (fsharp-ac--localname file)
                  (if force-sync " sync" "")
                  (buffer-substring-no-properties (point-min) (point-max)))))
       (setq fsharp-ac-last-parsed-ticks (buffer-chars-modified-tick)))))
@@ -168,12 +177,12 @@ If FILENAME is not a Tramp filename return FILENAME"
 (defun fsharp-ac--tramp-file (file)
   "Return Tramp filename of FILE
 
-When completion process is not started on a remote locate return FILE"
-  (with-current-buffer (process-buffer fsharp-ac-completion-process)
-    (if (tramp-tramp-file-p default-directory)
+When completion process is not started on a remote location return FILE.
+This function should always be evaluated in the process-buffer!"
+  (if (tramp-tramp-file-p default-directory)
       (with-parsed-tramp-file-name default-directory nil
 	(tramp-make-tramp-file-name method user host file))
-      file)))
+      file))
 
 ;;; ----------------------------------------------------------------------------
 ;;; File Parsing and loading
@@ -199,8 +208,8 @@ For indirect buffers return the truename of the base buffer."
     (unless (fsharp-ac--process-live-p (fsharp-ac--hostname file))
       (fsharp-ac/start-process))
     ;; Load given project.
-    (when (fsharp-ac--process-live-p)
-      (log-psendstr fsharp-ac-completion-process
+    (when (fsharp-ac--process-live-p (fsharp-ac--hostname file))
+      (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname file))
 		      (format "project \"%s\"%s\n"
 			      (fsharp-ac--localname (file-truename file))
 			      (if (and (numberp fsharp-ac-debug)
@@ -242,8 +251,8 @@ For indirect buffers return the truename of the base buffer."
     (cancel-timer fsharp-ac-idle-timer))
   (setq fsharp-ac-status 'idle
         fsharp-ac-idle-timer nil
-        fsharp-ac-completion-process nil
         fsharp-ac-current-candidate nil)
+  (fsharp-ac-completion-process-del (fsharp-ac--hostname default-directory))
   (-each (list fsharp-ac-current-helptext
                fsharp-ac--project-data
                fsharp-ac--project-files) 'clrhash)
@@ -253,43 +262,37 @@ For indirect buffers return the truename of the base buffer."
 ;;; Display Requests
 (defun fsharp-ac-send-pos-request (cmd file line col)
   (let ((linestr (replace-regexp-in-string "\"" "\\\""(buffer-substring-no-properties (line-beginning-position) (line-end-position)) t t)))
-    (log-psendstr fsharp-ac-completion-process
-                  (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd file linestr line col
+    (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname file))
+                  (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd (fsharp-ac--localname file) linestr line col
                           (* 1000 fsharp-ac-blocking-timeout)
                           (if (string= cmd "completion") "filter=StartsWith" "")))))
 
-(defun fsharp-ac--process-live-p (&optional file)
-  "Check whether the background process is live.
-Optional argument FILE is the name of F# file; Return nil if
-the process is not valid (i.e. different Tramp host for this file)."
-  (and fsharp-ac-completion-process
-       (process-live-p fsharp-ac-completion-process)
-       (or (not file) (equal (fsharp-ac--process-host) (fsharp-ac--hostname file)))))
+(defun fsharp-ac--process-live-p (host)
+  "Check whether the background process is live for Tramp HOST.
+If HOST is nil, check process on local system."
+  (process-live-p (fsharp-ac-completion-process host)))
 
 (defun fsharp-ac/stop-process ()
   (interactive)
-  (fsharp-ac-message-safely "Quitting fsharp completion process")
-  (when (fsharp-ac--process-live-p)
-    (log-psendstr fsharp-ac-completion-process "quit\n")
-    (sleep-for 1)
-    (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process)
-      (kill-buffer fsharp-ac--completion-bufname)))
+  (let ((host (fsharp-ac--hostname default-directory)))
+    (when (fsharp-ac--process-live-p host)
+      (fsharp-ac-message-safely "Quitting fsharp completion process")
+      (log-psendstr (fsharp-ac-completion-process host) "quit\n")
+      (sleep-for 1)
+      (when (fsharp-ac--process-live-p host)
+        (kill-process (fsharp-ac-completion-process host))
+        (kill-buffer  (process-buffer (fsharp-ac-completion-process host))))))
   (fsharp-ac--reset))
 
 (defun fsharp-ac/start-process ()
   "Launch the F# completion process in the background."
   (interactive)
-
   (when fsharp-ac-intellisense-enabled
-    (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process)
-      (kill-buffer fsharp-ac--completion-bufname))
-
+    (fsharp-ac/stop-process)
     (condition-case err
         (progn
           (fsharp-ac--reset)
-          (setq fsharp-ac-completion-process (fsharp-ac--configure-proc))
+          (fsharp-ac-completion-process-add (fsharp-ac--hostname default-directory) (fsharp-ac--configure-proc))
           (fsharp-ac--reset-timer))
       (error
        (setq fsharp-ac-intellisense-enabled nil)
@@ -328,7 +331,7 @@ the process is not valid (i.e. different Tramp host for this file)."
     (if (file-exists-p fsac)
 	(let ((proc (apply 'start-file-process
 			   fsharp-ac--completion-procname
-			   (get-buffer-create fsharp-ac--completion-bufname)
+			   (get-buffer-create (generate-new-buffer-name "*fsharp-complete*"))
 			   fsharp-ac-complete-command)))
 	  (sleep-for 0.1)
 	  (if (process-live-p proc)
@@ -488,14 +491,14 @@ the process is not valid (i.e. different Tramp host for this file)."
 (defun fsharp-ac-can-make-request (&optional quiet)
   "Test whether it is possible to make a request with the compiler binding.
 The current buffer must be an F# file that exists on disk."
-  (let ((file (fsharp-ac--localname (fsharp-ac--buffer-truename))))
+  (let ((file (fsharp-ac--buffer-truename)))
     (cond
      ((null file)
       (unless quiet
         (fsharp-ac-message-safely "Error: buffer not visiting a file."))
       nil)
 
-     ((not (fsharp-ac--process-live-p))
+     ((not (fsharp-ac--process-live-p (fsharp-ac--hostname file)))
       (unless quiet
         (fsharp-ac-message-safely "Error: background intellisense process not running."))
       nil)
@@ -526,8 +529,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request quiet)
      (fsharp-ac-send-pos-request "tooltip"
-                                 (fsharp-ac--localname
-				  (fsharp-ac--buffer-truename))
+                                 (fsharp-ac--buffer-truename)
                                  (line-number-at-pos)
                                  (+ 1 (current-column)))))
 
@@ -536,8 +538,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request)
     (fsharp-ac-send-pos-request "symboluse"
-                                (fsharp-ac--localname
-				 (fsharp-ac--buffer-truename))
+                                (fsharp-ac--buffer-truename)
                                 (line-number-at-pos)
                                 (+ 1 (current-column)))))
 
@@ -564,8 +565,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (company-complete)))
 
 (defun fsharp-ac--parse-current-file ()
-  (when (and (eq major-mode 'fsharp-mode)
-             (fsharp-ac-can-make-request t))
+  (when (and (eq major-mode 'fsharp-mode) (fsharp-ac-can-make-request t))
     (fsharp-ac-parse-current-buffer)))
 
 ;;; ----------------------------------------------------------------------------
@@ -797,12 +797,10 @@ around to the start of the buffer."
 
 (defun fsharp-ac-handle-errors (data)
   "Display error overlays and set buffer-local error variables for error navigation."
-  (when (eq major-mode 'fsharp-mode)
-    (unless (or (active-minibuffer-window) cursor-in-echo-area)
-      (fsharp-ac-clear-errors)
-      (let ((errs (fsharp-ac-parse-errors data)))
-        (setq fsharp-ac-errors errs)
-        (mapc 'fsharp-ac/show-error-overlay errs)))))
+  (when (and (eq major-mode 'fsharp-mode) (not (active-minibuffer-window)) (not cursor-in-echo-area))
+    (fsharp-ac-clear-errors)
+    (setq fsharp-ac-errors (fsharp-ac-parse-errors data))
+    (mapc 'fsharp-ac/show-error-overlay fsharp-ac-errors)))
 
 (defun fsharp-ac--format-tooltip-overload (overload)
   "Format a single overload"
@@ -878,7 +876,7 @@ display a short summary in the minibuffer."
         (remhash it fsharp-ac--project-files)))
 
     (puthash project data fsharp-ac--project-data)
-    (--map (puthash it project fsharp-ac--project-files) files)
+    (--each files (puthash it project fsharp-ac--project-files))
 
     (when (not oldprojdata)
       (fsharp-ac-message-safely "Loaded F# project '%s'" (file-relative-name project)))
