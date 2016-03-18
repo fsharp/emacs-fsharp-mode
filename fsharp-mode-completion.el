@@ -101,6 +101,9 @@ If set to nil, display in a help buffer instead.")
 (defconst fsharp-ac--completion-bufname
   (concat "*" fsharp-ac--completion-procname "*"))
 
+(defvar-local fsharp-ac-last-parsed-line -1
+  "The line number that we last requested a parse for completions")
+
 (defun fsharp-ac--log (str)
   (when fsharp-ac-debug
     (unless (get-buffer fsharp-ac--log-buf)
@@ -136,11 +139,6 @@ since the last request."
                  (if force-sync " sync" "")
                  (buffer-substring-no-properties (point-min) (point-max)))))
       (setq fsharp-ac-last-parsed-ticks (buffer-chars-modified-tick)))))
-
-(defun fsharp-ac-parse-file (file)
-  (with-current-buffer (find-file-noselect file)
-    (fsharp-ac-parse-current-buffer)))
-
 
 (defun fsharp-ac--isIdChar (c)
   (let ((gc (get-char-code-property c 'general-category)))
@@ -233,7 +231,7 @@ For indirect buffers return the truename of the base buffer."
   (log-psendstr fsharp-ac-completion-process
                 (format "%s \"%s\" %d %d %d %s\n" cmd file line col
                         (* 1000 fsharp-ac-blocking-timeout)
-			(if (string= cmd "completion") "filter=StartsWith" ""))))
+      (if (string= cmd "completion") "filter=StartsWith" ""))))
 
 (defun fsharp-ac--process-live-p ()
   "Check whether the background process is live."
@@ -341,12 +339,15 @@ For indirect buffers return the truename of the base buffer."
   (setq fsharp-ac-status 'wait)
   (setq fsharp-ac-current-candidate nil)
   (clrhash fsharp-ac-current-helptext)
-  (fsharp-ac-parse-current-buffer)
-  (fsharp-ac-send-pos-request
-   "completion"
-   (fsharp-ac--buffer-truename)
-   (line-number-at-pos)
-   (+ 1 (current-column))))
+  (let ((line (line-number-at-pos)))
+    (if (not (eq fsharp-ac-last-parsed-line line))
+        (setq fsharp-ac-last-parsed-line line)
+      (fsharp-ac-parse-current-buffer))
+    (fsharp-ac-send-pos-request
+     "completion"
+     (fsharp-ac--buffer-truename)
+     line
+     (+ 1 (current-column)))))
 
 (require 'cl-lib)
 
