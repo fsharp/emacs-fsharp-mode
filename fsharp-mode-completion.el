@@ -250,10 +250,13 @@ For indirect buffers return the truename of the base buffer."
                           (* 1000 fsharp-ac-blocking-timeout)
                           (if (string= cmd "completion") "filter=StartsWith" "")))))
 
-(defun fsharp-ac--process-live-p ()
-  "Check whether the background process is live."
+(defun fsharp-ac--process-live-p (&optional file)
+  "Check whether the background process is live.
+Optional argument FILE is the name of F# file; Return nil if
+the process is not valid (i.e. different Tramp host for this file)."
   (and fsharp-ac-completion-process
-       (process-live-p fsharp-ac-completion-process)))
+       (process-live-p fsharp-ac-completion-process)
+       (or (not file) (equal (fsharp-ac--process-host) (fsharp-ac--hostname file)))))
 
 (defun fsharp-ac/stop-process ()
   (interactive)
