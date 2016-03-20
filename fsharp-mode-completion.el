@@ -228,10 +228,11 @@ For indirect buffers return the truename of the base buffer."
 ;;; Display Requests
 
 (defun fsharp-ac-send-pos-request (cmd file line col)
-  (log-psendstr fsharp-ac-completion-process
-                (format "%s \"%s\" %d %d %d %s\n" cmd file line col
-                        (* 1000 fsharp-ac-blocking-timeout)
-      (if (string= cmd "completion") "filter=StartsWith" ""))))
+  (let ((linestr (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+    (log-psendstr fsharp-ac-completion-process
+                  (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd file linestr line col
+                          (* 1000 fsharp-ac-blocking-timeout)
+                          (if (string= cmd "completion") "filter=StartsWith" "")))))
 
 (defun fsharp-ac--process-live-p ()
   "Check whether the background process is live."
@@ -341,8 +342,9 @@ For indirect buffers return the truename of the base buffer."
   (clrhash fsharp-ac-current-helptext)
   (let ((line (line-number-at-pos)))
     (if (not (eq fsharp-ac-last-parsed-line line))
-        (setq fsharp-ac-last-parsed-line line)
-      (fsharp-ac-parse-current-buffer))
+        (progn
+          (setq fsharp-ac-last-parsed-line line)
+          (fsharp-ac-parse-current-buffer)))
     (fsharp-ac-send-pos-request
      "completion"
      (fsharp-ac--buffer-truename)
