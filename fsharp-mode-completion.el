@@ -244,7 +244,7 @@ For indirect buffers return the truename of the base buffer."
                        (downcase (file-name-extension file)))))
 
 (defun fsharp-ac--in-project-p (file)
-  (gethash (fsharp-ac--localname file) fsharp-ac--project-files))
+  (gethash file fsharp-ac--project-files))
 
 (defun fsharp-ac--reset ()
   (when fsharp-ac-idle-timer
@@ -860,8 +860,8 @@ display a short summary in the minibuffer."
         (princ str)))))
 
 (defun fsharp-ac-handle-project (data)
-  (let* ((project (gethash "Project" data))
-         (files (--map (fsharp-ac--localname (file-truename (fsharp-ac--tramp-file it)))
+  (let* ((project (fsharp-ac--tramp-file (gethash "Project" data)))
+         (files (--map (file-truename (fsharp-ac--tramp-file it))
                        (gethash "Files" data)))
          (oldprojdata (gethash project fsharp-ac--project-data)))
 
