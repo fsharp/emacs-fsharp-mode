@@ -24,6 +24,7 @@
 ;; Boston, MA 02110-1301, USA.
 
 (with-no-warnings (require 'cl))
+(require 'tramp)
 (require 's)
 (require 'dash)
 (require 'company)
@@ -149,6 +150,14 @@ since the last request."
 (defun fsharp-ac--isNormalId (s)
   (-all? (lambda (x) x) (mapcar 'fsharp-ac--isIdChar s)))
 
+(defun fsharp-ac--localname (file)
+  "Return localname of a Tramp filename.
+
+If FILENAME is not a Tramp filename return FILENAME"
+  (if (tramp-tramp-file-p file)
+      (with-parsed-tramp-file-name file nil
+	localname)
+    file))
 ;;; ----------------------------------------------------------------------------
 ;;; File Parsing and loading
 
