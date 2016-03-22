@@ -144,11 +144,11 @@ since the last request."
 (defun fsharp-ac--isIdChar (c)
   (let ((gc (get-char-code-property c 'general-category)))
     (or
-     (-any? (lambda (x) (string= gc x)) '("Lu" "Ll" "Lt" "Lm" "Lo" "Nl" "Nd" "Pc" "Mn" "Mc"))
+     (--any? (string= gc it) '("Lu" "Ll" "Lt" "Lm" "Lo" "Nl" "Nd" "Pc" "Mn" "Mc"))
      (eq c 39))))
 
 (defun fsharp-ac--isNormalId (s)
-  (-all? (lambda (x) x) (mapcar 'fsharp-ac--isIdChar s)))
+  (--all? it (mapcar 'fsharp-ac--isIdChar s)))
 
 (defun fsharp-ac--localname (file)
   "Return localname of a Tramp filename.
@@ -280,13 +280,11 @@ For indirect buffers return the truename of the base buffer."
   (when (memq (process-status process) '(exit signal))
     (when fsharp-ac-idle-timer
       (cancel-timer fsharp-ac-idle-timer))
-    (mapc (lambda (buf)
-            (with-current-buffer buf
-              (when (eq major-mode 'fsharp-mode)
-                (setq fsharp-ac-last-parsed-ticks 0)
-                (fsharp-ac-clear-errors)
-                (fsharp-ac--clear-symbol-uses))))
-          (buffer-list))
+    (--each (buffer-list) (with-current-buffer it
+			    (when (eq major-mode 'fsharp-mode)
+			      (setq fsharp-ac-last-parsed-ticks 0)
+			      (fsharp-ac-clear-errors)
+			      (fsharp-ac--clear-symbol-uses))))
     (fsharp-ac--reset)))
 
 (defun fsharp-ac--configure-proc ()
@@ -382,11 +380,10 @@ For indirect buffers return the truename of the base buffer."
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 
 (defun fsharp-ac-completion-done ()
-  (->> (-map (lambda (candidate)
-        (let ((s (gethash "Name" candidate)))
-          (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
-      (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
-    fsharp-ac-current-candidate)
+  (->> (--map (let ((s (gethash "Name" it)))
+                (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s it)
+                        (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s it)))))
+              fsharp-ac-current-candidate)
        (funcall fsharp-company-callback)))
 
 (defun completion-char-p (c)
@@ -459,16 +456,13 @@ For indirect buffers return the truename of the base buffer."
   "Regexp for a dotted ident with a raw residue.")
 
 (defun fsharp-ac--residue ()
-  (let ((result
-         (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
+  (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
            (- (point)
               (cadr
-                (-min-by 'car-less-than-car
-                 (-map (lambda (r) (let ((e (-map 'length (s-match r line))))
-                                (if e e '(0 0))))
-                       (list fsharp-ac--dottedIdentRawResidue
-                             fsharp-ac--dottedIdentNormalResidue))))))))
-    result))
+	       (-min-by 'car-less-than-car
+			(--map (or (-map 'length (s-match it line)) '(0 0))
+			       (list fsharp-ac--dottedIdentRawResidue
+				     fsharp-ac--dottedIdentNormalResidue)))))))
 
 (defun fsharp-ac-can-make-request (&optional quiet)
   "Test whether it is possible to make a request with the compiler binding.
@@ -674,21 +668,20 @@ around to the start of the buffer."
   (when reset
     (goto-char (point-min)))
 
-  (let ((pos (fsharp-ac-error-position n-steps fsharp-ac-errors)))
-    (if pos
-        (goto-char pos)
-      (error "No more F# errors"))))
+  (-if-let (pos (fsharp-ac-error-position n-steps fsharp-ac-errors))
+      (goto-char pos)
+    (error "No more F# errors")))
 
 (defun fsharp-ac--has-faces-p (ov &rest faces)
   (let ((face (overlay-get ov 'face)))
     (--first (equal face it) faces)))
 
 (defun fsharp-ac/error-overlay-at (pos)
-  (-first (lambda (ov) (fsharp-ac--has-faces-p ov 'fsharp-error-face 'fsharp-warning-face))
+  (--first (fsharp-ac--has-faces-p it 'fsharp-error-face 'fsharp-warning-face)
           (overlays-at pos)))
 
 (defun fsharp-ac/usage-overlay-at (pos)
-  (-first (lambda (ov) (fsharp-ac--has-faces-p ov 'fsharp-usage-face))
+  (--first (fsharp-ac--has-faces-p it 'fsharp-usage-face)
           (overlays-at pos)))
 
 ;;; HACK: show-error-at point checks last position of point to prevent
@@ -725,11 +718,10 @@ around to the start of the buffer."
               (json-object-type 'hash-table)
               (json-key-type 'string))
           (condition-case nil
-              (progn
-                (goto-char (point-min))
-                (let ((msg (json-read)))
-                  (delete-region (point-min) (+ (point) 1))
-                  msg))
+              (prog2
+		  (goto-char (point-min))
+		  (json-read)
+		(delete-region (point-min) (1+ (point))))
             (error
              (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
              (message "Error: F# completion process produced malformed JSON (%s)."
@@ -809,7 +801,7 @@ around to the start of the buffer."
 (defun fsharp-ac--format-tooltip (items)
   "Format a list of items as a tooltip"
   (let ((result (s-join "\n--------------------\n"
-                           (-map (lambda (i) (fsharp-ac--format-tooltip-overloads (< (length items) 2) i)) items))))
+                           (--map (fsharp-ac--format-tooltip-overloads (< (length items) 2) it) items))))
       (s-chomp result)))
 
 (defun fsharp-ac--handle-symboluse (data)
@@ -862,11 +854,11 @@ display a short summary in the minibuffer."
     ;; Remove any files previously associated with this
     ;; project as if reloading, they may have changed
     (when oldprojdata
-      (-each (gethash "Files" oldprojdata)
-        (lambda (f) (remhash f fsharp-ac--project-files))))
+      (--each (gethash "Files" oldprojdata)
+        (remhash it fsharp-ac--project-files)))
 
     (puthash project data fsharp-ac--project-data)
-    (-map (lambda (f) (puthash f project fsharp-ac--project-files)) files)
+    (--map (puthash it project fsharp-ac--project-files) files)
 
     (when (not oldprojdata)
       (fsharp-ac-message-safely "Loaded F# project '%s'" (file-relative-name project)))
