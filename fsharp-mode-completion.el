@@ -290,36 +290,40 @@ For indirect buffers return the truename of the base buffer."
     (fsharp-ac--reset)))
 
 (defun fsharp-ac--configure-proc ()
-  (let ((fsac (car (last fsharp-ac-complete-command))))
-    (unless (file-exists-p fsac)
-      (error "%s not found" fsac)))
-  (let* ((process-environment
-          (if (null fsharp-ac-using-mono)
-              process-environment
-            ;; workaround for Mono >= 4.2.1 thread pool bug
-            ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
-            (let ((x (getenv "MONO_THREADS_PER_CPU")))
-              (if (or (null x)
-                      (< (string-to-number x) 8))
-                  (cons "MONO_THREADS_PER_CPU=8" process-environment)
-                process-environment))))
-         (proc (let (process-connection-type)
-                 (apply 'start-file-process
-                        fsharp-ac--completion-procname
-                        (get-buffer-create fsharp-ac--completion-bufname)
-                        fsharp-ac-complete-command))))
-    (sleep-for 0.1)
-    (if (process-live-p proc)
-        (progn
-          (set-process-sentinel proc #'fsharp-ac--process-sentinel)
-          (set-process-coding-system proc 'utf-8-auto)
-          (set-process-filter proc 'fsharp-ac-filter-output)
-          (set-process-query-on-exit-flag proc nil)
-          (with-current-buffer (process-buffer proc)
-            (delete-region (point-min) (point-max)))
-          proc)
-      (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
-      nil)))
+  (let* ((fsac (if (tramp-tramp-file-p default-directory)
+		   (with-parsed-tramp-file-name default-directory nil
+		     (tramp-make-tramp-file-name
+		      method user host (car (last fsharp-ac-complete-command))))
+		 (car (last fsharp-ac-complete-command))))
+	 (process-environment
+	  (if (null fsharp-ac-using-mono)
+	      process-environment
+	    ;; workaround for Mono = 4.2.1 thread pool bug
+	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
+	    (let ((x (getenv "MONO_THREADS_PER_CPU")))
+	      (if (or (null x)
+		      (< (string-to-number x) 8))
+		  (cons "MONO_THREADS_PER_CPU=8" process-environment)
+		process-environment))))
+	 process-connection-type)
+    (if (file-exists-p fsac)
+	(let ((proc (apply 'start-file-process
+			   fsharp-ac--completion-procname
+			   (get-buffer-create fsharp-ac--completion-bufname)
+			   fsharp-ac-complete-command)))
+	  (sleep-for 0.1)
+	  (if (process-live-p proc)
+	      (progn
+		(set-process-sentinel proc #'fsharp-ac--process-sentinel)
+		(set-process-coding-system proc 'utf-8-auto)
+		(set-process-filter proc 'fsharp-ac-filter-output)
+		(set-process-query-on-exit-flag proc nil)
+		(with-current-buffer (process-buffer proc)
+		  (delete-region (point-min) (point-max)))
+		proc)
+	    (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
+	    nil))
+      (error "%s not found" fsac))))
 
 (defun fsharp-ac--reset-timer ()
   (when fsharp-ac-idle-timer
