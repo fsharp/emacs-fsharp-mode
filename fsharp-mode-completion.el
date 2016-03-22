@@ -184,12 +184,12 @@ For indirect buffers return the truename of the base buffer."
     ;; Load given project.
     (when (fsharp-ac--process-live-p)
       (log-psendstr fsharp-ac-completion-process
-                    (format "project \"%s\"%s\n"
-                            (file-truename file)
-                            (if (and (numberp fsharp-ac-debug)
-                                     (>= fsharp-ac-debug 2))
-                                " verbose"
-                              ""))))
+		      (format "project \"%s\"%s\n"
+			      (fsharp-ac--localname (file-truename file))
+			      (if (and (numberp fsharp-ac-debug)
+				       (>= fsharp-ac-debug 2))
+				  " verbose"
+				""))))
     file))
 
 (defun fsharp-ac/load-file (file)
