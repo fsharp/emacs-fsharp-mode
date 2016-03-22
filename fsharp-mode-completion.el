@@ -253,9 +253,14 @@ For indirect buffers return the truename of the base buffer."
         fsharp-ac-idle-timer nil
         fsharp-ac-current-candidate nil)
   (fsharp-ac-completion-process-del (fsharp-ac--hostname default-directory))
-  (-each (list fsharp-ac-current-helptext
-               fsharp-ac--project-data
-               fsharp-ac--project-files) 'clrhash)
+  (clrhash fsharp-ac-current-helptext)
+  (let (files projects)
+    (maphash (lambda (file project) (when (equal (fsharp-ac--hostname file) (fsharp-ac--hostname default-directory))
+				      (push file files)
+				      (push project projects)))
+	     fsharp-ac--project-files)
+    (--each projects (remhash it fsharp-ac--project-files))
+    (--each files (remhash it fsharp-ac--project-files)))
   (fsharp-ac-clear-errors))
 
 ;;; ----------------------------------------------------------------------------
