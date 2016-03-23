@@ -223,7 +223,7 @@ function bound to VAR in BODY. "
 (check "error message in a script if no bg process running"
  (stubbing-process-functions
   (stub-fn message msg
-   (noflet ((fsharp-ac--process-live-p ()))
+   (noflet ((fsharp-ac--process-live-p (host)))
      (using-temp-file "test.fsx"
        (fsharp-ac-can-make-request)
        (should-match "not running" msg))))))
@@ -231,7 +231,7 @@ function bound to VAR in BODY. "
 (check "no error message in a script if no bg process running and quiet mode selected"
  (stubbing-process-functions
   (stub-fn message msg
-   (noflet ((fsharp-ac--process-live-p ()))
+   (noflet ((fsharp-ac--process-live-p (host)))
      (using-temp-file "test.fsx"
        (fsharp-ac-can-make-request t)
        (should (null msg)))))))
@@ -257,7 +257,7 @@ function bound to VAR in BODY. "
 (check "no error message if failed request from doc mode"
   (stubbing-process-functions
    (stub-fn message msg
-     (noflet ((fsharp-ac--process-live-p ()))
+     (noflet ((fsharp-ac--process-live-p (host)))
        (using-temp-file "test.fsx"
          (fsharp-doc--request-info)
          (should (null msg)))))))
@@ -265,7 +265,7 @@ function bound to VAR in BODY. "
 (check "no error message if failed request from parsing"
   (stubbing-process-functions
    (stub-fn message msg
-     (noflet ((fsharp-ac--process-live-p ()))
+     (noflet ((fsharp-ac--process-live-p (host)))
        (using-temp-file "test.fsx"
          (fsharp-ac--parse-current-file)
          (should (null msg)))))))
@@ -276,7 +276,7 @@ function bound to VAR in BODY. "
   (let ((counter 0))
     (noflet ((process-send-string (_ _) (setq counter (+ counter 1)))
              (process-live-p (p) t)
-              (fsharp-ac--process-live-p () t)
+              (fsharp-ac--process-live-p (host) t)
               (start-process (&rest args))
               (set-process-filter (&rest args))
               (set-process-query-on-exit-flag (&rest args))
