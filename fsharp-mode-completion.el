@@ -512,7 +512,7 @@ The current buffer must be an F# file that exists on disk."
            (not (fsharp-ac--in-project-p file)))
 
       (unless quiet
-        (fsharp-ac-message-safely "Error: this file is not part of the loaded project."))
+        (fsharp-ac-message-safely "Error: %s is not part of the loaded projects." file))
       nil)
 
      (t
