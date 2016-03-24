@@ -498,7 +498,6 @@ on QUIET to FSHARP-AC-CAN-MAKE-REQUEST. This is a bit of hack to
 prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request quiet)
-     (fsharp-ac-parse-current-buffer)
      (fsharp-ac-send-pos-request "tooltip"
                                  (fsharp-ac--buffer-truename)
                                  (line-number-at-pos)
@@ -508,7 +507,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   "Find the uses in this file of the symbol at point."
   (interactive)
   (when (fsharp-ac-can-make-request)
-    (fsharp-ac-parse-current-buffer)
     (fsharp-ac-send-pos-request "symboluse"
                                 (fsharp-ac--buffer-truename)
                                 (line-number-at-pos)
@@ -518,7 +516,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   "Find the point of declaration of the symbol at point and goto it."
   (interactive)
   (when (fsharp-ac-can-make-request)
-    (fsharp-ac-parse-current-buffer)
     (fsharp-ac-send-pos-request "finddecl"
                                 (fsharp-ac--buffer-truename)
                                 (line-number-at-pos)
