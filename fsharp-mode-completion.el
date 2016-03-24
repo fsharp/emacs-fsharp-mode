@@ -362,8 +362,8 @@ For indirect buffers return the truename of the base buffer."
   (if (and (fsharp-ac-can-make-request 't)
              (eq fsharp-ac-status 'idle))
       (progn
-	(setq fsharp-company-callback callback)
-	(fsharp-ac-make-completion-request))
+  (setq fsharp-company-callback callback)
+  (fsharp-ac-make-completion-request))
     (funcall callback nil)))
 
 (defun fsharp-ac-add-annotation-prop (s candidate)
@@ -371,10 +371,10 @@ For indirect buffers return the truename of the base buffer."
 
 (defun fsharp-ac-completion-done ()
   (->> (-map (lambda (candidate)
-		    (let ((s (gethash "Name" candidate)))
-		      (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
-			(s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
-		fsharp-ac-current-candidate)
+        (let ((s (gethash "Name" candidate)))
+          (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
+      (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
+    fsharp-ac-current-candidate)
        (funcall fsharp-company-callback)))
 
 (defun completion-char-p (c)
