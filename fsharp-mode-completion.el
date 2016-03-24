@@ -730,28 +730,27 @@ around to the start of the buffer."
 (defun fsharp-ac--get-msg (proc)
   (with-current-buffer (process-buffer proc)
     (goto-char (point-min))
-    (let ((eofloc (search-forward "\n" nil t)))
-      (when eofloc
-        (when (numberp fsharp-ac-debug)
-          (cond
-           ((eq fsharp-ac-debug 1)
-            (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
+    (-when-let (eofloc (search-forward "\n" nil t))
+      (when (numberp fsharp-ac-debug)
+        (cond
+         ((eq fsharp-ac-debug 1)
+          (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
 
-           ((>= fsharp-ac-debug 2)
-            (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
+         ((>= fsharp-ac-debug 2)
+          (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
 
-        (let ((json-array-type 'list)
-              (json-object-type 'hash-table)
-              (json-key-type 'string))
-          (condition-case nil
-              (prog2
-		  (goto-char (point-min))
-		  (json-read)
-		(delete-region (point-min) (1+ (point))))
-            (error
-             (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
-             (message "Error: F# completion process produced malformed JSON (%s)."
-                      (buffer-substring-no-properties (point-min) (point-max))))))))))
+      (let ((json-array-type 'list)
+            (json-object-type 'hash-table)
+            (json-key-type 'string))
+        (condition-case nil
+            (prog2
+                (goto-char (point-min))
+                (json-read)
+              (delete-region (point-min) (1+ (point))))
+          (error
+           (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
+           (message "Error: F# completion process produced malformed JSON (%s)."
+                    (buffer-substring-no-properties (point-min) (point-max)))))))))
 
 (defun fsharp-ac-filter-output (proc str)
   "Filter STR from the completion process PROC and handle appropriately."
