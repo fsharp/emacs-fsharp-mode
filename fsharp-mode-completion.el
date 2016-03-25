@@ -49,7 +49,9 @@
                          "bin/" fsharp-ac-executable))))
     (if fsharp-ac-using-mono
         (list "mono" exe)
-      (list exe))))
+      (list exe)))
+  "Command to start the completion process.
+If using Tramp this command must be also valid on remote the Host.")
 
 (defvar fsharp-ac-use-popup t
   "Display tooltips using a popup at point.
