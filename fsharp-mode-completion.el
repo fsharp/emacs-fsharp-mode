@@ -226,9 +226,8 @@ For indirect buffers return the truename of the base buffer."
 
 ;;; ----------------------------------------------------------------------------
 ;;; Display Requests
-
 (defun fsharp-ac-send-pos-request (cmd file line col)
-  (let ((linestr (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+  (let ((linestr (replace-regexp-in-string "\"" "\\\""(buffer-substring-no-properties (line-beginning-position) (line-end-position)) t t)))
     (log-psendstr fsharp-ac-completion-process
                   (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd file linestr line col
                           (* 1000 fsharp-ac-blocking-timeout)
