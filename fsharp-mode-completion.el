@@ -529,6 +529,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (and (fsharp-ac-can-make-request quiet)
              (eq fsharp-ac-status 'idle))
+    (fsharp-ac-parse-current-buffer)
     (company-complete)))
 
 (defun fsharp-ac--parse-current-file ()
