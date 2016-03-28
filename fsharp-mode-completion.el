@@ -593,27 +593,27 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 
 (defun fsharp-ac-parse-errors (data)
   "Extract the errors from the given process response DATA. Return a list of fsharp-error."
-  (save-match-data
-    (--map
-     (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
-					      (gethash "StartColumn" it)))
-	   (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
-					      (gethash "EndColumn" it)))
-	   (face (if (string= "Error" (gethash "Severity" it))
-		     'fsharp-error-face
-		   'fsharp-warning-face))
-	   (priority (if (string= "Error" (gethash "Severity" it))
-			 1
-		       0))
-	   (msg (gethash "Message" it))
-	   (file (fsharp-ac--tramp-file (gethash "FileName" it))))
-       (make-fsharp-error :start beg
-			  :end   end
-			  :face  face
-			  :priority priority
-			  :text  msg
-			  :file  file))
-     data)))
+  (nreverse
+   (--map
+    (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
+                                             (gethash "StartColumn" it)))
+          (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
+                                             (gethash "EndColumn" it)))
+          (face (if (string= "Error" (gethash "Severity" it))
+                    'fsharp-error-face
+                  'fsharp-warning-face))
+          (priority (if (string= "Error" (gethash "Severity" it))
+                        1
+                      0))
+          (msg (gethash "Message" it))
+          (file (fsharp-ac--tramp-file (gethash "FileName" it))))
+      (make-fsharp-error :start beg
+                         :end   end
+                         :face  face
+                         :priority priority
+                         :text  msg
+                         :file  file))
+    data)))
 
 (defun fsharp-ac--parse-symbol-uses (data)
   "Extract the symbol uses from the given process response DATA."
