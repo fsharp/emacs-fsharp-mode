@@ -398,7 +398,7 @@ For indirect buffers return the truename of the base buffer."
         (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))
 
 (defconst fsharp-ac--ident
-  (rx (one-or-more (not (any ".` \t\r\n"))))
+  (rx (one-or-more (not (any ".` ,(\t\r\n"))))
   "Regexp for normal identifiers.")
 
 ; Note that this regexp is not 100% correct.
@@ -432,7 +432,7 @@ For indirect buffers return the truename of the base buffer."
            (or (regexp ,fsharp-ac--ident)
                (regexp ,fsharp-ac--rawIdent))
            "."))
-         (group (zero-or-more (not (any ".` \t\r\n"))))
+         (group (zero-or-more (not (any ".` ,(\t\r\n"))))
          string-end))
   "Regexp for a dotted ident with a standard residue.")
 
