@@ -368,10 +368,10 @@ If HOST is nil, check process on local system."
          (prop (gethash key fsharp-ac-current-helptext)))
     (let ((help
            (if prop prop
-             (log-psendstr fsharp-ac-completion-process
+             (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname default-directory))
                            (format "helptext %s\n" key))
              (with-local-quit
-               (accept-process-output fsharp-ac-completion-process 0 100))
+               (accept-process-output (fsharp-ac-completion-process (fsharp-ac--hostname default-directory)) 0 100))
              (gethash key fsharp-ac-current-helptext
                       "Loading documentation..."))))
              help)))
