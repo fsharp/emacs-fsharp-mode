@@ -69,7 +69,7 @@
 
 (check-filter "error clears partial data"
   (should (equal "" (with-current-buffer (process-buffer
-                                          fsharp-ac-completion-process)
+                                          (fsharp-ac-completion-process nil))
                       (buffer-string)))))
 
 (check-filter "errors cause overlays to be drawn"
@@ -279,9 +279,10 @@ function bound to VAR in BODY. "
               (fsharp-ac--process-live-p (host) t)
               (start-process (&rest args))
               (set-process-filter (&rest args))
+	      (fsharp-ac-completion-process (host) nil)
+	      (process-buffer (p) (get-buffer-create "*fsharp-complete*"))
               (set-process-query-on-exit-flag (&rest args))
 ;              (process-send-string (&rest args))
-              (process-buffer (proc) fsharp-ac--completion-bufname)
               (process-mark (proc) (point-max))
               ;(fsharp-ac-parse-current-buffer () t)
               (log-to-proc-buf (p s)))
