@@ -219,7 +219,6 @@
           company-minimum-prefix-length
           company-require-match
           company-tooltip-align-annotations
-          popup-tip-max-width
           fsharp-ac-last-parsed-ticks
           fsharp-ac-errors))
 
