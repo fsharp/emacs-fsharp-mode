@@ -251,7 +251,7 @@
   (setq company-backends (list 'fsharp-ac/company-backend))
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
-  (setq company-idle-delay 0.5)
+  (setq company-idle-delay 0.03)
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
