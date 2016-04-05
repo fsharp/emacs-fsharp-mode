@@ -1,4 +1,19 @@
+## 1.8.0 (2016-04-05)
+
+Features:
+  - Update to FsAutoComplete 0.28.0 to support #65.
+  - #65: Faster completions (thanks to @nosami).
+  - #56: Use FsAutoComplete "startswith" filter (thanks to @juergenhoetzel).
+
+Bugfixes:
+  - #67: Fix use of popup (thanks to @drvink)
+  - #60: Unbreak company support on non-graphic displays (thanks to @drvink)
+  - #58: Handle buffers not visiting a file (thanks to @juergenhoetzel).  
+
 ## 1.7.4 (2016-02-05)
+
+Features:
+  - #49: Use company for completions (thanks to @nosami).
 
 Bugfixes:
   - Update to FsAutoComplete 0.27.2, fixes project cracking for files
