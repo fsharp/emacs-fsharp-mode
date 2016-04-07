@@ -33,10 +33,10 @@
 
     ; Stop the fsautocomplete process and close its buffer
     (fsharp-ac/stop-process)
-    (wait-for-condition (not (fsharp-ac--process-live-p)))
-    (when (fsharp-ac--process-live-p)
+    (wait-for-condition (not (fsharp-ac--process-live-p nil)))
+    (when (fsharp-ac--process-live-p nil)
       (kill-process fsharp-ac-completion-process)
-      (wait-for-condition (not (fsharp-ac--process-live-p))))
+      (wait-for-condition (not (fsharp-ac--process-live-p nil))))
     (when (get-buffer "*fsharp-complete*")
       (kill-buffer "*fsharp-complete*"))
 

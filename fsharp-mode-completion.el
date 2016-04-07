@@ -24,6 +24,7 @@
 ;; Boston, MA 02110-1301, USA.
 
 (with-no-warnings (require 'cl))
+(require 'tramp)
 (require 's)
 (require 'dash)
 (require 'company)
@@ -48,7 +49,9 @@
                          "bin/" fsharp-ac-executable))))
     (if fsharp-ac-using-mono
         (list "mono" exe)
-      (list exe))))
+      (list exe)))
+  "Command to start the completion process.
+If using Tramp this command must be also valid on remote the Host.")
 
 (defvar fsharp-ac-use-popup t
   "Display tooltips using a popup at point.
@@ -80,7 +83,18 @@ If set to nil, display in a help buffer instead.")
 
 (defvar fsharp-ac-debug nil)
 (defvar fsharp-ac-status 'idle)
-(defvar fsharp-ac-completion-process nil)
+(defvar fsharp-ac-completion-process-alist nil)
+
+(defun fsharp-ac-completion-process (host)
+  "Return completion process on HOST."
+  (cdr (assoc host fsharp-ac-completion-process-alist)))
+
+(defun fsharp-ac-completion-process-add (host process)
+  (push (cons host process) fsharp-ac-completion-process-alist))
+
+(defun fsharp-ac-completion-process-del (host)
+  (delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist))
+
 (defvar fsharp-ac--project-data (make-hash-table :test 'equal)
   "Data returned by fsautocomplete for loaded projects.")
 (defvar fsharp-ac--project-files (make-hash-table :test 'equal)
@@ -98,17 +112,13 @@ If set to nil, display in a help buffer instead.")
 
 (defconst fsharp-ac--log-buf "*fsharp-debug*")
 (defconst fsharp-ac--completion-procname "fsharp-complete")
-(defconst fsharp-ac--completion-bufname
-  (concat "*" fsharp-ac--completion-procname "*"))
 
 (defvar-local fsharp-ac-last-parsed-line -1
   "The line number that we last requested a parse for completions")
 
 (defun fsharp-ac--log (str)
   (when fsharp-ac-debug
-    (unless (get-buffer fsharp-ac--log-buf)
-      (generate-new-buffer fsharp-ac--log-buf))
-    (with-current-buffer fsharp-ac--log-buf
+    (with-current-buffer (get-buffer-create fsharp-ac--log-buf)
       (let ((pt (point))
             (atend (eq (point-max) (point))))
         (goto-char (point-max))
@@ -133,9 +143,9 @@ since the last request."
         (widen)
         (fsharp-ac--log (format "Parsing \"%s\"\n" file))
         (process-send-string
-         fsharp-ac-completion-process
+         (fsharp-ac-completion-process (fsharp-ac--hostname file))
          (format "parse \"%s\" %s\n%s\n<<EOF>>\n"
-                 file
+                 (fsharp-ac--localname file)
                  (if force-sync " sync" "")
                  (buffer-substring-no-properties (point-min) (point-max)))))
       (setq fsharp-ac-last-parsed-ticks (buffer-chars-modified-tick)))))
@@ -143,11 +153,38 @@ since the last request."
 (defun fsharp-ac--isIdChar (c)
   (let ((gc (get-char-code-property c 'general-category)))
     (or
-     (-any? (lambda (x) (string= gc x)) '("Lu" "Ll" "Lt" "Lm" "Lo" "Nl" "Nd" "Pc" "Mn" "Mc"))
+     (--any? (string= gc it) '("Lu" "Ll" "Lt" "Lm" "Lo" "Nl" "Nd" "Pc" "Mn" "Mc"))
      (eq c 39))))
 
 (defun fsharp-ac--isNormalId (s)
-  (-all? (lambda (x) x) (mapcar 'fsharp-ac--isIdChar s)))
+  (--all? it (mapcar 'fsharp-ac--isIdChar s)))
+
+(defun fsharp-ac--hostname (file)
+  "Return host of a Tramp filename.
+
+If FILENAME is not a Tramp filename return nil"
+  (when (tramp-tramp-file-p file)
+    (with-parsed-tramp-file-name file nil
+      host)))
+
+(defun fsharp-ac--localname (file)
+  "Return localname of a Tramp filename.
+
+If FILENAME is not a Tramp filename return FILENAME"
+  (if (tramp-tramp-file-p file)
+      (with-parsed-tramp-file-name file nil
+	localname)
+    file))
+
+(defun fsharp-ac--tramp-file (file)
+  "Return Tramp filename of FILE
+
+When completion process is not started on a remote location return FILE.
+This function should always be evaluated in the process-buffer!"
+  (if (tramp-tramp-file-p default-directory)
+      (with-parsed-tramp-file-name default-directory nil
+	(tramp-make-tramp-file-name method user host file))
+      file))
 
 ;;; ----------------------------------------------------------------------------
 ;;; File Parsing and loading
@@ -170,26 +207,25 @@ For indirect buffers return the truename of the base buffer."
 
   (when (fsharp-ac--valid-project-p file)
     (setq fsharp-ac-intellisense-enabled t)
-    (when (not (fsharp-ac--process-live-p))
+    (unless (fsharp-ac--process-live-p (fsharp-ac--hostname file))
       (fsharp-ac/start-process))
     ;; Load given project.
-    (when (fsharp-ac--process-live-p)
-      (log-psendstr fsharp-ac-completion-process
-                    (format "project \"%s\"%s\n"
-                            (file-truename file)
-                            (if (and (numberp fsharp-ac-debug)
-                                     (>= fsharp-ac-debug 2))
-                                " verbose"
-                              ""))))
+    (when (fsharp-ac--process-live-p (fsharp-ac--hostname file))
+      (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname file))
+		      (format "project \"%s\"%s\n"
+			      (fsharp-ac--localname (file-truename file))
+			      (if (and (numberp fsharp-ac-debug)
+				       (>= fsharp-ac-debug 2))
+				  " verbose"
+				""))))
     file))
 
 (defun fsharp-ac/load-file (file)
   "Start the compiler binding for an individual F# script FILE."
-  (when (fsharp-ac--script-file-p file)
-    (if (file-exists-p file)
-        (when (not (fsharp-ac--process-live-p))
-          (fsharp-ac/start-process))
-      (add-hook 'after-save-hook 'fsharp-ac--load-after-save nil 'local))))
+  (when (and (fsharp-ac--script-file-p file) (file-exists-p file))
+    (unless (fsharp-ac--process-live-p (fsharp-ac--hostname file))
+      (fsharp-ac/start-process))
+    (add-hook 'after-save-hook 'fsharp-ac--load-after-save nil 'local)))
 
 (defun fsharp-ac--load-after-save ()
   (remove-hook 'fsharp-ac--load-after-save 'local)
@@ -217,49 +253,53 @@ For indirect buffers return the truename of the base buffer."
     (cancel-timer fsharp-ac-idle-timer))
   (setq fsharp-ac-status 'idle
         fsharp-ac-idle-timer nil
-        fsharp-ac-completion-process nil
         fsharp-ac-current-candidate nil)
-  (-each (list fsharp-ac-current-helptext
-               fsharp-ac--project-data
-               fsharp-ac--project-files) 'clrhash)
+  (fsharp-ac-completion-process-del (fsharp-ac--hostname default-directory))
+  (clrhash fsharp-ac-current-helptext)
+  (let (files projects)
+    (maphash (lambda (file project) (when (equal (fsharp-ac--hostname file) (fsharp-ac--hostname default-directory))
+				      (push file files)
+				      (push project projects)))
+	     fsharp-ac--project-files)
+    (--each projects (remhash it fsharp-ac--project-files))
+    (--each files (remhash it fsharp-ac--project-files)))
   (fsharp-ac-clear-errors))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Display Requests
 (defun fsharp-ac-send-pos-request (cmd file line col)
   (let ((linestr (replace-regexp-in-string "\"" "\\\""(buffer-substring-no-properties (line-beginning-position) (line-end-position)) t t)))
-    (log-psendstr fsharp-ac-completion-process
-                  (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd file linestr line col
+    (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname file))
+                  (format "%s \"%s\" \"%s\" %d %d %d %s\n" cmd (fsharp-ac--localname file) linestr line col
                           (* 1000 fsharp-ac-blocking-timeout)
                           (if (string= cmd "completion") "filter=StartsWith" "")))))
 
-(defun fsharp-ac--process-live-p ()
-  "Check whether the background process is live."
-  (and fsharp-ac-completion-process
-       (process-live-p fsharp-ac-completion-process)))
+(defun fsharp-ac--process-live-p (host)
+  "Check whether the background process is live for Tramp HOST.
+If HOST is nil, check process on local system."
+  (process-live-p (fsharp-ac-completion-process host)))
 
 (defun fsharp-ac/stop-process ()
   (interactive)
-  (fsharp-ac-message-safely "Quitting fsharp completion process")
-  (when (fsharp-ac--process-live-p)
-    (log-psendstr fsharp-ac-completion-process "quit\n")
-    (sleep-for 1)
-    (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process)))
+  (let ((host (fsharp-ac--hostname default-directory)))
+    (when (fsharp-ac--process-live-p host)
+      (fsharp-ac-message-safely "Quitting fsharp completion process")
+      (log-psendstr (fsharp-ac-completion-process host) "quit\n")
+      (sleep-for 1)
+      (when (fsharp-ac--process-live-p host)
+        (kill-process (fsharp-ac-completion-process host))
+        (kill-buffer  (process-buffer (fsharp-ac-completion-process host))))))
   (fsharp-ac--reset))
 
 (defun fsharp-ac/start-process ()
   "Launch the F# completion process in the background."
   (interactive)
-
   (when fsharp-ac-intellisense-enabled
-    (when (fsharp-ac--process-live-p)
-      (kill-process fsharp-ac-completion-process))
-
+    (fsharp-ac/stop-process)
     (condition-case err
         (progn
           (fsharp-ac--reset)
-          (setq fsharp-ac-completion-process (fsharp-ac--configure-proc))
+          (fsharp-ac-completion-process-add (fsharp-ac--hostname default-directory) (fsharp-ac--configure-proc))
           (fsharp-ac--reset-timer))
       (error
        (setq fsharp-ac-intellisense-enabled nil)
@@ -271,46 +311,48 @@ For indirect buffers return the truename of the base buffer."
   (when (memq (process-status process) '(exit signal))
     (when fsharp-ac-idle-timer
       (cancel-timer fsharp-ac-idle-timer))
-    (mapc (lambda (buf)
-            (with-current-buffer buf
-              (when (eq major-mode 'fsharp-mode)
-                (setq fsharp-ac-last-parsed-ticks 0)
-                (fsharp-ac-clear-errors)
-                (fsharp-ac--clear-symbol-uses))))
-          (buffer-list))
+    (--each (buffer-list) (with-current-buffer it
+			    (when (eq major-mode 'fsharp-mode)
+			      (setq fsharp-ac-last-parsed-ticks 0)
+			      (fsharp-ac-clear-errors)
+			      (fsharp-ac--clear-symbol-uses))))
     (fsharp-ac--reset)))
 
 (defun fsharp-ac--configure-proc ()
-  (let ((fsac (car (last fsharp-ac-complete-command))))
-    (unless (file-exists-p fsac)
-      (error "%s not found" fsac)))
-  (let* ((process-environment
-          (if (null fsharp-ac-using-mono)
-              process-environment
-            ;; workaround for Mono >= 4.2.1 thread pool bug
-            ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
-            (let ((x (getenv "MONO_THREADS_PER_CPU")))
-              (if (or (null x)
-                      (< (string-to-number x) 8))
-                  (cons "MONO_THREADS_PER_CPU=8" process-environment)
-                process-environment))))
-         (proc (let (process-connection-type)
-                 (apply 'start-process
-                        fsharp-ac--completion-procname
-                        fsharp-ac--completion-bufname
-                        fsharp-ac-complete-command))))
-    (sleep-for 0.1)
-    (if (process-live-p proc)
-        (progn
-          (set-process-sentinel proc #'fsharp-ac--process-sentinel)
-          (set-process-coding-system proc 'utf-8-auto)
-          (set-process-filter proc 'fsharp-ac-filter-output)
-          (set-process-query-on-exit-flag proc nil)
-          (with-current-buffer (process-buffer proc)
-            (delete-region (point-min) (point-max)))
-          proc)
-      (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
-      nil)))
+  (let* ((fsac (if (tramp-tramp-file-p default-directory)
+		   (with-parsed-tramp-file-name default-directory nil
+		     (tramp-make-tramp-file-name
+		      method user host (car (last fsharp-ac-complete-command))))
+		 (car (last fsharp-ac-complete-command))))
+	 (process-environment
+	  (if (null fsharp-ac-using-mono)
+	      process-environment
+	    ;; workaround for Mono = 4.2.1 thread pool bug
+	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
+	    (let ((x (getenv "MONO_THREADS_PER_CPU")))
+	      (if (or (null x)
+		      (< (string-to-number x) 8))
+		  (cons "MONO_THREADS_PER_CPU=8" process-environment)
+		process-environment))))
+	 process-connection-type)
+    (if (file-exists-p fsac)
+	(let ((proc (apply 'start-file-process
+			   fsharp-ac--completion-procname
+			   (get-buffer-create (generate-new-buffer-name "*fsharp-complete*"))
+			   fsharp-ac-complete-command)))
+	  (sleep-for 0.1)
+	  (if (process-live-p proc)
+	      (progn
+		(set-process-sentinel proc #'fsharp-ac--process-sentinel)
+		(set-process-coding-system proc 'utf-8-auto)
+		(set-process-filter proc 'fsharp-ac-filter-output)
+		(set-process-query-on-exit-flag proc nil)
+		(with-current-buffer (process-buffer proc)
+		  (delete-region (point-min) (point-max)))
+		proc)
+	    (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
+	    nil))
+      (error "%s not found" fsac))))
 
 (defun fsharp-ac--reset-timer ()
   (when fsharp-ac-idle-timer
@@ -326,10 +368,10 @@ For indirect buffers return the truename of the base buffer."
          (prop (gethash key fsharp-ac-current-helptext)))
     (let ((help
            (if prop prop
-             (log-psendstr fsharp-ac-completion-process
+             (log-psendstr (fsharp-ac-completion-process (fsharp-ac--hostname default-directory))
                            (format "helptext %s\n" key))
              (with-local-quit
-               (accept-process-output fsharp-ac-completion-process 0 100))
+               (accept-process-output (fsharp-ac-completion-process (fsharp-ac--hostname default-directory)) 0 100))
              (gethash key fsharp-ac-current-helptext
                       "Loading documentation..."))))
              help)))
@@ -340,15 +382,14 @@ For indirect buffers return the truename of the base buffer."
   (setq fsharp-ac-current-candidate nil)
   (clrhash fsharp-ac-current-helptext)
   (let ((line (line-number-at-pos)))
-    (if (not (eq fsharp-ac-last-parsed-line line))
-        (progn
-          (setq fsharp-ac-last-parsed-line line)
-          (fsharp-ac-parse-current-buffer)))
+    (unless (eq fsharp-ac-last-parsed-line line)
+      (setq fsharp-ac-last-parsed-line line)
+      (fsharp-ac-parse-current-buffer))
     (fsharp-ac-send-pos-request
-     "completion"
-     (fsharp-ac--buffer-truename)
-     line
-     (+ 1 (current-column)))))
+   "completion"
+   (fsharp-ac--buffer-truename)
+   (line-number-at-pos)
+   (+ 1 (current-column)))))
 
 (require 'cl-lib)
 
@@ -386,11 +427,10 @@ For indirect buffers return the truename of the base buffer."
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 
 (defun fsharp-ac-completion-done ()
-  (->> (-map (lambda (candidate)
-        (let ((s (gethash "Name" candidate)))
-          (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s candidate)
-      (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s candidate))))))
-    fsharp-ac-current-candidate)
+  (->> (--map (let ((s (gethash "Name" it)))
+                (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s it)
+                        (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s it)))))
+              fsharp-ac-current-candidate)
        (funcall fsharp-company-callback)))
 
 (defun completion-char-p (c)
@@ -463,16 +503,13 @@ For indirect buffers return the truename of the base buffer."
   "Regexp for a dotted ident with a raw residue.")
 
 (defun fsharp-ac--residue ()
-  (let ((result
-         (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
+  (let ((line (buffer-substring-no-properties (line-beginning-position) (point))))
            (- (point)
               (cadr
-                (-min-by 'car-less-than-car
-                 (-map (lambda (r) (let ((e (-map 'length (s-match r line))))
-                                (if e e '(0 0))))
-                       (list fsharp-ac--dottedIdentRawResidue
-                             fsharp-ac--dottedIdentNormalResidue))))))))
-    result))
+	       (-min-by 'car-less-than-car
+			(--map (or (-map 'length (s-match it line)) '(0 0))
+			       (list fsharp-ac--dottedIdentRawResidue
+				     fsharp-ac--dottedIdentNormalResidue)))))))
 
 (defun fsharp-ac-can-make-request (&optional quiet)
   "Test whether it is possible to make a request with the compiler binding.
@@ -484,7 +521,7 @@ The current buffer must be an F# file that exists on disk."
         (fsharp-ac-message-safely "Error: buffer not visiting a file."))
       nil)
 
-     ((not (fsharp-ac--process-live-p))
+     ((not (fsharp-ac--process-live-p (fsharp-ac--hostname file)))
       (unless quiet
         (fsharp-ac-message-safely "Error: background intellisense process not running."))
       nil)
@@ -493,7 +530,7 @@ The current buffer must be an F# file that exists on disk."
            (not (fsharp-ac--in-project-p file)))
 
       (unless quiet
-        (fsharp-ac-message-safely "Error: this file is not part of the loaded project."))
+        (fsharp-ac-message-safely "Error: %s is not part of the loaded projects." file))
       nil)
 
      (t
@@ -550,8 +587,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (company-complete)))
 
 (defun fsharp-ac--parse-current-file ()
-  (when (and (eq major-mode 'fsharp-mode)
-             (fsharp-ac-can-make-request t))
+  (when (and (eq major-mode 'fsharp-mode) (fsharp-ac-can-make-request t))
     (fsharp-ac-parse-current-buffer)))
 
 ;;; ----------------------------------------------------------------------------
@@ -573,44 +609,43 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 
 (defun fsharp-ac-parse-errors (data)
   "Extract the errors from the given process response DATA. Return a list of fsharp-error."
-  (save-match-data
-    (let (parsed)
-      (dolist (err data parsed)
-        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" err)
-                                                 (gethash "StartColumn" err)))
-              (end (fsharp-ac-line-column-to-pos (gethash "EndLine" err)
-                                                 (gethash "EndColumn" err)))
-              (face (if (string= "Error" (gethash "Severity" err))
-                        'fsharp-error-face
-                      'fsharp-warning-face))
-              (priority (if (string= "Error" (gethash "Severity" err))
-                            1
-                          0))
-              (msg (gethash "Message" err))
-              (file (gethash "FileName" err)))
-          (add-to-list 'parsed (make-fsharp-error :start beg
-                                                  :end   end
-                                                  :face  face
-                                                  :priority priority
-                                                  :text  msg
-                                                  :file  file)))))))
-
+  (nreverse
+   (--map
+    (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
+                                             (gethash "StartColumn" it)))
+          (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
+                                             (gethash "EndColumn" it)))
+          (face (if (string= "Error" (gethash "Severity" it))
+                    'fsharp-error-face
+                  'fsharp-warning-face))
+          (priority (if (string= "Error" (gethash "Severity" it))
+                        1
+                      0))
+          (msg (gethash "Message" it))
+          (file (fsharp-ac--tramp-file (gethash "FileName" it))))
+      (make-fsharp-error :start beg
+                         :end   end
+                         :face  face
+                         :priority priority
+                         :text  msg
+                         :file  file))
+    data)))
 
 (defun fsharp-ac--parse-symbol-uses (data)
   "Extract the symbol uses from the given process response DATA."
   (save-match-data
-    (let (parsed)
-      (dolist (use data parsed)
-        (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" use)
-                                                 (gethash "StartColumn" use)))
-              (end (fsharp-ac-line-column-to-pos (gethash "EndLine" use)
-                                                 (gethash "EndColumn" use)))
-              (face 'fsharp-usage-face)
-              (file (gethash "FileName" use)))
-          (add-to-list 'parsed (make-fsharp-symbol-use :start beg
-                                                       :end   end
-                                                       :face  face
-                                                       :file  file)))))))
+    (--map
+     (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
+					      (gethash "StartColumn" it)))
+	   (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
+					      (gethash "EndColumn" it)))
+	   (face 'fsharp-usage-face)
+	   (file (fsharp-ac--tramp-file (gethash "FileName" it))))
+       (make-fsharp-symbol-use :start beg
+			       :end   end
+			       :face  face
+			       :file  file))
+     data)))
 
 (defun fsharp-ac/show-error-overlay (err)
   "Draw overlays in the current buffer to represent fsharp-error ERR."
@@ -633,10 +668,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
          (end  (fsharp-symbol-use-end use))
          (face (fsharp-symbol-use-face use))
          (file (fsharp-symbol-use-file use)))
-    (unless (or (not (string= (fsharp-ac--buffer-truename)
-                              (file-truename file)))
-      (let ((ov (make-overlay beg end)))
-        (overlay-put ov 'face face))))))
+    (when (string= (fsharp-ac--buffer-truename) (file-truename file))
+      (-> (make-overlay beg end)
+          (overlay-put 'face face)))))
 
 (defun fsharp-ac-clear-errors ()
   (interactive)
@@ -678,21 +712,20 @@ around to the start of the buffer."
   (when reset
     (goto-char (point-min)))
 
-  (let ((pos (fsharp-ac-error-position n-steps fsharp-ac-errors)))
-    (if pos
-        (goto-char pos)
-      (error "No more F# errors"))))
+  (-if-let (pos (fsharp-ac-error-position n-steps fsharp-ac-errors))
+      (goto-char pos)
+    (error "No more F# errors")))
 
 (defun fsharp-ac--has-faces-p (ov &rest faces)
   (let ((face (overlay-get ov 'face)))
     (--first (equal face it) faces)))
 
 (defun fsharp-ac/error-overlay-at (pos)
-  (-first (lambda (ov) (fsharp-ac--has-faces-p ov 'fsharp-error-face 'fsharp-warning-face))
+  (--first (fsharp-ac--has-faces-p it 'fsharp-error-face 'fsharp-warning-face)
           (overlays-at pos)))
 
 (defun fsharp-ac/usage-overlay-at (pos)
-  (-first (lambda (ov) (fsharp-ac--has-faces-p ov 'fsharp-usage-face))
+  (--first (fsharp-ac--has-faces-p it 'fsharp-usage-face)
           (overlays-at pos)))
 
 ;;; HACK: show-error-at point checks last position of point to prevent
@@ -715,29 +748,27 @@ around to the start of the buffer."
 (defun fsharp-ac--get-msg (proc)
   (with-current-buffer (process-buffer proc)
     (goto-char (point-min))
-    (let ((eofloc (search-forward "\n" nil t)))
-      (when eofloc
-        (when (numberp fsharp-ac-debug)
-          (cond
-           ((eq fsharp-ac-debug 1)
-            (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
+    (-when-let (eofloc (search-forward "\n" nil t))
+      (when (numberp fsharp-ac-debug)
+        (cond
+         ((eq fsharp-ac-debug 1)
+          (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
 
-           ((>= fsharp-ac-debug 2)
-            (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
+         ((>= fsharp-ac-debug 2)
+          (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
 
-        (let ((json-array-type 'list)
-              (json-object-type 'hash-table)
-              (json-key-type 'string))
-          (condition-case nil
-              (progn
+      (let ((json-array-type 'list)
+            (json-object-type 'hash-table)
+            (json-key-type 'string))
+        (condition-case nil
+            (prog2
                 (goto-char (point-min))
-                (let ((msg (json-read)))
-                  (delete-region (point-min) (+ (point) 1))
-                  msg))
-            (error
-             (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
-             (message "Error: F# completion process produced malformed JSON (%s)."
-                      (buffer-substring-no-properties (point-min) (point-max))))))))))
+                (json-read)
+              (delete-region (point-min) (1+ (point))))
+          (error
+           (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
+           (message "Error: F# completion process produced malformed JSON (%s)."
+                    (buffer-substring-no-properties (point-min) (point-max)))))))))
 
 (defun fsharp-ac-filter-output (proc str)
   "Filter STR from the completion process PROC and handle appropriately."
@@ -748,27 +779,24 @@ around to the start of the buffer."
       (insert-before-markers (if (string-prefix-p "\ufeff" str)
                  (substring str 1)
                    str))))
-  (let ((msg (fsharp-ac--get-msg proc)))
-    (while msg
+  (let (msg)
+    (while (setq msg (fsharp-ac--get-msg proc))
       (let ((kind (gethash "Kind" msg))
             (data (gethash "Data" msg)))
         (fsharp-ac--log (format "Received '%s' message of length %d\n"
                                 kind
                                 (hash-table-size msg)))
-        (cond
-         ((s-equals? "error" kind) (fsharp-ac-handle-process-error data))
-         ((s-equals? "info" kind) (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
-         ((s-equals? "completion" kind) (fsharp-ac-handle-completion data))
-         ((s-equals? "helptext" kind) (fsharp-ac-handle-doctext data))
-         ((s-equals? "errors" kind) (fsharp-ac-handle-errors data))
-         ((s-equals? "project" kind) (fsharp-ac-handle-project data))
-         ((s-equals? "tooltip" kind) (fsharp-ac-handle-tooltip data))
-         ((s-equals? "finddecl" kind) (fsharp-ac-visit-definition data))
-         ((s-equals? "symboluse" kind) (fsharp-ac--handle-symboluse data))
-       (t
-        (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind))))
-
-    (setq msg (fsharp-ac--get-msg proc)))))
+        (pcase kind
+         ("error" (fsharp-ac-handle-process-error data))
+         ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
+         ("completion" (fsharp-ac-handle-completion data))
+         ("helptext" (fsharp-ac-handle-doctext data))
+         ("errors" (fsharp-ac-handle-errors data))
+         ("project" (fsharp-ac-handle-project data))
+         ("tooltip" (fsharp-ac-handle-tooltip data))
+         ("finddecl" (fsharp-ac-visit-definition data))
+         ("symboluse" (fsharp-ac--handle-symboluse data))
+	 (_ (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind)))))))
 
 (defun fsharp-ac-handle-completion (data)
   (setq fsharp-ac-current-candidate data
@@ -781,7 +809,7 @@ around to the start of the buffer."
            fsharp-ac-current-helptext))
 
 (defun fsharp-ac-visit-definition (data)
-  (let* ((file (gethash "File" data))
+  (let* ((file (fsharp-ac--tramp-file (gethash "File" data)))
          (line (gethash "Line" data))
          (col (gethash "Column" data)))
     (ring-insert find-tag-marker-ring (point-marker))
@@ -790,12 +818,10 @@ around to the start of the buffer."
 
 (defun fsharp-ac-handle-errors (data)
   "Display error overlays and set buffer-local error variables for error navigation."
-  (when (eq major-mode 'fsharp-mode)
-    (unless (or (active-minibuffer-window) cursor-in-echo-area)
-      (fsharp-ac-clear-errors)
-      (let ((errs (fsharp-ac-parse-errors data)))
-        (setq fsharp-ac-errors errs)
-        (mapc 'fsharp-ac/show-error-overlay errs)))))
+  (when (and (eq major-mode 'fsharp-mode) (not (active-minibuffer-window)) (not cursor-in-echo-area))
+    (fsharp-ac-clear-errors)
+    (setq fsharp-ac-errors (fsharp-ac-parse-errors data))
+    (mapc 'fsharp-ac/show-error-overlay fsharp-ac-errors)))
 
 (defun fsharp-ac--format-tooltip-overload (overload)
   "Format a single overload"
@@ -813,7 +839,7 @@ around to the start of the buffer."
 (defun fsharp-ac--format-tooltip (items)
   "Format a list of items as a tooltip"
   (let ((result (s-join "\n--------------------\n"
-                           (-map (lambda (i) (fsharp-ac--format-tooltip-overloads (< (length items) 2) i)) items))))
+                           (--map (fsharp-ac--format-tooltip-overloads (< (length items) 2) it) items))))
       (s-chomp result)))
 
 (defun fsharp-ac--handle-symboluse (data)
@@ -856,8 +882,9 @@ display a short summary in the minibuffer."
         (princ str)))))
 
 (defun fsharp-ac-handle-project (data)
-  (let* ((project (gethash "Project" data))
-         (files (-map 'file-truename (gethash "Files" data)))
+  (let* ((project (fsharp-ac--tramp-file (gethash "Project" data)))
+         (files (--map (file-truename (fsharp-ac--tramp-file it))
+                       (gethash "Files" data)))
          (oldprojdata (gethash project fsharp-ac--project-data)))
 
     ;; Use the canonicalised filenames
@@ -866,11 +893,11 @@ display a short summary in the minibuffer."
     ;; Remove any files previously associated with this
     ;; project as if reloading, they may have changed
     (when oldprojdata
-      (-each (gethash "Files" oldprojdata)
-        (lambda (f) (remhash f fsharp-ac--project-files))))
+      (--each (gethash "Files" oldprojdata)
+        (remhash it fsharp-ac--project-files)))
 
     (puthash project data fsharp-ac--project-data)
-    (-map (lambda (f) (puthash f project fsharp-ac--project-files)) files)
+    (--each files (puthash it project fsharp-ac--project-files))
 
     (when (not oldprojdata)
       (fsharp-ac-message-safely "Loaded F# project '%s'" (file-relative-name project)))
