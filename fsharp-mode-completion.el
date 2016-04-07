@@ -365,6 +365,23 @@ For indirect buffers return the truename of the base buffer."
   (fsharp-ac-make-completion-request))
     (funcall callback nil)))
 
+(defun fsharp-company-sort-preferring-exact-or-same-case (candidates)
+  (let* ((exact nil)
+        (sameprefix nil)
+        (others nil)
+        (prefix (fsharp-ac-get-prefix))
+        (plen (length prefix)))
+    (mapc (lambda (candidate)
+            (if (equal prefix candidate)
+                (push candidate exact)
+              (if (equal prefix (substring candidate 0 plen))
+                  (push candidate sameprefix)
+                (push candidate others))))
+          candidates)
+    (append exact sameprefix others)))
+
+(add-to-list 'company-transformers #'fsharp-company-sort-preferring-exact-or-same-case)
+
 (defun fsharp-ac-add-annotation-prop (s candidate)
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
 
