@@ -382,10 +382,9 @@ If HOST is nil, check process on local system."
   (setq fsharp-ac-current-candidate nil)
   (clrhash fsharp-ac-current-helptext)
   (let ((line (line-number-at-pos)))
-    (if (not (eq fsharp-ac-last-parsed-line line))
-        (progn
-          (setq fsharp-ac-last-parsed-line line)
-          (fsharp-ac-parse-current-buffer)))
+    (unless (eq fsharp-ac-last-parsed-line line)
+      (setq fsharp-ac-last-parsed-line line)
+      (fsharp-ac-parse-current-buffer))
     (fsharp-ac-send-pos-request
    "completion"
    (fsharp-ac--buffer-truename)
