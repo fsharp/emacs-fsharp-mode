@@ -11,8 +11,8 @@ The following features are under development:
 
 - Intelligent indentation
 
-Requires Emacs 24+, Mono 3.10.X and F# 3.0. Without F# 3.0 the background compiler
-process will not function correctly.
+Requires Emacs 24+, Mono 3.10.X and F# 3.0 or higher. Without F# 3.0 (or higher)
+the background compiler process will not function correctly.
 
 ## Build Status
 
@@ -94,9 +94,12 @@ buffer. When the intellisense process is running, the following features will be
 
 fsharp-mode offers intellisense for projects using the MSBuild/`.fsproj`
 format. This allows project files to be shared with other developers using
-Visual Studio and Xamarin Studio/Monodevelop. To create a new project file,
-it is recommended that you take an existing project file and modify the list
-of source files. One such project file can be found in the fsharp-mode repository [here](https://github.com/fsharp/emacs-fsharp-mode/blob/master/test/Test1/Test1.fsproj).
+Visual Studio and Xamarin Studio/Monodevelop. To create a new project file, it
+is recommended that you take an existing project file and modify the list of
+source files. One such project file can be found in the fsharp-mode repository
+[here](https://github.com/fsharp/emacs-fsharp-mode/blob/master/test/Test1/Test1.fsproj). Alternatively
+projects generated via [forge](https://github.com/fsprojects/forge) are setup
+with the needed files.
 
 If, on loading a new `.fs` file, a `.fsproj` file is found in the
 current or an enclosing directory, the intellisense process will be
