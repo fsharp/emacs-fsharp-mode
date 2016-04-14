@@ -1,3 +1,9 @@
+## 1.8.1 (2016-04-14)
+
+Features:
+  - #66: Tramp support (@juergenhoetzel).
+  - #69: Prefer exact case sort in completion list (@nosami).
+
 ## 1.8.0 (2016-04-05)
 
 Features:

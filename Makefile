@@ -130,6 +130,7 @@ emacs-fsharp-mode-bin:
 	git clone git@github.com:/rneatherway/emacs-fsharp-mode-bin
 
 release: update-version emacs-fsharp-mode-bin $(ac_exe)
+	cd emacs-fsharp-mode-bin && git pull
 	cp $(bin_d)/*.exe $(bin_d)/*.exe.config $(bin_d)/*.dll emacs-fsharp-mode-bin
 	cp $(src_files) emacs-fsharp-mode-bin
 	cd emacs-fsharp-mode-bin && git add --all
