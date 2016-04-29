@@ -24,8 +24,8 @@
  **************************************************************)»
 «m:// »«x:TODO : Recreate 'size' as a measure type on int
 »«k:type» «t:size» = int
-«k:let» «k:inline» «f:size_of_int» («v:n» : «t:int») : «t:size »= n
-«k:let» «k:inline» «f:int_of_size» («v:s» : «t:size») : «t:int »= s
+«k:let» «k:inline» «f:size_of_int» («v:n» : «t:int») : «t:size» = n
+«k:let» «k:inline» «f:int_of_size» («v:s» : «t:size») : «t:int» = s
   
 «x:(* Tokens are one of the following : *)»
 «k:type» «t:pp_token» =
@@ -84,9 +84,9 @@
    size is set when the size of the block is known
    len is the declared length of the token. *)»
 «k:type» «t:pp_queue_elem» = {
-    «k:mutable» elem_size : size;
-    token : pp_token;
-    length : int;
+    «k:mutable» elem_size : «t:size»;
+    token : «t:pp_token»;
+    length : «t:int»;
 }
 
 «x:(* Scan stack:
@@ -119,63 +119,63 @@
 
 «x:(* The formatter specific tag handling functions. *)»
 «k:type» «t:formatter_tag_functions» = {
-    mark_open_tag : «t:tag »-> string;
-    mark_close_tag : «t:tag »-> string;
-    print_open_tag : «t:tag »-> unit;
-    print_close_tag : «t:tag »-> unit;
+    mark_open_tag : «t:tag» -> string;
+    mark_close_tag : «t:tag» -> string;
+    print_open_tag : «t:tag» -> unit;
+    print_close_tag : «t:tag» -> unit;
   }
 
 «x:(* A formatter with all its machinery. *)»
 «k:type» «t:formatter» = {
-    «k:mutable» pp_scan_stack : pp_scan_elem list;
-    «k:mutable» pp_format_stack : pp_format_elem list;
-    «k:mutable» pp_tbox_stack : tblock list;
-    «k:mutable» pp_tag_stack : tag list;
-    «k:mutable» pp_mark_stack : tag list;
+    «k:mutable» pp_scan_stack : «t:pp_scan_elem list»;
+    «k:mutable» pp_format_stack : «t:pp_format_elem list»;
+    «k:mutable» pp_tbox_stack : «t:tblock list»;
+    «k:mutable» pp_tag_stack : «t:tag list»;
+    «k:mutable» pp_mark_stack : «t:tag list»;
     «x:(* Global variables: default initialization is
      set_margin 78
      set_min_space_left 0. *)»
     «m:/// »«x:Value of right margin.
-»    «k:mutable» pp_margin : int;
+»    «k:mutable» pp_margin : «t:int»;
     «m:/// »«x:Minimal space left before margin, when opening a block.
-»    «k:mutable» pp_min_space_left : int;
+»    «k:mutable» pp_min_space_left : «t:int»;
     «m:/// »«x:Maximum value of indentation: no blocks can be opened further.
-»    «k:mutable» pp_max_indent : int;
+»    «k:mutable» pp_max_indent : «t:int»;
     «m:/// »«x:Space remaining on the current line.
-»    «k:mutable» pp_space_left : int;
+»    «k:mutable» pp_space_left : «t:int»;
     «m:/// »«x:Current value of indentation.
-»    «k:mutable» pp_current_indent : int;
+»    «k:mutable» pp_current_indent : «t:int»;
     «m:/// »«x:True when the line has been broken by the pretty-printer.
-»    «k:mutable» pp_is_new_line : bool;
+»    «k:mutable» pp_is_new_line : «t:bool»;
     «m:/// »«x:Total width of tokens already printed.
-»    «k:mutable» pp_left_total : int;
+»    «k:mutable» pp_left_total : «t:int»;
     «m:/// »«x:Total width of tokens ever put in queue.
-»    «k:mutable» pp_right_total : int;
+»    «k:mutable» pp_right_total : «t:int»;
     «m:/// »«x:Current number of opened blocks.
-»    «k:mutable» pp_curr_depth : int;
+»    «k:mutable» pp_curr_depth : «t:int»;
     «m:/// »«x:Maximum number of blocks which can be simultaneously opened.
-»    «k:mutable» pp_max_boxes : int;
+»    «k:mutable» pp_max_boxes : «t:int»;
     «m:/// »«x:Ellipsis string.
-»    «k:mutable» pp_ellipsis : string;
+»    «k:mutable» pp_ellipsis : «t:string»;
     «m:/// »«x:Output function.
-»    «k:mutable» pp_out_string : string -> int -> int -> unit;
+»    «k:mutable» pp_out_string : «t:string» -> int -> int -> unit;
     «m:/// »«x:Flushing function.
-»    «k:mutable» pp_out_flush : «t:unit »-> unit;
+»    «k:mutable» pp_out_flush : «t:unit» -> unit;
     «m:/// »«x:Output of new lines.
-»    «k:mutable» pp_out_newline : «t:unit »-> unit;
+»    «k:mutable» pp_out_newline : «t:unit» -> unit;
     «m:/// »«x:Output of indentation spaces.
-»    «k:mutable» pp_out_spaces : «t:int »-> unit;
+»    «k:mutable» pp_out_spaces : «t:int» -> unit;
     «m:/// »«x:Are tags printed?
-»    «k:mutable» pp_print_tags : bool;
+»    «k:mutable» pp_print_tags : «t:bool»;
     «m:/// »«x:Are tags marked?
-»    «k:mutable» pp_mark_tags : bool;
+»    «k:mutable» pp_mark_tags : «t:bool»;
     «m:/// »«x:Find opening and closing markers of tags.
-»    «k:mutable» pp_mark_open_tag : tag -> string;
-    «k:mutable» pp_mark_close_tag : «t:tag »-> string;
-    «k:mutable» pp_print_open_tag : «t:tag »-> unit;
-    «k:mutable» pp_print_close_tag : «t:tag »-> unit;
+»    «k:mutable» pp_mark_open_tag : «t:tag» -> string;
+    «k:mutable» pp_mark_close_tag : «t:tag» -> string;
+    «k:mutable» pp_print_open_tag : «t:tag» -> unit;
+    «k:mutable» pp_print_close_tag : «t:tag» -> unit;
     «m:/// »«x:The pretty-printer queue.
-»    «k:mutable» pp_queue : pp_queue_elem queue
+»    «k:mutable» pp_queue : «t:pp_queue_elem queue»
   }
 
 «x:(**************************************************************
@@ -791,10 +791,10 @@
 «k:let» «f:pp_get_margin» «v:state» () = state.pp_margin
   
 «k:type» «t:formatter_out_functions» = {
-    out_string : «t:string »-> int -> int -> unit;
-    out_flush : «t:unit »-> unit;
-    out_newline : «t:unit »-> unit;
-    out_spaces : «t:int »-> unit
+    out_string : «t:string» -> int -> int -> unit;
+    out_flush : «t:unit» -> unit;
+    out_newline : «t:unit» -> unit;
+    out_spaces : «t:int» -> unit
   }
 
 «k:let» «f:pp_set_formatter_out_functions» «v:state»
@@ -1113,12 +1113,12 @@
         («k:if» to_s
          «k:then»
            pp_print_as_string
-             ((Obj.magic printer : «t:unit »-> _ -> string) () arg)
+             ((Obj.magic printer : «t:unit» -> _ -> string) () arg)
          «k:else» printer ppf arg;
          doprn n i)
       «k:and» «f:cont_t» «v:n» «v:printer» «v:i» =
         («k:if» to_s
-         «k:then» pp_print_as_string ((Obj.magic printer : «t:unit »-> string) ())
+         «k:then» pp_print_as_string ((Obj.magic printer : «t:unit» -> string) ())
          «k:else» printer ppf;
          doprn n i)
       «k:and» «f:cont_f» «v:n» «v:i» = (pp_print_flush ppf (); doprn n i)
@@ -1216,13 +1216,13 @@
                  «k:and» «f:cont_a» «v:n» «v:printer» «v:arg» «v:i» =
                    «k:let» «v:s» =
                      «k:if» to_s
-                     «k:then» (Obj.magic printer : «t:unit »-> _ -> string) () arg
+                     «k:then» (Obj.magic printer : «t:unit» -> _ -> string) () arg
                      «k:else» exstring printer arg
                    «k:in» get (s :: s0 :: accu) n i i
                  «k:and» «f:cont_t» «v:n» «v:printer» «v:i» =
                    «k:let» «v:s» =
                      «k:if» to_s
-                     «k:then» (Obj.magic printer : «t:unit »-> string) ()
+                     «k:then» (Obj.magic printer : «t:unit» -> string) ()
                      «k:else» exstring («k:fun» «v:ppf» () -> printer ppf) ()
                    «k:in» get (s :: s0 :: accu) n i i
                  «k:and» «f:cont_f» «v:_n» «v:i» =

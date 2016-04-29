@@ -53,7 +53,9 @@ FILE is interpreted as relative to this source directory."
 (ert-deftest fsharp-mode-face-file-test ()
   (let ((coding-system-for-read 'utf-8))
     (should (fsharp-mode-face-test-apps "apps/FQuake3/NativeMappings.fs"))
-    (should (fsharp-mode-face-test-apps "apps/FSharp.Compatibility/Format.fs"))))
+    (should (fsharp-mode-face-test-apps "apps/FSharp.Compatibility/Format.fs"))
+    (should (fsharp-mode-face-test-apps "apps/RecordHighlighting/Test.fsx"))
+            ))
 
 
 (defun fsharp-font-lock-test (faceup)

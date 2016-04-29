@@ -170,7 +170,7 @@
   `(,fsharp-member-function-regexp 1 font-lock-function-name-face)
   `(,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
   ;; `(,fsharp-constructor-regexp 1 font-lock-function-name-face)
-  `("[^:]:\\s-*\\(\\<[A-Za-z_'][^,)=<-]*\\)\\s-*\\(<[^>]*>\\)?"
+  `("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
     (1 font-lock-type-face)             ; type annotations
     ;; HACK: font-lock-negation-char-face is usually the same as
     ;; 'default'. use this to prevent generic type arguments from

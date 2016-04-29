@@ -1,0 +1,28 @@
+«k:type» «t:RecordTest1» = { something: «t:int»
+                     another: «t:string» }
+
+«k:type» «t:RecordTest2» = { something :«t:int»; another :«t:string» }
+
+«k:type» «t:RecordTest3» = { something : «t:float»; another: «t:float»; third :«t:float»; }
+
+«k:type» «t:RecordTest4» = {
+    something: «t:int»
+    another: «t:string» }
+
+«k:type» «t:RecordTest5» =
+    { something: «t:int»
+      another: «t:string» }
+
+«k:type» «t:RecordTest6» =
+    {
+        something: «t:int»
+        another: «t:string»
+        third: «t:Option»«n:<int>»
+    }
+
+«k:type» «t:RecordTest7» =
+    {
+    something: «t:int»
+    another: «t:string»
+    third: «t:int option»
+    }
