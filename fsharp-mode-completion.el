@@ -36,7 +36,7 @@
 (autoload 'pos-tip-show "pos-tip")
 (autoload 'popup-tip "popup")
 
-(declare-function fsharp-doc/format-for-minibuffer "fsharp-doc.el" (str))
+(declare-function fsharp-fontify-string "fsharp-doc.el" (str))
 (declare-function fsharp-mode/find-fsproj "fsharp-mode.el" (dir-or-file))
 
 ;;; User-configurable variables
