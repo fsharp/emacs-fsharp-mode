@@ -537,12 +537,14 @@ The current buffer must be an F# file that exists on disk."
       (and (not (syntax-ppss-context (syntax-ppss)))
            (eq fsharp-ac-status 'idle))))))
 
-(defvar fsharp-ac-awaiting-tooltip nil)
-
 (defun fsharp-ac/show-tooltip-at-point ()
   "Display a tooltip for the F# symbol at POINT."
   (interactive)
-  (fsharp-ac/show-typesig-at-point))
+  (when (fsharp-ac-can-make-request)
+    (fsharp-ac-send-pos-request "tooltip"
+                                (fsharp-ac--buffer-truename)
+                                (line-number-at-pos)
+                                (+ 1 (current-column)))))
 
 (defun fsharp-ac/show-typesig-at-point (&optional quiet)
   "Display the type signature for the F# symbol at POINT. Pass
@@ -857,7 +859,6 @@ has requested a popup tooltip, display a popup."
     (unless (or (active-minibuffer-window) cursor-in-echo-area)
       (let ((data (fsharp-ac--format-tooltip data)))
         (progn
-          (setq fsharp-ac-awaiting-tooltip nil)
           (if fsharp-ac-use-popup
               (fsharp-ac/show-popup data)
             (fsharp-ac/show-info-window data)))))))
