@@ -168,13 +168,6 @@ function bound to VAR in BODY. "
         (fsharp-ac-filter-output nil tooltip-msg)
         (should-match "foo" tip)))))
 
-(check-handler "does not show popup if typesig is requested"
-  (let ((fsharp-ac-use-popup t))
-    (stub-fn popup-tip called
-      (fsharp-ac/show-typesig-at-point)
-      (fsharp-ac-filter-output nil tooltip-msg)
-      (should-not called))))
-
 (check-handler "does not show popup if use-popup is nil"
   (let ((fsharp-ac-use-popup nil))
     (stub-fn popup-tip called
@@ -191,10 +184,14 @@ function bound to VAR in BODY. "
       (fsharp-ac-filter-output nil tooltip-msg)
       (should-match "fsharp info" (buffer-name (window-buffer win))))))
 
+(defconst typesig-msg
+  "{\"Kind\": \"typesig\", \"Data\": \"foo\" }\n"
+  "A simple tooltip message")
+
 (check-handler "displays typesig in minibuffer if typesig is requested"
   (noflet ((message (fmt &rest args) (setq sig (apply 'format fmt args))))
     (fsharp-ac/show-typesig-at-point)
-    (fsharp-ac-filter-output nil tooltip-msg)
+    (fsharp-ac-filter-output nil typesig-msg)
     (should= "foo" sig)))
 
 ;;; Residue computation

@@ -91,38 +91,6 @@
     (delete-region (point-min) (point-max))
     (font-lock-fontify-region (point) (progn (insert str ";") (point)))
     (buffer-substring (point-min) (1- (point-max)))))
-;;; ----------------------------------------------------------------------------
-
-(defun fsharp-doc/format-for-minibuffer (str)
-  "Parse the result from the F# process."
-  (destructuring-bind (x &rest xs) (split-string str "[\r\n]")
-    (let ((line (if (string-match-p "^Multiple" x) (car-safe xs) x))
-          (name (fsharp-doc-extract-full-name str)))
-      (fsharp-fontify-string
-       (fsharp-doc-tidy-result
-        (cond
-         ;; Don't fully-qualify let-bindings.
-         ((string-match-p "^val" line)
-          line)
-
-         ;; Extract type identifier.
-         (name
-          (fsharp-doc-replace-identifier line name))
-
-         (t
-          line)))))))
-
-(defun fsharp-doc-extract-full-name (str)
-  (when (string-match "Full name: \\(.*\\)$" str)
-    (match-string 1 str)))
-
-(defun fsharp-doc-replace-identifier (str fullname)
-  (replace-regexp-in-string
-   "^\\w+ \\(public \\|private \\|internal \\)?\\(.*?\\) "
-   fullname str 'fixcase "\2" 2))
-
-(defun fsharp-doc-tidy-result (str)
-  (replace-regexp-in-string "[ ]*=[ ]*" "" str))
 
 ;;; ----------------------------------------------------------------------------
 

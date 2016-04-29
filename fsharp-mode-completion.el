@@ -36,7 +36,7 @@
 (autoload 'pos-tip-show "pos-tip")
 (autoload 'popup-tip "popup")
 
-(declare-function fsharp-doc/format-for-minibuffer "fsharp-doc.el" (str))
+(declare-function fsharp-fontify-string "fsharp-doc.el" (str))
 (declare-function fsharp-mode/find-fsproj "fsharp-mode.el" (dir-or-file))
 
 ;;; User-configurable variables
@@ -537,13 +537,14 @@ The current buffer must be an F# file that exists on disk."
       (and (not (syntax-ppss-context (syntax-ppss)))
            (eq fsharp-ac-status 'idle))))))
 
-(defvar fsharp-ac-awaiting-tooltip nil)
-
 (defun fsharp-ac/show-tooltip-at-point ()
   "Display a tooltip for the F# symbol at POINT."
   (interactive)
-  (setq fsharp-ac-awaiting-tooltip t)
-  (fsharp-ac/show-typesig-at-point))
+  (when (fsharp-ac-can-make-request)
+    (fsharp-ac-send-pos-request "tooltip"
+                                (fsharp-ac--buffer-truename)
+                                (line-number-at-pos)
+                                (+ 1 (current-column)))))
 
 (defun fsharp-ac/show-typesig-at-point (&optional quiet)
   "Display the type signature for the F# symbol at POINT. Pass
@@ -551,7 +552,7 @@ on QUIET to FSHARP-AC-CAN-MAKE-REQUEST. This is a bit of hack to
 prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request quiet)
-     (fsharp-ac-send-pos-request "tooltip"
+     (fsharp-ac-send-pos-request "typesig"
                                  (fsharp-ac--buffer-truename)
                                  (line-number-at-pos)
                                  (+ 1 (current-column)))))
@@ -794,6 +795,7 @@ around to the start of the buffer."
          ("errors" (fsharp-ac-handle-errors data))
          ("project" (fsharp-ac-handle-project data))
          ("tooltip" (fsharp-ac-handle-tooltip data))
+         ("typesig" (fsharp-ac--handle-typesig data))
          ("finddecl" (fsharp-ac-visit-definition data))
          ("symboluse" (fsharp-ac--handle-symboluse data))
 	 (_ (fsharp-ac-message-safely "Error: unrecognised message kind: '%s'" kind)))))))
@@ -851,19 +853,19 @@ around to the start of the buffer."
 
 (defun fsharp-ac-handle-tooltip (data)
   "Display information from the background process. If the user
-has requested a popup tooltip, display a popup. Otherwise,
-display a short summary in the minibuffer."
+has requested a popup tooltip, display a popup."
   ;; Do not display if the current buffer is not an fsharp buffer.
   (when (eq major-mode 'fsharp-mode)
     (unless (or (active-minibuffer-window) cursor-in-echo-area)
       (let ((data (fsharp-ac--format-tooltip data)))
-        (if fsharp-ac-awaiting-tooltip
-            (progn
-              (setq fsharp-ac-awaiting-tooltip nil)
-              (if fsharp-ac-use-popup
-                  (fsharp-ac/show-popup data)
-                (fsharp-ac/show-info-window data)))
-          (fsharp-ac-message-safely "%s" (fsharp-doc/format-for-minibuffer data)))))))
+        (progn
+          (if fsharp-ac-use-popup
+              (fsharp-ac/show-popup data)
+            (fsharp-ac/show-info-window data)))))))
+
+(defun fsharp-ac--handle-typesig (data)
+  "Display in the minibuffer."
+  (fsharp-ac-message-safely "%s" (fsharp-fontify-string data)))
 
 (defun fsharp-ac/show-popup (str)
   (if (display-graphic-p)
