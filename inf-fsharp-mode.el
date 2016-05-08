@@ -104,7 +104,7 @@ be sent from another buffer in fsharp mode.
 
 (defun fsharp-run-process-if-needed (&optional cmd)
   "Launch fsi if needed, using CMD if supplied."
-  (if (comint-check-proc inferior-fsharp-buffer-name) nil
+  (unless (comint-check-proc inferior-fsharp-buffer-name)
     (if (not cmd)
         (if (comint-check-proc inferior-fsharp-buffer-name)
             (setq cmd inferior-fsharp-program)
@@ -117,9 +117,7 @@ be sent from another buffer in fsharp mode.
                                   inferior-fsharp-buffer-subname
                                   (car cmdlist) nil (cdr cmdlist))
         (inferior-fsharp-mode))
-      (display-buffer inferior-fsharp-buffer-name)
-      t)
-    ))
+      (display-buffer inferior-fsharp-buffer-name))))
 
 ;;;###autoload
 (defun run-fsharp (&optional cmd)
