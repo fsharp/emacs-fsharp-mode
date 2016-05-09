@@ -333,8 +333,8 @@ Otherwise, treat as a stand-alone file."
       (when (y-or-n-p (concat "Do you want to save \"" name "\" before
 loading it? "))
         (save-buffer)))
-    (save-excursion (fsharp-run-process-if-needed))
-    (save-excursion (fsharp-simple-send inferior-fsharp-buffer-name command))))
+    (fsharp-run-process-if-needed)
+    (fsharp-simple-send inferior-fsharp-buffer-name command)))
 
 (defun fsharp-show-subshell ()
   (interactive)

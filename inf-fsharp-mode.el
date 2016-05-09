@@ -104,22 +104,17 @@ be sent from another buffer in fsharp mode.
 
 (defun fsharp-run-process-if-needed (&optional cmd)
   "Launch fsi if needed, using CMD if supplied."
-  (if (comint-check-proc inferior-fsharp-buffer-name) nil
-    (if (not cmd)
-        (if (comint-check-proc inferior-fsharp-buffer-name)
-            (setq cmd inferior-fsharp-program)
-          (setq cmd (read-from-minibuffer "fsharp toplevel to run: "
-                                          inferior-fsharp-program))))
-    (setq inferior-fsharp-program cmd)
-    (let ((cmdlist (inferior-fsharp-args-to-list cmd))
+  (unless (comint-check-proc inferior-fsharp-buffer-name)
+    (setq inferior-fsharp-program
+	  (or cmd (read-from-minibuffer "fsharp toplevel to run: "
+					inferior-fsharp-program)))
+    (let ((cmdlist (inferior-fsharp-args-to-list inferior-fsharp-program))
           (process-connection-type nil))
       (with-current-buffer (apply (function make-comint)
                                   inferior-fsharp-buffer-subname
                                   (car cmdlist) nil (cdr cmdlist))
         (inferior-fsharp-mode))
-      (display-buffer inferior-fsharp-buffer-name)
-      t)
-    ))
+      (display-buffer inferior-fsharp-buffer-name))))
 
 ;;;###autoload
 (defun run-fsharp (&optional cmd)
