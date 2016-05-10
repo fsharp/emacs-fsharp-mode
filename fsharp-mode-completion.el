@@ -658,7 +658,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
          (file (fsharp-error-file err)))
     (unless (or (not (string= (fsharp-ac--buffer-truename)
                               (file-truename file)))
-      (let ((ov (make-overlay beg end)))
+      (let ((ov (make-overlay beg end nil t)))
         (overlay-put ov 'face face)
         (overlay-put ov 'help-echo txt)
         (overlay-put ov 'priority priority))))))
@@ -670,7 +670,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
          (face (fsharp-symbol-use-face use))
          (file (fsharp-symbol-use-file use)))
     (when (string= (fsharp-ac--buffer-truename) (file-truename file))
-      (-> (make-overlay beg end)
+      (-> (make-overlay beg end nil t)
           (overlay-put 'face face)))))
 
 (defun fsharp-ac-clear-errors ()
