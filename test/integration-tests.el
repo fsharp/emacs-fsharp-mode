@@ -63,7 +63,7 @@
        (maphash (lambda (k _) (add-to-list 'projectfiles k)) fsharp-ac--project-files)
        (should-match "Test1/Program.fs" (s-join "" projectfiles))
        (should-match "Test1/FileTwo.fs" (s-join "" projectfiles))
-       (should-match "Test1/bin/Debug/Test1.exe"
+       (should-match (regexp-quote (convert-standard-filename "Test1/bin/Debug/Test1.exe"))
                      (gethash "Output" (gethash project fsharp-ac--project-data)))))))
 
 (ert-deftest check-completion ()
