@@ -162,7 +162,7 @@ Input and output via buffer `*inferior-fsharp*'."
   (fsharp-run-process-if-needed)
     ;; send location to fsi
   (let* ((name (file-truename (buffer-file-name (current-buffer))))
-         (dir (file-name-directory name))
+         (dir (fsharp-ac--localname (file-name-directory name)))
          (line (number-to-string (line-number-at-pos start)))
          (loc (concat "# " line " \"" name "\"\n"))
          (movedir (concat "#silentCd @\"" dir "\";;\n")))
