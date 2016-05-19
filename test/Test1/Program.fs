@@ -9,6 +9,10 @@ let val3 = testval.Terrific val2
 
 let val4 : FileTwo.NewObjectType = testval
 
+type Dummy = Foo | Bar
+
+let val5:Dummy = Foo
+
 [<EntryPoint>]
 let main args =
     printfn "Hello %d" val2

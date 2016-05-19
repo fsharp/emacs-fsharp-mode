@@ -77,6 +77,17 @@
      (beginning-of-line)
      (should (search-forward "X.func")))))
 
+(ert-deftest check-completion-type-annotation ()
+  "Check completion-at-point works with type annotation"
+  (fsharp-mode-wrapper '("Program.fs")
+   (lambda ()
+     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
+     (search-forward "val5:Dummy")
+     (delete-char -3)
+     (let ((company-async-timeout 5)) (company-complete))
+     (beginning-of-line)
+     (should (search-forward "val5:Dummy")))))
+
 (ert-deftest check-completion-no-project ()
   "Check completion-at-point if File is not part of a Project."
   (fsharp-mode-wrapper '("NoProject.fs")
