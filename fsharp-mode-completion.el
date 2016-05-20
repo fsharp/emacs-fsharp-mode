@@ -489,7 +489,7 @@ If HOST is nil, check process on local system."
            (or (regexp ,fsharp-ac--ident)
                (regexp ,fsharp-ac--rawIdent))
            "."))
-         (group (zero-or-more (not (any ".` ,(\t\r\n"))))
+         (group (zero-or-more (not (any ":.` ,(\t\r\n"))))
          string-end))
   "Regexp for a dotted ident with a standard residue.")
 
