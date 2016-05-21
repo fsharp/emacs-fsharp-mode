@@ -248,14 +248,16 @@
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
   ; Some reasonable defaults for company mode
-  (setq company-backends (list 'fsharp-ac/company-backend))
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
   (setq company-idle-delay 0.03)
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
-  
+  (setq company-backends
+        (let ((backends-to-remove '(company-dabbrev company-dabbrev-code company-keywords)))
+              (remove-all #'(lambda (backend) (member backend backends-to-remove)) company-backends)))
+  (add-to-list 'company-backends 'fsharp-ac/company-backend)
 
   ;; Error navigation
   (setq next-error-function 'fsharp-ac/next-error)
@@ -276,6 +278,17 @@
 
   (turn-on-fsharp-doc-mode)
   (run-hooks 'fsharp-mode-hook))
+
+(defun remove-all (predic seq &optional res)
+  "Remove items that could be anywhere inside a nested list"
+  (if (null seq)
+      (reverse res)
+      (cond ((and (not (null (car seq))) (listp (car seq)))
+             (remove-all predic (cdr seq)
+                         (cons (remove-all predic (car seq)) res)))
+            ((funcall predic (car seq))
+             (remove-all predic (cdr seq) res))
+            (t (remove-all predic (cdr seq) (cons (car seq) res))))))
 
 (defun fsharp-mode--load-with-binding (file)
   "Attempt to load FILE using the F# compiler binding.
