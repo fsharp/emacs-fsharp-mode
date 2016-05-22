@@ -248,7 +248,7 @@
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
   ; Some reasonable defaults for company mode
-  (setq company-backends (list 'fsharp-ac/company-backend))
+  (add-to-list 'company-backends 'fsharp-ac/company-backend)
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
   (setq company-idle-delay 0.03)
