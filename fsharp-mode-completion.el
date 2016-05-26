@@ -448,7 +448,10 @@ If HOST is nil, check process on local system."
     (interactive (list 'interactive))
     (cl-case command
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
-        (prefix  (fsharp-ac-get-prefix))
+        (prefix  (or (fsharp-ac-get-prefix)
+                     ;; Don't pass to next backend if we are not inside a string or comment
+                     (when (and (not (nth 3 (syntax-ppss))) (not (nth 4 (syntax-ppss))))
+                       'stop)))
         (ignore-case 't)
         (candidates (cons :async 'fsharp-company-candidates))
         (annotation (get-text-property 0 'annotation arg))
