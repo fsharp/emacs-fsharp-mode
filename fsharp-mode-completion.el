@@ -399,29 +399,12 @@ If HOST is nil, check process on local system."
     ;; just pressed '.' or are at the start of a new line
     (setq fsharp-ac-status 'idle))
 
-  (if (and (fsharp-ac-can-make-request 't)
+  (if (and (fsharp-ac-can-make-request t)
              (eq fsharp-ac-status 'idle))
       (progn
   (setq fsharp-company-callback callback)
   (fsharp-ac-make-completion-request))
     (funcall callback nil)))
-
-(defun fsharp-company-sort-preferring-exact-or-same-case (candidates)
-  (let* ((exact nil)
-        (sameprefix nil)
-        (others nil)
-        (prefix (fsharp-ac-get-prefix))
-        (plen (length prefix)))
-    (mapc (lambda (candidate)
-            (if (equal prefix candidate)
-                (push candidate exact)
-              (if (equal prefix (substring candidate 0 plen))
-                  (push candidate sameprefix)
-                (push candidate others))))
-          candidates)
-    (append exact sameprefix others)))
-
-(add-to-list 'company-transformers #'fsharp-company-sort-preferring-exact-or-same-case)
 
 (defun fsharp-ac-add-annotation-prop (s candidate)
   (propertize s 'annotation (gethash "GlyphChar" candidate)))
@@ -429,7 +412,7 @@ If HOST is nil, check process on local system."
 (defun fsharp-ac-completion-done ()
   (->> (--map (let ((s (gethash "Name" it)))
                 (if (fsharp-ac--isNormalId s) (fsharp-ac-add-annotation-prop s it)
-                        (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s it)))))
+		  (s-append "``" (s-prepend "``" (fsharp-ac-add-annotation-prop s it)))))
               fsharp-ac-current-candidate)
        (funcall fsharp-company-callback)))
 
@@ -439,10 +422,9 @@ If HOST is nil, check process on local system."
       (= ?w (char-syntax c))))
 
 (defun fsharp-ac-get-prefix ()
-  (if (completion-char-p (char-before))
-      (buffer-substring-no-properties (fsharp-ac--residue) (point))
-    ;; returning nil here causes company mode to not fetch completions
-    nil))
+  ;; returning nil here causes company mode to not fetch completions
+  (when (completion-char-p (char-before))
+    (buffer-substring-no-properties (fsharp-ac--residue) (point))))
 
 (defun fsharp-ac/company-backend (command &optional arg &rest ignored)
     (interactive (list 'interactive))
@@ -452,7 +434,8 @@ If HOST is nil, check process on local system."
                      ;; Don't pass to next backend if we are not inside a string or comment
                      (when (and (not (nth 3 (syntax-ppss))) (not (nth 4 (syntax-ppss))))
                        'stop)))
-        (ignore-case 't)
+        (ignore-case t)
+        (sorted t)
         (candidates (cons :async 'fsharp-company-candidates))
         (annotation (get-text-property 0 'annotation arg))
         (doc-buffer (company-doc-buffer (fsharp-ac-document arg)))))

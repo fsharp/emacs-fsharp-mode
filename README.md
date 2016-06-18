@@ -155,6 +155,16 @@ There are a few variables you can adjust to change how fsharp-mode behaves:
   process from being launched in the *future*. If it is already running you
   will also need to quit it using <kbd>C-c C-q</kbd>.
 
+You might also add `company-sort-prefer-same-case-prefix` to the list
+of company transformers to to prefer exact case sort in completion
+lists:
+
+```lisp
+(add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
+```
+
+
+
 ### Key Bindings
 
 If you are new to Emacs, you might want to use the menu (call
