@@ -60,16 +60,6 @@ If set to nil, display in a help buffer instead.")
 (defvar fsharp-ac-intellisense-enabled t
   "Whether autocompletion is automatically triggered on '.'.")
 
-(defface fsharp-error-face
-  '((t :inherit error))
-  "Face used for marking an error in F#"
-  :group 'fsharp)
-
-(defface fsharp-warning-face
-  '((t :inherit warning))
-  "Face used for marking a warning in F#"
-  :group 'fsharp)
-
 (defface fsharp-usage-face
   '((t :inherit match))
   "Face used for marking a usage of a symbol in F#"
@@ -115,6 +105,12 @@ If set to nil, display in a help buffer instead.")
 
 (defvar-local fsharp-ac-last-parsed-line -1
   "The line number that we last requested a parse for completions")
+
+(defvar fsharp-ac-handle-errors-function nil
+  "Function to call to handle errors messages from fsautocomplete.exe.")
+
+(defvar fsharp-ac-handle-lint-function nil
+  "Function to call to handle lint messages from fsautocomplete.exe.")
 
 (defun fsharp-ac--log (str)
   (when fsharp-ac-debug
@@ -262,8 +258,7 @@ For indirect buffers return the truename of the base buffer."
 				      (push project projects)))
 	     fsharp-ac--project-files)
     (--each projects (remhash it fsharp-ac--project-files))
-    (--each files (remhash it fsharp-ac--project-files)))
-  (fsharp-ac-clear-errors))
+    (--each files (remhash it fsharp-ac--project-files))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Display Requests
@@ -314,7 +309,6 @@ If HOST is nil, check process on local system."
     (--each (buffer-list) (with-current-buffer it
 			    (when (eq major-mode 'fsharp-mode)
 			      (setq fsharp-ac-last-parsed-ticks 0)
-			      (fsharp-ac-clear-errors)
 			      (fsharp-ac--clear-symbol-uses))))
     (fsharp-ac--reset)))
 
@@ -594,30 +588,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
       (forward-char (- col 1))
       (point))))
 
-(defun fsharp-ac-parse-errors (data)
-  "Extract the errors from the given process response DATA. Return a list of fsharp-error."
-  (nreverse
-   (--map
-    (let ((beg (fsharp-ac-line-column-to-pos (gethash "StartLine" it)
-                                             (gethash "StartColumn" it)))
-          (end (fsharp-ac-line-column-to-pos (gethash "EndLine" it)
-                                             (gethash "EndColumn" it)))
-          (face (if (string= "Error" (gethash "Severity" it))
-                    'fsharp-error-face
-                  'fsharp-warning-face))
-          (priority (if (string= "Error" (gethash "Severity" it))
-                        1
-                      0))
-          (msg (gethash "Message" it))
-          (file (fsharp-ac--tramp-file (gethash "FileName" it))))
-      (make-fsharp-error :start beg
-                         :end   end
-                         :face  face
-                         :priority priority
-                         :text  msg
-                         :file  file))
-    data)))
-
 (defun fsharp-ac--parse-symbol-uses (data)
   "Extract the symbol uses from the given process response DATA."
   (save-match-data
@@ -634,21 +604,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 			       :file  file))
      data)))
 
-(defun fsharp-ac/show-error-overlay (err)
-  "Draw overlays in the current buffer to represent fsharp-error ERR."
-  (let* ((beg  (fsharp-error-start err))
-         (end  (fsharp-error-end err))
-         (face (fsharp-error-face err))
-         (priority (fsharp-error-priority err))
-         (txt  (fsharp-error-text err))
-         (file (fsharp-error-file err)))
-    (unless (or (not (string= (fsharp-ac--buffer-truename)
-                              (file-truename file)))
-      (let ((ov (make-overlay beg end nil t)))
-        (overlay-put ov 'face face)
-        (overlay-put ov 'help-echo txt)
-        (overlay-put ov 'priority priority))))))
-
 (defun fsharp-ac/show-symbol-use-overlay (use)
   "Draw overlays in the current buffer to represent fsharp-symbol-use USE."
   (let* ((beg  (fsharp-symbol-use-start use))
@@ -658,12 +613,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (when (string= (fsharp-ac--buffer-truename) (file-truename file))
       (-> (make-overlay beg end nil t)
           (overlay-put 'face face)))))
-
-(defun fsharp-ac-clear-errors ()
-  (interactive)
-  (remove-overlays nil nil 'face 'fsharp-error-face)
-  (remove-overlays nil nil 'face 'fsharp-warning-face)
-  (setq fsharp-ac-errors nil))
 
 (defun fsharp-ac--clear-symbol-uses ()
   (interactive)
@@ -681,51 +630,13 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
     (unless (or (active-minibuffer-window) cursor-in-echo-area)
       (apply 'message format-string args))))
 
-(defun fsharp-ac-error-position (n-steps errs)
-  "Calculate the position of the next error to move to."
-  (let* ((xs (->> (sort (-map 'fsharp-error-start errs) '<)
-               (--remove (= (point) it))
-               (--split-with (>= (point) it))))
-         (before (nreverse (car xs)))
-         (after  (cadr xs))
-         (errs   (if (< n-steps 0) before after))
-         (step   (- (abs n-steps) 1))
-         )
-    (nth step errs)))
-
-(defun fsharp-ac/next-error (n-steps reset)
-  "Move forward N-STEPS number of errors, possibly wrapping
-around to the start of the buffer."
-  (when reset
-    (goto-char (point-min)))
-
-  (-if-let (pos (fsharp-ac-error-position n-steps fsharp-ac-errors))
-      (goto-char pos)
-    (error "No more F# errors")))
-
 (defun fsharp-ac--has-faces-p (ov &rest faces)
   (let ((face (overlay-get ov 'face)))
     (--first (equal face it) faces)))
 
-(defun fsharp-ac/error-overlay-at (pos)
-  (--first (fsharp-ac--has-faces-p it 'fsharp-error-face 'fsharp-warning-face)
-          (overlays-at pos)))
-
 (defun fsharp-ac/usage-overlay-at (pos)
   (--first (fsharp-ac--has-faces-p it 'fsharp-usage-face)
           (overlays-at pos)))
-
-;;; HACK: show-error-at point checks last position of point to prevent
-;;; corner-case interaction issues, e.g. when running `describe-key`
-(defvar fsharp-ac-last-point nil)
-
-(defun fsharp-ac/show-error-at-point ()
-  (let ((ov (fsharp-ac/error-overlay-at (point)))
-        (changed-pos (not (equal (point) fsharp-ac-last-point))))
-    (setq fsharp-ac-last-point (point))
-
-    (when (and ov changed-pos)
-      (fsharp-ac-message-safely (overlay-get ov 'help-echo)))))
 
 ;;; ----------------------------------------------------------------------------
 ;;; Process handling
@@ -778,7 +689,8 @@ around to the start of the buffer."
          ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
          ("completion" (fsharp-ac-handle-completion data))
          ("helptext" (fsharp-ac-handle-doctext data))
-         ("errors" (fsharp-ac-handle-errors data))
+         ("lint" (-some-> fsharp-ac-handle-lint-function (funcall data)))
+         ("errors" (-some-> fsharp-ac-handle-errors-function (funcall data)))
          ("project" (fsharp-ac-handle-project data))
          ("tooltip" (fsharp-ac-handle-tooltip data))
          ("typesig" (fsharp-ac--handle-typesig data))
@@ -803,13 +715,6 @@ around to the start of the buffer."
     (ring-insert find-tag-marker-ring (point-marker))
     (find-file file)
     (goto-char (fsharp-ac-line-column-to-pos line col))))
-
-(defun fsharp-ac-handle-errors (data)
-  "Display error overlays and set buffer-local error variables for error navigation."
-  (when (and (eq major-mode 'fsharp-mode) (not (active-minibuffer-window)) (not cursor-in-echo-area))
-    (fsharp-ac-clear-errors)
-    (setq fsharp-ac-errors (fsharp-ac-parse-errors data))
-    (mapc 'fsharp-ac/show-error-overlay fsharp-ac-errors)))
 
 (defun fsharp-ac--format-tooltip-overload (overload)
   "Format a single overload"
