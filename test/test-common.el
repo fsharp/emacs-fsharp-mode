@@ -1,4 +1,5 @@
 (require 'ert)
+(require 'package)
 (require 'cl)
 
 (defmacro check (desc &rest body)
@@ -80,7 +81,7 @@
 (defconst tests-load-path
   (mapcar 'expand-file-name `(,@load-path "." ".." "./tests")))
 
-(defconst default-dependencies '(s dash pos-tip noflet faceup company company-quickhelp))
+(defconst default-dependencies '(s dash pos-tip noflet faceup company company-quickhelp flycheck))
 
 (defun load-packages ()
   "Load package dependencies for fsharp-mode."
@@ -142,7 +143,8 @@ glob emacs/test/*test.el."
   (package-install-file (expand-file-name pkg)))
 
 (defun init-melpa ()
-  (setq package-archives '(("melpa" . "http://melpa.milkbox.net/packages/")))
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
+  (message "Message %s" package-archives)
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents)))
