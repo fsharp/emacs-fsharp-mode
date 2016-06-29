@@ -270,6 +270,7 @@
       (fsharp-mode--load-with-binding file)))
 
   (turn-on-fsharp-doc-mode)
+  (flycheck-mode 1)
   (run-hooks 'fsharp-mode-hook))
 
 (defun fsharp-mode--load-with-binding (file)
