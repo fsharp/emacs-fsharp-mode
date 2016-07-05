@@ -73,7 +73,10 @@
                       (buffer-string)))))
 
 (check-filter "errors cause overlays to be drawn"
-  (should (equal 3 (length (overlays-in (point-min) (point-max))))))
+  (should (equal (->> (flycheck-count-errors flycheck-current-errors)
+                      (mapcar 'cdr)
+                      (apply '+))
+                 3)))
 
 (check-filter "error overlay has expected text"
     (flycheck-next-error)
