@@ -76,14 +76,13 @@
   (should (equal 3 (length (overlays-in (point-min) (point-max))))))
 
 (check-filter "error overlay has expected text"
-  (let* ((ov (overlays-at (next-overlay-change (point-min))))
-         (text (overlay-get (car-safe ov) 'help-echo)))
-    (should (equal text
+    (flycheck-next-error)
+    (should (equal (flycheck-error-message (car-safe (flycheck-overlay-errors-at (point))))
                    (concat "Possible incorrect indentation: "
                            "this token is offside of context started at "
                            "position (8:1). "
                            "Try indenting this token further or using standard "
-                           "formatting conventions.")))))
+                           "formatting conventions."))))
 
 (check-filter "first overlay should have the warning face"
   (let* ((ov (overlays-at (next-overlay-change (point-min))))
