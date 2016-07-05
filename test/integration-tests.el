@@ -1,4 +1,5 @@
 (require 'ert)
+(setq flycheck-check-syntax-automatically nil)
 
 (defmacro wait-for-condition (&rest body)
   "Wait up to 10 seconds for BODY to evaluate non-nil"
@@ -153,12 +154,12 @@
      (search-forward "X.func")
      (delete-char -1)
      (backward-char)
-     (fsharp-ac-parse-current-buffer t)
-     (wait-for-condition (> (length (overlays-at (point))) 0))
-     (should= (overlay-get (car (overlays-at (point))) 'face)
-              'fsharp-error-face)
-     (should= (overlay-get (car (overlays-at (point))) 'help-echo)
-              "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token."))))
+     (flycheck-buffer)
+     (wait-for-condition (car-safe (flycheck-overlay-errors-at (point))))
+     (let ((ferror (car-safe (flycheck-overlay-errors-at (point)))))
+       (should= (flycheck-error-level ferror) 'error)
+       (should= (flycheck-error-message ferror)
+                "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token.")))))
 
 (ert-deftest check-script-tooltip ()
   "Check we can request a tooltip from a script"
