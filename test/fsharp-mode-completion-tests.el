@@ -88,9 +88,8 @@
                            "formatting conventions."))))
 
 (check-filter "first overlay should have the warning face"
-  (let* ((ov (overlays-at (next-overlay-change (point-min))))
-         (face (overlay-get (car ov) 'face)))
-    (should (eq 'fsharp-warning-face face))))
+  (flycheck-next-error)
+  (should (eq 'warning (flycheck-error-level (car-safe (flycheck-overlay-errors-at (point)))))))
 
 (check-filter "third overlay should have the error face"
   (let* ((ov (overlays-at (next-overlay-change
