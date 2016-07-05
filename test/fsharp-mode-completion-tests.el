@@ -95,11 +95,8 @@
   (should (eq 'warning (flycheck-error-level (car-safe (flycheck-overlay-errors-at (point)))))))
 
 (check-filter "third overlay should have the error face"
-  (let* ((ov (overlays-at (next-overlay-change
-                           (next-overlay-change
-                            (next-overlay-change (point-min))))))
-         (face (overlay-get (cadr ov) 'face)))
-    (should (eq 'fsharp-error-face face))))
+  (flycheck-next-error 2)
+  (should (eq 'error (flycheck-error-level (car-safe (flycheck-overlay-errors-at (point)))))))
 
 ;;; Loading projects
 
