@@ -49,11 +49,14 @@
   (stubbing-process-functions
    (using-file
     (concat fs-file-dir "Program.fs")
-    (let ((json-array-type 'list)
-          (json-object-type 'hash-table)
-          (json-key-type 'string))
-      (should= 3 (length (fsharp-ac-parse-errors
-                          (gethash "Data" (json-read-from-string err-brace-str)))))))))
+    (let* ((json-array-type 'list)
+           (json-object-type 'hash-table)
+           (json-key-type 'string)
+           n
+           (flycheck-fsharp--error-callback-info (cons 'checker (lambda (_ result)
+                                                                 (setq n (length result))))))
+      (flycheck-fsharp-handle-errors (gethash "Data" (json-read-from-string err-brace-str)))
+      (should (eq n 3))))))
 
 (defmacro check-filter (desc &rest body)
   "Test properties of filtered output from the ac-process."
