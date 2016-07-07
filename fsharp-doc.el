@@ -37,6 +37,7 @@
 
 (with-no-warnings (require 'cl))
 (require 'fsharp-mode-completion)
+(require 'flycheck)
 
 (declare-function fsharp-mode "fsharp-mode.el")
 (defvar fsharp-doc-idle-delay 0.5
@@ -108,7 +109,7 @@
       (unless (or (equal (point) fsharp-doc-prevpoint)
                   (not (eq fsharp-ac-status 'idle))
                   executing-kbd-macro
-                  (fsharp-ac/error-overlay-at (point))
+                  (flycheck-overlay-errors-at (point))
                   (active-minibuffer-window)
                   cursor-in-echo-area)
         (setq fsharp-doc-prevpoint (point))

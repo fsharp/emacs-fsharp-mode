@@ -27,6 +27,7 @@
 ;; Boston, MA 02110-1301, USA.
 
 (require 'fsharp-mode-completion)
+(require 'flycheck-fsharp)
 (require 'fsharp-doc)
 (require 'inf-fsharp-mode)
 (require 'fsharp-mode-util)
@@ -255,12 +256,6 @@
   (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
-  
-
-  ;; Error navigation
-  (setq next-error-function 'fsharp-ac/next-error)
-  (add-hook 'next-error-hook 'fsharp-ac/show-error-at-point nil t)
-  (add-hook 'post-command-hook 'fsharp-ac/show-error-at-point nil t)
 
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
@@ -275,6 +270,7 @@
       (fsharp-mode--load-with-binding file)))
 
   (turn-on-fsharp-doc-mode)
+  (flycheck-mode 1)
   (run-hooks 'fsharp-mode-hook))
 
 (defun fsharp-mode--load-with-binding (file)

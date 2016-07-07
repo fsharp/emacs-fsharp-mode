@@ -49,11 +49,14 @@
   (stubbing-process-functions
    (using-file
     (concat fs-file-dir "Program.fs")
-    (let ((json-array-type 'list)
-          (json-object-type 'hash-table)
-          (json-key-type 'string))
-      (should= 3 (length (fsharp-ac-parse-errors
-                          (gethash "Data" (json-read-from-string err-brace-str)))))))))
+    (let* ((json-array-type 'list)
+           (json-object-type 'hash-table)
+           (json-key-type 'string)
+           n
+           (flycheck-fsharp--error-callback-info (cons 'checker (lambda (_ result)
+                                                                 (setq n (length result))))))
+      (flycheck-fsharp-handle-errors (gethash "Data" (json-read-from-string err-brace-str)))
+      (should (eq n 3))))))
 
 (defmacro check-filter (desc &rest body)
   "Test properties of filtered output from the ac-process."
@@ -73,29 +76,27 @@
                       (buffer-string)))))
 
 (check-filter "errors cause overlays to be drawn"
-  (should (equal 3 (length (overlays-in (point-min) (point-max))))))
+  (should (equal (->> (flycheck-count-errors flycheck-current-errors)
+                      (mapcar 'cdr)
+                      (apply '+))
+                 3)))
 
 (check-filter "error overlay has expected text"
-  (let* ((ov (overlays-at (next-overlay-change (point-min))))
-         (text (overlay-get (car-safe ov) 'help-echo)))
-    (should (equal text
+    (flycheck-next-error)
+    (should (equal (flycheck-error-message (car-safe (flycheck-overlay-errors-at (point))))
                    (concat "Possible incorrect indentation: "
                            "this token is offside of context started at "
                            "position (8:1). "
                            "Try indenting this token further or using standard "
-                           "formatting conventions.")))))
+                           "formatting conventions."))))
 
 (check-filter "first overlay should have the warning face"
-  (let* ((ov (overlays-at (next-overlay-change (point-min))))
-         (face (overlay-get (car ov) 'face)))
-    (should (eq 'fsharp-warning-face face))))
+  (flycheck-next-error)
+  (should (eq 'warning (flycheck-error-level (car-safe (flycheck-overlay-errors-at (point)))))))
 
 (check-filter "third overlay should have the error face"
-  (let* ((ov (overlays-at (next-overlay-change
-                           (next-overlay-change
-                            (next-overlay-change (point-min))))))
-         (face (overlay-get (cadr ov) 'face)))
-    (should (eq 'fsharp-error-face face))))
+  (flycheck-next-error 2)
+  (should (eq 'error (flycheck-error-level (car-safe (flycheck-overlay-errors-at (point)))))))
 
 ;;; Loading projects
 
@@ -270,27 +271,27 @@ function bound to VAR in BODY. "
 ;;; Only parse if the file has changed
 
 (check "do not reparse if file has not changed"
-  (let ((counter 0))
-    (noflet ((process-send-string (_ _) (setq counter (+ counter 1)))
-             (process-live-p (p) t)
-              (fsharp-ac--process-live-p (host) t)
-              (start-process (&rest args))
-              (set-process-filter (&rest args))
-	      (fsharp-ac-completion-process (host) nil)
-	      (process-buffer (p) (get-buffer-create "*fsharp-complete*"))
-              (set-process-query-on-exit-flag (&rest args))
-;              (process-send-string (&rest args))
-              (process-mark (proc) (point-max))
-              ;(fsharp-ac-parse-current-buffer () t)
-              (log-to-proc-buf (p s)))
-       (using-temp-file "test.fsx"
-         (should= counter 0)
-         (fsharp-ac-parse-current-buffer)
-         (should= counter 1)
-         (fsharp-ac-parse-current-buffer)
-         (should= counter 1)
-         (insert "let x = 1\n")
-         (fsharp-ac-parse-current-buffer)
-         (should= counter 2)
-         (fsharp-ac-parse-current-buffer)
-         (should= counter 2)))))
+       (let ((counter 0)
+             (flycheck-disabled-checkers '(fsharp-fsautocomplete fsharp-fsautocomplete-lint)))
+         (noflet ((process-send-string (_ _) (setq counter (+ counter 1)))
+                  (process-live-p (p) t)
+                  (fsharp-ac--process-live-p (host) t)
+                  (start-process (&rest args))
+                  (set-process-filter (&rest args))
+                  (fsharp-ac-completion-process (host) nil)
+                  (process-buffer (p) (get-buffer-create "*fsharp-complete*"))
+                  (set-process-query-on-exit-flag (&rest args))
+                                        ;              (process-send-string (&rest args))
+                  (process-mark (proc) (point-max))
+                  (log-to-proc-buf (p s)))
+                 (using-temp-file "test.fsx"
+                                  (should= counter 0)
+                                  (fsharp-ac-parse-current-buffer)
+                                  (should= counter 1)
+                                  (fsharp-ac-parse-current-buffer)
+                                  (should= counter 1)
+                                  (insert "let x = 1\n")
+                                  (fsharp-ac-parse-current-buffer)
+                                  (should= counter 2)
+                                  (fsharp-ac-parse-current-buffer)
+                                  (should= counter 2)))))

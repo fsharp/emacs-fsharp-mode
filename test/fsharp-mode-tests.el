@@ -1,15 +1,3 @@
-;;; Test registration of auto modes.
-
-(defmacro check-automode (extension)
-  `(check ,(concat "uses fsharp-mode for " extension " files")
-     (using-temp-file ,extension
-       (should (eq major-mode 'fsharp-mode)))))
-
-(check-automode ".fs")
-(check-automode ".fsx")
-(check-automode ".fsi")
-(check-automode ".fsl")
-
 ;;; Test our ability to find SLN files and projects.
 ;;; This is tricky to test comprehensively because there is a sln at the
 ;;; root of this repo.
