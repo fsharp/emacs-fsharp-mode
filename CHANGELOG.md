@@ -1,3 +1,19 @@
+## 1.9.0 (2016-07-09)
+
+Features:
+  - #71: fontify the doc string (@nosami).
+  - #77: Use new typesig command for fsharp-doc mode (@rneatherway).
+  - #88: Use flycheck for error reporting (@juergenhoetzel).
+  
+Bugfixes:
+  - #75: Do not change current buffer when starting FSI (@rneatherway).
+  - #76: Record type highlighting (@rneatherway).
+  - #79: Overlays should not grow when typing (@rneatherway).
+  - #82: Inferior fsi: #silentcd to local directory in Tramp (@juergenhoetzel).
+  - #83: Fix completion of type annotated symbols (@juergenhoetzel).
+  - #85: Don't modify company-transformers (@nosami).
+  - #86: Don't clobber company-backends (@nosami).
+
 ## 1.8.1 (2016-04-14)
 
 Features:
@@ -14,7 +30,7 @@ Features:
 Bugfixes:
   - #67: Fix use of popup (thanks to @drvink)
   - #60: Unbreak company support on non-graphic displays (thanks to @drvink)
-  - #58: Handle buffers not visiting a file (thanks to @juergenhoetzel).  
+  - #58: Handle buffers not visiting a file (thanks to @juergenhoetzel).
 
 ## 1.7.4 (2016-02-05)
 
