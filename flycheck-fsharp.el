@@ -94,7 +94,7 @@ See URL `https://github.com/fsharp/FsAutoComplete'."
 			    (file (fsharp-ac--tramp-file (gethash "FileName" it))))
 			(flycheck-error-new-at
 			 line column level msg :checker checker :filename file)) data))
-    (message "Warning: `flycheck-fsharp--error-callback-info` not set (flycheck-fsautocomlete not enabled?)")))
+    (message "Warning: `flycheck-fsharp--error-callback-info` not set (flycheck-fsautocomplete not enabled?)")))
 
 (setq fsharp-ac-handle-errors-function 'flycheck-fsharp-handle-errors)
 (setq fsharp-ac-handle-lint-function 'flycheck-fsharp-handle-lint)
