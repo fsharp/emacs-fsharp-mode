@@ -210,6 +210,15 @@ the following to your `init.el` may be a good start:
 ```
 
 
+## Editor
+
+In order to change tab size it is possile to put this in emacs profile:
+
+```lisp
+(setq-default fsharp-indent-offset 2)
+```
+
+
 ## Troubleshooting
 
 `fsharp-mode` is still under development, so you may encounter some issues. Please report them so we can improve things! Either open an issue on [Github](https://github.com/fsharp/emacs-fsharp-mode/) with the label `Emacs`, or email the [mailing list](http://groups.google.com/group/fsharp-opensource).
