@@ -133,6 +133,7 @@ release: update-version emacs-fsharp-mode-bin $(ac_exe)
 	cd emacs-fsharp-mode-bin && git pull
 	cp $(bin_d)/*.exe $(bin_d)/*.exe.config $(bin_d)/*.dll emacs-fsharp-mode-bin
 	cp $(src_files) emacs-fsharp-mode-bin
+	cd emacs-fsharp-mode-bin && git checkout FSharp.Core.dll  # Do not change this
 	cd emacs-fsharp-mode-bin && git add --all
 	cd emacs-fsharp-mode-bin && git commit -m "Update to version $(cur_release)"
 	cd emacs-fsharp-mode-bin && git tag -a $(cur_release) -m "Tag release $(cur_release)"
