@@ -1,4 +1,4 @@
-## 1.9.0 (2016-07-19)
+## 1.9.1 (2016-07-19)
 
 Features:
   - Update to FsAutoComplete 0.29.0.
