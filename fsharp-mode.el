@@ -122,7 +122,7 @@
       (define-key map [eval-phrase] '("Eval phrase" . fsharp-eval-phrase)))))
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.fs[iylx]?$" . fsharp-mode))
+(add-to-list 'auto-mode-alist '("\\.fs[iylx]?\\'" . fsharp-mode))
 
 (defvar fsharp-mode-syntax-table nil
   "Syntax table in use in fsharp mode buffers.")
