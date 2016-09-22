@@ -1612,7 +1612,7 @@ This tells add-log.el how to find the current function/method/variable."
   (forward-line 1)
   (beginning-of-line)
   (condition-case nil
-      (progn (re-search-forward "^[a-zA-Z#0-9(]")
+      (progn (re-search-forward "^[a-zA-Z#0-9(\[]")
              (while (continuation-p)
                (forward-line 1))
              (forward-line -1))
