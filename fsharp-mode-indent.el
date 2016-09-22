@@ -1610,15 +1610,18 @@ This tells add-log.el how to find the current function/method/variable."
   "Move point to the end of the current top-level block"
   (interactive)
   (forward-line 1)
-  (beginning-of-line)
-  (condition-case nil
-      (progn (re-search-forward "^[a-zA-Z#0-9(\[]")
-             (while (continuation-p)
-               (forward-line 1))
-             (forward-line -1))
-    (error
-     (progn (goto-char (point-max)))))
-  (end-of-line))
+  (if (not (eobp))
+      (progn
+        (beginning-of-line)
+        (condition-case nil
+            (progn (re-search-forward "^[a-zA-Z#0-9([]")
+                   (while (continuation-p)
+                     (forward-line 1))
+                   (forward-line -1))
+          (error
+           (progn (goto-char (point-max)))))
+        (end-of-line))
+    (goto-char (point-max))))
 
 (provide 'fsharp-mode-indent)
 
