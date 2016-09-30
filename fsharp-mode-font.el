@@ -130,121 +130,135 @@
 
 (defvar fsharp-fun-pre-form
   (lambda ()
-    (save-excursion      
+    (save-excursion
       (search-forward "->"))))
 
+;; Preprocessor directives (3.3)
+(defvar fsharp-ui-preproessor-directives
+  '("#if" "#else" "#endif"))
+
+    ;; Compiler directives (12.4)
+(defvar fsharp-ui-compiler-directives
+  '("#nowarn" "#load" "#r" "#reference" "#I"
+    "#Include" "#q" "#quit" "#time" "#help"))
+
+;; Lexical matters (18.4)
+(defvar fsharp-ui-lexical-matters
+  '("#indent"))
+
+;; Line Directives (3.9)
+(defvar fsharp-ui-line-directives
+  '("#line"))
+
+;; Identifier replacements (3.11)
+(defvar fsharp-ui-identifier-replacements
+  '("__SOURCE_DIRECTORY__" "__SOURCE_FILE__" "__LINE__"))
+
+;; F# keywords (3.4)
+(defvar fsharp-ui-fsharp-threefour-keywords
+  '("abstract" "and" "as" "assert" "base" "begin"
+    "class" "default" "delegate" "do" "do!" "done"
+    "downcast" "downto" "elif" "else" "end"
+    "exception" "extern" "false" "finally" "for" "fun"
+    "function" "global" "if" "in" "inherit" "inline"
+    "interface" "internal" "lazy" "let" "let!"
+    "match" "member" "module" "mutable" "namespace"
+    "new" "not" "null" "of" "open" "or" "override"
+    "private" "public" "rec" "return" "return!"
+    "select" "static" "struct" "then" "to" "true"
+    "try" "type" "upcast" "use" "use!"  "val" "void"
+    "when" "while" "with" "yield" "yield!"))
+
+;; "Reserved because they are reserved in OCaml"
+(defvar fsharp-ui-ocaml-reserved-words
+  '("asr" "land" "lor" "lsl" "lsr" "lxor" "mod" "sig"))
+
+;; F# reserved words for future use
+(defvar fsharp-ui-reserved-words
+  '("atomic" "break" "checked" "component" "const"
+    "constraint" "constructor" "continue" "eager"
+    "event" "external" "fixed" "functor" "include"
+    "method" "mixin" "object" "parallel" "process"
+    "protected" "pure" "sealed" "tailcall" "trait"
+    "virtual" "volatile"))
+
+;; RMD 2016-09-30 -- This was pulled out separately with the following comment
+;; when I got here. Not clear to me why it's on it's own, or even precisely what
+;; the comment means. But: `async' is a valid F# keyword and needs to go someplace,
+;; so I've left it here. For now.
+;;
+;; Workflows not yet handled by fsautocomplete but async
+;; always present
+(defvar fsharp-ui-async-words
+  '("async"))
+
+(defvar fsharp-ui-word-list
+  (-concat `(,@fsharp-ui-async-words
+             ,@fsharp-ui-compiler-directives
+             ,@fsharp-ui-fsharp-threefour-keywords
+             ,@fsharp-ui-identifier-replacements
+             ,@fsharp-ui-lexical-matters
+             ,@fsharp-ui-ocaml-reserved-words
+             ,@fsharp-ui-preproessor-directives
+             ,@fsharp-ui-reserved-words
+             ,@fsharp-ui-line-directives)))
+
 (defconst fsharp-font-lock-keywords
-  (list
-   (cons (regexp-opt
-          '(;; Sections in brackets refer to the F# 3.0 specification
+  (eval-when-compile
+    `(
+      (,(regexp-opt fsharp-ui-word-list 'symbols) 0 font-lock-keyword-face)
 
-            ;; Preprocessor directives (3.3)
-            "#if" "#else" "#endif"
+      ;; control
 
-            ;; Compiler directives (12.4)
-            "#nowarn" "#load" "#r" "#reference" "#I"
-            "#Include" "#q" "#quit" "#time" "#help"
+      ;; attributes
+      (,fsharp-attributes-regexp . font-lock-preprocessor-face)
+      ;; ;; type defines
+      (,fsharp-type-def-regexp 1 font-lock-type-face)
+      (,fsharp-function-def-regexp 1 font-lock-function-name-face)
+      (,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
+      (,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
+      (,fsharp-member-function-regexp 1 font-lock-function-name-face)
+      (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
+      (,fsharp-constructor-regexp 1 font-lock-function-name-face)
+      ("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
+        (1 font-lock-type-face)
+        ;; 'prevent generic type arguments from being rendered in variable face
+        (2 'fsharp-ui-generic-face nil t))
+      (,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
+                 fsharp-access-control-regexp)
+        (0 font-lock-keyword-face) ; let binding and function arguments
+        (,fsharp-var-or-arg-regexp
+         (,fsharp-var-pre-form) nil
+         (1 font-lock-variable-name-face nil t)))
+      ("\\<fun\\>"
+        (0 font-lock-keyword-face) ; lambda function arguments
+        (,fsharp-var-or-arg-regexp
+         (,fsharp-fun-pre-form) nil
+         (1 font-lock-variable-name-face nil t)))
+      (,fsharp-type-def-regexp
+       (0 'font-lock-keyword-face) ; implicit constructor arguments
+        (,fsharp-var-or-arg-regexp
+         (,fsharp-var-pre-form) nil
+         (1 font-lock-variable-name-face nil t)))
+      (,fsharp-explicit-field-regexp
+       (1 font-lock-variable-name-face)
+       (2 font-lock-type-face))
 
-            ;; Lexical matters (18.4)
-            "#indent"
+      ;; open namespace
+      ("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
 
-            ;; Line Directives (3.9)
-            "#line"
+      ;; module/namespace
+      ("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
+      )))
 
-            ;; Identifier replacements (3.11)
-            "__SOURCE_DIRECTORY__" "__SOURCE_FILE__" "__LINE__"
+(defun fsharp-ui-setup-font-lock ()
+  "Set up font locking for F# Mode."
+  (setq font-lock-defaults
+        '(fsharp-font-lock-keywords)))
 
-            ;; F# keywords (3.4)
-            "abstract" "and" "as" "assert" "base" "begin"
-            "class" "default" "delegate" "do" "do!" "done"
-            "downcast" "downto" "elif" "else" "end"
-            "exception" "extern" "false" "finally" "for" "fun"
-            "function" "global" "if" "in" "inherit" "inline"
-            "interface" "internal" "lazy" "let" "let!"
-            "match" "member" "module" "mutable" "namespace"
-            "new" "not" "null" "of" "open" "or" "override"
-            "private" "public" "rec" "return" "return!"
-            "select" "static" "struct" "then" "to" "true"
-            "try" "type" "upcast" "use" "use!"  "val" "void"
-            "when" "while" "with" "yield" "yield!"
-
-            ;; "Reserved because they are reserved in OCaml"
-            "asr" "land" "lor" "lsl" "lsr" "lxor" "mod" "sig"
-
-            ;; F# reserved words for future use
-            "atomic" "break" "checked" "component" "const"
-            "constraint" "constructor" "continue" "eager"
-            "event" "external" "fixed" "functor" "include"
-            "method" "mixin" "object" "parallel" "process"
-            "protected" "pure" "sealed" "tailcall" "trait"
-            "virtual" "volatile"
-
-            ;; Workflows not yet handled by fsautocomplete
-            ;; but async always present
-            "async"
-            ) 'symbols)
-         'font-lock-keyword-face)
-
-;blocking
-;;    '("\\<\\(begin\\|end\\|module\\|namespace\\|object\\|sig\\|struct\\)\\>"
-;;      . font-lock-keyword-face)
-;control
-
-  ;; attributes
-  '("\\[<[A-Za-z0-9_]+>\\]" . font-lock-preprocessor-face)
-  ;; type defines
-  `(,fsharp-type-def-regexp 1 font-lock-type-face)
-  `(,fsharp-function-def-regexp 1 font-lock-function-name-face)
-  `(,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
-  `(,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
-  `(,fsharp-member-function-regexp 1 font-lock-function-name-face)
-  `(,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
-  ;; `(,fsharp-constructor-regexp 1 font-lock-function-name-face)
-  `("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
-    (1 font-lock-type-face)             ; type annotations
-    ;; HACK: font-lock-negation-char-face is usually the same as
-    ;; 'default'. use this to prevent generic type arguments from
-    ;; being rendered in variable face
-    (2 font-lock-negation-char-face nil t))
-  `(,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
-                         fsharp-access-control-regexp)
-    (0 font-lock-keyword-face) ; let binding and function arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-var-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `("\\<fun\\>"
-    (0 font-lock-keyword-face) ; lambda function arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-fun-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `(,fsharp-type-def-regexp
-    (0 font-lock-keyword-face) ; implicit constructor arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-var-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `(,fsharp-explicit-field-regexp
-        (1 font-lock-variable-name-face)
-        (2 font-lock-type-face))
-
-  ;; open namespace
-  '("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
-
-  ;; module/namespace
-  '("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
-
-;labels (and open)
-   '("\\_<\\(assert\\|open\\|include\\|module\\|namespace\\|extern\\|void\\)\\_>\\|[~][ (]*[a-z][a-zA-Z0-9_']*"
-     . font-lock-variable-name-face)
-   ;; (cons (concat
-   ;;        "\\<\\(asr\\|false\\|land\\|lor\\|lsl\\|lsr\\|lxor"
-   ;;        "\\|mod\\|new\\|null\\|object\\|or\\|sig\\|true\\)\\>"
-   ;;        "\\|\|\\|->\\|&\\|#")
-   ;;       'font-lock-constant-face)
-   ))
-
+(add-hook 'fsharp-mode-hook #'fsharp-ui-setup-font-lock)
 
 (defun fsharp--syntax-propertize-function (start end)
-;  (message "Called with (%d,%d)" start end)
   (goto-char start)
   (fsharp--syntax-string end)
   (funcall (syntax-propertize-rules
