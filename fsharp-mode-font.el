@@ -31,7 +31,7 @@
 ;;; Code:
 
 (require 'fsharp-mode)
-(require 's)
+(require 'dash)
 
 (defgroup fsharp-ui nil
   "F# UI group for the defcustom interface."
@@ -276,10 +276,8 @@
          (instr (nth 3 pst))
          (start (nth 8 pst)))
     (when (eq t instr) ; Then we are in a custom string
-      ;(message "In custom string")
       (cond
        ((eq ?@ (char-after start)) ; Then we are in a verbatim string
-        ;(message "verbatim")
         (while
             (when (re-search-forward "\"\"?" end 'move)
               (if (> (- (match-end 0) (match-beginning 0)) 1)
@@ -290,15 +288,14 @@
                                    'syntax-table (string-to-syntax "|"))
                 nil)))
         )
-       
+
        (t ; Then we are in a triple-quoted string
-        ;(message "triple-quoted")
         (when (re-search-forward "\"\"\"" end 'move)
           (put-text-property (- (match-beginning 0) 1) (match-beginning 0)
                              'syntax-table (string-to-syntax "."))
           (put-text-property (match-beginning 0) (match-end 0)
                              'syntax-table (string-to-syntax "|")))
-          )))))
+        )))))
 
 (provide 'fsharp-mode-font)
 
