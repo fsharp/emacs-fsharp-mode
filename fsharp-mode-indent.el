@@ -32,11 +32,6 @@
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defgroup fsharp nil
-  "Support for the Fsharp programming language, <http://www.fsharp.net/>"
-  :group 'languages
-  :prefix "fsharp-")
-
 (defcustom fsharp-tab-always-indent t
   "*Non-nil means TAB in Fsharp mode should always reindent the current line,
 regardless of where in the line point is when the TAB command is used."
@@ -139,18 +134,18 @@ as indentation hints, unless the comment character is in column zero."
 (defconst fsharp-continued-re
   ;; This is tricky because a trailing backslash does not mean
   ;; continuation if it's in a comment
-;;   (concat
-;;    "\\(" "[^#'\"\n\\]" "\\|" fsharp-stringlit-re "\\)*"
-;;    "\\\\$")
-;;   "Regular expression matching Fsharp backslash continuation lines.")
+  ;;   (concat
+  ;;    "\\(" "[^#'\"\n\\]" "\\|" fsharp-stringlit-re "\\)*"
+  ;;    "\\\\$")
+  ;;   "Regular expression matching Fsharp backslash continuation lines.")
   (concat ".*\\(" (mapconcat 'identity
-                           '("+" "-" "*" "/")
-                           "\\|")
+                             '("+" "-" "*" "/")
+                             "\\|")
           "\\)$")
   "Regular expression matching unterminated expressions.")
 
 
-;(defconst fsharp-blank-or-comment-re "[ \t]*\\($\\|#\\)"
+                                        ;(defconst fsharp-blank-or-comment-re "[ \t]*\\($\\|#\\)"
 (defconst fsharp-blank-or-comment-re "[ \t]*\\(//.*\\)?"
   "Regular expression matching a blank or comment line.")
 
@@ -167,7 +162,7 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching statements to be dedented one level.")
 
 (defconst fsharp-block-closing-keywords-re
-;  "\\(return\\|raise\\|break\\|continue\\|pass\\)"
+                                        ;  "\\(return\\|raise\\|break\\|continue\\|pass\\)"
   "\\(end\\|done\\|raise\\|failwith\\|failwithf\\|rethrow\\|exit\\)"
   "Regular expression matching keywords which typically close a block.")
 
@@ -183,23 +178,23 @@ as indentation hints, unless the comment character is in column zero."
                     (concat fsharp-block-closing-keywords-re "[ \t\n]")
                     )
               "\\|")
-          "\\)")
+   "\\)")
   "Regular expression matching lines not to dedent after.")
 
 
 (defconst fsharp-block-opening-re
   (concat "\\(" (mapconcat 'identity
                            '("then"
-                          "else"
+                             "else"
                              "with"
-                          "finally"
-                          "class"
-                          "struct"
+                             "finally"
+                             "class"
+                             "struct"
                              "="        ; for example: let f x =
-                          "->"
-                          "do"
-                          "try"
-                          "function")
+                             "->"
+                             "do"
+                             "try"
+                             "function")
                            "\\|")
           "\\)")
   "Regular expression matching expressions which begin a block")
@@ -282,7 +277,7 @@ i.e. the limit on how far back to scan."
   (save-excursion
     (progn (back-to-indentation)
            (looking-at fsharp-outdent-re))
-))
+    ))
 
 (defun fsharp-electric-colon (arg)
   "Insert a colon.
@@ -354,8 +349,8 @@ above."
   (if (or (/= (current-indentation) (current-column))
           (bolp)
           (fsharp-continuation-line-p)
-;         (not fsharp-honor-comment-indentation)
-;         (looking-at "#[^ \t\n]")      ; non-indenting #
+                                        ;         (not fsharp-honor-comment-indentation)
+                                        ;         (looking-at "#[^ \t\n]")      ; non-indenting #
           )
       (funcall fsharp-backspace-function arg)
     ;; else indent the same as the colon line that opened the block
@@ -397,7 +392,7 @@ function in `fsharp-delete-function'.
 \\[universal-argument] (programmatically, argument ARG) specifies the
 number of characters to delete (default is 1)."
   (interactive "*p")
- (funcall fsharp-delete-function arg))
+  (funcall fsharp-delete-function arg))
 ;;   (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
 ;;             (delete-forward-p))
 ;;        (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
@@ -764,7 +759,7 @@ You cannot dedent the region if any line is already at column zero."
           (error "Region is at left edge"))
       (forward-line 1)))
   (fsharp-shift-region start end (- (prefix-numeric-value
-                                 (or count fsharp-indent-offset))))
+                                     (or count fsharp-indent-offset))))
   (fsharp-keep-region-active))
 
 (defun fsharp-shift-region-right (start end &optional count)
@@ -783,7 +778,7 @@ many columns.  With no active region, indent only the current line."
          (list (min p m) (max p m) arg)
        (list p (save-excursion (forward-line 1) (point)) arg))))
   (fsharp-shift-region start end (prefix-numeric-value
-                              (or count fsharp-indent-offset)))
+                                  (or count fsharp-indent-offset)))
   (fsharp-keep-region-active))
 
 (defun fsharp-indent-region (start end &optional indent-offset)
@@ -823,7 +818,7 @@ initial line; and comment lines beginning in column 1 are ignored."
     (goto-char end)   (beginning-of-line) (setq end (point-marker))
     (goto-char start) (beginning-of-line)
     (let ((fsharp-indent-offset (prefix-numeric-value
-                             (or indent-offset fsharp-indent-offset)))
+                                 (or indent-offset fsharp-indent-offset)))
           (indents '(-1))               ; stack of active indent levels
           (target-column 0)             ; column to which to indent
           (base-shifted-by 0)           ; amount last base line was shifted
@@ -1315,7 +1310,7 @@ If nesting level is zero, return nil."
      ;; use 'eq' because char-after may return nil
      (not (eq (char-after (- (point) 2)) nil))
 
-;     (eq (char-after (- (point) 2)) ?\\ )
+                                        ;     (eq (char-after (- (point) 2)) ?\\ )
      ;; make sure; since eq test passed, there is a preceding line
      (forward-line -1)                  ; always true -- side effect
      (looking-at fsharp-continued-re))))
