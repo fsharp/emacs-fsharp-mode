@@ -24,64 +24,94 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
-;; useful colors
+;;; Commentary:
 
-(cond
- ((x-display-color-p)
-  (require 'font-lock)
-  (cond
-   ((not (boundp 'font-lock-type-face))
-    ;; make the necessary faces
-    (make-face 'Firebrick)
-    (set-face-foreground 'Firebrick "firebrick")
-    (make-face 'RosyBrown)
-    (set-face-foreground 'RosyBrown "RosyBrown")
-    (make-face 'Purple)
-    (set-face-foreground 'Purple "Purple")
-    (make-face 'MidnightBlue)
-    (set-face-foreground 'MidnightBlue "MidnightBlue")
-    (make-face 'DarkGoldenRod)
-    (set-face-foreground 'DarkGoldenRod "DarkGoldenRod")
-    (make-face 'DarkOliveGreen)
-    (set-face-foreground 'DarkOliveGreen "DarkOliveGreen4")
-    (make-face 'CadetBlue)
-    (set-face-foreground 'CadetBlue "CadetBlue")
-    ; assign them as standard faces
-    (setq font-lock-comment-face 'Firebrick)
-    (setq font-lock-string-face 'RosyBrown)
-    (setq font-lock-keyword-face 'Purple)
-    (setq font-lock-function-name-face 'MidnightBlue)
-    (setq font-lock-variable-name-face 'DarkGoldenRod)
-    (setq font-lock-type-face 'DarkOliveGreen)
-    (setq font-lock-constant-face 'CadetBlue)))
-  ; extra faces for documention
-  (make-face 'Stop)
-  (set-face-foreground 'Stop "White")
-  (set-face-background 'Stop "Red")
-  (make-face 'Doc)
-  (set-face-foreground 'Doc "Red")
-))
+;; Mother of god.
+
+;;; Code:
+
+(require 'fsharp-mode)
+(require 's)
+
+(defgroup fsharp-ui nil
+  "F# UI group for the defcustom interface."
+  :prefix "fsharp-ui-"
+  :group 'fsharp
+  :package-version '(fsharp-mode . "1.9.2"))
+
+(defface fsharp-ui-generic-face
+  '((t (:inherit default)))
+  "Preprocessor face"
+  :group 'fsharp-ui)
+
+(defface fsharp-ui-operator-face
+  '((t (:foreground "LightSkyBlue")))
+  "Preprocessor face"
+  :group 'fsharp-ui)
+
+(defface fsharp-ui-warning-face
+  '((t (:inherit font-lock-warning-face)))
+  "Face for warnings."
+  :group 'fsharp-ui)
+
+(defface fsharp-ui-error-face
+  '((t (:inherit font-lock-error-face :underline t)))
+  "Face for errors"
+  :group 'fsharp-ui)
 
 (defconst fsharp-access-control-regexp
   "\\(?:private\\s-+\\|internal\\s-+\\|public\\s-+\\)*")
+
 (defconst fsharp-function-def-regexp
   "\\<\\(?:let\\|and\\|with\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\([A-Za-z0-9_']+\\)\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
+
 (defconst fsharp-pattern-function-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\([A-Za-z0-9_']+\\)\\s-*=\\s-*function")
+
 (defconst fsharp-active-pattern-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
+
 (defconst fsharp-member-function-regexp
   "\\<\\(?:override\\|member\\|abstract\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(?:[A-Za-z0-9_']+\\.\\)?\\([A-Za-z0-9_']+\\)")
+
 (defconst fsharp-overload-operator-regexp
   "\\<\\(?:override\\|member\\|abstract\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(([!%&*+-./<=>?@^|~]+)\\)")
-(defconst fsharp-constructor-regexp "^\\s-*\\<\\(new\\) *(.*)[^=]*=")
-(defconst fsharp-type-def-regexp 
-  (format "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+%s\\([A-Za-z0-9_'.]+\\)" 
-          fsharp-access-control-regexp))
-(defconst fsharp-var-or-arg-regexp "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
-(defconst fsharp-explicit-field-regexp
-  (format "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?%s\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)" fsharp-access-control-regexp))
 
+(defconst fsharp-constructor-regexp
+  "^\\s-*\\<\\(new\\) *(.*)[^=]*=")
+
+(defconst fsharp-type-def-regexp
+  (format
+   "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+%s\\([A-Za-z0-9_'.]+\\)"
+   fsharp-access-control-regexp))
+
+(defconst fsharp-var-or-arg-regexp
+  "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
+
+(defconst fsharp-explicit-field-regexp
+  (format
+   "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?%s\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"
+   fsharp-access-control-regexp))
+
+(defconst fsharp-attributes-regexp
+  "\\[<[A-Za-z0-9_]+>\\]")
+
+;; A lot of symbols in F# are actual, important operators. Highight them.
+;;
+;; In particular:
+;; (| ... |)                 -- banana clips for Active Patterns
+;; <@ ... @> and <@@ ... @@> -- quoted expressions
+;; <| and |>                 -- left and right pipe (also <||, <|||, ||>, |||>)
+;; << and >>                 -- function composition
+;; |                         -- match / type expressions
+
+;; prototype: "<@@?\\|@?@>\\||\{1,3\}>"
+;; "<@@?\\|@?@>\\||\\{1,3\\}>\\|<|\\{1,3\\}\\|(|\\||)\\|\\s-+|"
+;; "<@@?\\|@?@>\\||\\{1,3\\}>\\|<|\\{1,3\\}\\|(|\\||)\\|\\(?:\\s-+\\)|"
+
+
+
+;; This is not hooked up, thus doing no good at all :|
 (defvar fsharp-imenu-generic-expression
   `((nil ,(concat "^\\s-*" fsharp-function-def-regexp) 1)
     (nil ,(concat "^\\s-*" fsharp-pattern-function-regexp) 1)
