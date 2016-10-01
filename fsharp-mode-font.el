@@ -46,7 +46,7 @@
     (set-face-foreground 'DarkOliveGreen "DarkOliveGreen4")
     (make-face 'CadetBlue)
     (set-face-foreground 'CadetBlue "CadetBlue")
-    ; assign them as standard faces
+                                        ; assign them as standard faces
     (setq font-lock-comment-face 'Firebrick)
     (setq font-lock-string-face 'RosyBrown)
     (setq font-lock-keyword-face 'Purple)
@@ -54,13 +54,13 @@
     (setq font-lock-variable-name-face 'DarkGoldenRod)
     (setq font-lock-type-face 'DarkOliveGreen)
     (setq font-lock-constant-face 'CadetBlue)))
-  ; extra faces for documention
+                                        ; extra faces for documention
   (make-face 'Stop)
   (set-face-foreground 'Stop "White")
   (set-face-background 'Stop "Red")
   (make-face 'Doc)
   (set-face-foreground 'Doc "Red")
-))
+  ))
 
 (defconst fsharp-access-control-regexp
   "\\(?:private\\s-+\\|internal\\s-+\\|public\\s-+\\)*")
@@ -75,8 +75,8 @@
 (defconst fsharp-overload-operator-regexp
   "\\<\\(?:override\\|member\\|abstract\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(([!%&*+-./<=>?@^|~]+)\\)")
 (defconst fsharp-constructor-regexp "^\\s-*\\<\\(new\\) *(.*)[^=]*=")
-(defconst fsharp-type-def-regexp 
-  (format "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+%s\\([A-Za-z0-9_'.]+\\)" 
+(defconst fsharp-type-def-regexp
+  (format "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+%s\\([A-Za-z0-9_'.]+\\)"
           fsharp-access-control-regexp))
 (defconst fsharp-var-or-arg-regexp "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
 (defconst fsharp-explicit-field-regexp
@@ -92,6 +92,12 @@
     (nil ,fsharp-type-def-regexp 1)
     ))
 
+(defun fsharp-imenu-load-index ()
+  "Hook up the provided regexen to enable imenu support."
+  (setq imenu-generic-expression fsharp-imenu-generic-expression))
+
+(add-hook 'fsharp-mode-hook #'fsharp-imenu-load-index)
+
 (defvar fsharp-var-pre-form
   (lambda ()
     (save-excursion
@@ -100,7 +106,7 @@
 
 (defvar fsharp-fun-pre-form
   (lambda ()
-    (save-excursion      
+    (save-excursion
       (search-forward "->"))))
 
 (defconst fsharp-font-lock-keywords
@@ -155,54 +161,54 @@
             ) 'symbols)
          'font-lock-keyword-face)
 
-;blocking
-;;    '("\\<\\(begin\\|end\\|module\\|namespace\\|object\\|sig\\|struct\\)\\>"
-;;      . font-lock-keyword-face)
-;control
+                                        ;blocking
+   ;;    '("\\<\\(begin\\|end\\|module\\|namespace\\|object\\|sig\\|struct\\)\\>"
+   ;;      . font-lock-keyword-face)
+                                        ;control
 
-  ;; attributes
-  '("\\[<[A-Za-z0-9_]+>\\]" . font-lock-preprocessor-face)
-  ;; type defines
-  `(,fsharp-type-def-regexp 1 font-lock-type-face)
-  `(,fsharp-function-def-regexp 1 font-lock-function-name-face)
-  `(,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
-  `(,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
-  `(,fsharp-member-function-regexp 1 font-lock-function-name-face)
-  `(,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
-  ;; `(,fsharp-constructor-regexp 1 font-lock-function-name-face)
-  `("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
-    (1 font-lock-type-face)             ; type annotations
-    ;; HACK: font-lock-negation-char-face is usually the same as
-    ;; 'default'. use this to prevent generic type arguments from
-    ;; being rendered in variable face
-    (2 font-lock-negation-char-face nil t))
-  `(,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
-                         fsharp-access-control-regexp)
-    (0 font-lock-keyword-face) ; let binding and function arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-var-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `("\\<fun\\>"
-    (0 font-lock-keyword-face) ; lambda function arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-fun-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `(,fsharp-type-def-regexp
-    (0 font-lock-keyword-face) ; implicit constructor arguments
-    (,fsharp-var-or-arg-regexp
-     (,fsharp-var-pre-form) nil
-     (1 font-lock-variable-name-face nil t)))
-  `(,fsharp-explicit-field-regexp
-        (1 font-lock-variable-name-face)
-        (2 font-lock-type-face))
+   ;; attributes
+   '("\\[<[A-Za-z0-9_]+>\\]" . font-lock-preprocessor-face)
+   ;; type defines
+   `(,fsharp-type-def-regexp 1 font-lock-type-face)
+   `(,fsharp-function-def-regexp 1 font-lock-function-name-face)
+   `(,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
+   `(,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
+   `(,fsharp-member-function-regexp 1 font-lock-function-name-face)
+   `(,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
+   ;; `(,fsharp-constructor-regexp 1 font-lock-function-name-face)
+   `("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
+     (1 font-lock-type-face)             ; type annotations
+     ;; HACK: font-lock-negation-char-face is usually the same as
+     ;; 'default'. use this to prevent generic type arguments from
+     ;; being rendered in variable face
+     (2 font-lock-negation-char-face nil t))
+   `(,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
+              fsharp-access-control-regexp)
+     (0 font-lock-keyword-face) ; let binding and function arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-var-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+   `("\\<fun\\>"
+     (0 font-lock-keyword-face) ; lambda function arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-fun-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+   `(,fsharp-type-def-regexp
+     (0 font-lock-keyword-face) ; implicit constructor arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-var-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+   `(,fsharp-explicit-field-regexp
+     (1 font-lock-variable-name-face)
+     (2 font-lock-type-face))
 
-  ;; open namespace
-  '("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
+   ;; open namespace
+   '("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
 
-  ;; module/namespace
-  '("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
+   ;; module/namespace
+   '("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
 
-;labels (and open)
+                                        ;labels (and open)
    '("\\_<\\(assert\\|open\\|include\\|module\\|namespace\\|extern\\|void\\)\\_>\\|[~][ (]*[a-z][a-zA-Z0-9_']*"
      . font-lock-variable-name-face)
    ;; (cons (concat
@@ -214,7 +220,7 @@
 
 
 (defun fsharp--syntax-propertize-function (start end)
-;  (message "Called with (%d,%d)" start end)
+                                        ;  (message "Called with (%d,%d)" start end)
   (goto-char start)
   (fsharp--syntax-string end)
   (funcall (syntax-propertize-rules
@@ -232,10 +238,10 @@
          (instr (nth 3 pst))
          (start (nth 8 pst)))
     (when (eq t instr) ; Then we are in a custom string
-      ;(message "In custom string")
+                                        ;(message "In custom string")
       (cond
        ((eq ?@ (char-after start)) ; Then we are in a verbatim string
-        ;(message "verbatim")
+                                        ;(message "verbatim")
         (while
             (when (re-search-forward "\"\"?" end 'move)
               (if (> (- (match-end 0) (match-beginning 0)) 1)
@@ -246,15 +252,15 @@
                                    'syntax-table (string-to-syntax "|"))
                 nil)))
         )
-       
+
        (t ; Then we are in a triple-quoted string
-        ;(message "triple-quoted")
+                                        ;(message "triple-quoted")
         (when (re-search-forward "\"\"\"" end 'move)
           (put-text-property (- (match-beginning 0) 1) (match-beginning 0)
                              'syntax-table (string-to-syntax "."))
           (put-text-property (match-beginning 0) (match-end 0)
                              'syntax-table (string-to-syntax "|")))
-          )))))
+        )))))
 
 (provide 'fsharp-mode-font)
 
