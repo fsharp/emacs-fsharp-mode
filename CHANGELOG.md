@@ -1,3 +1,7 @@
+## 1.9.2 (2016-09-30)
+Features
+  - #98 Enable imenu support
+
 ## 1.9.1 (2016-07-19)
 
 Features:
@@ -9,7 +13,7 @@ Features:
   - #71: fontify the doc string (@nosami).
   - #77: Use new typesig command for fsharp-doc mode (@rneatherway).
   - #88: Use flycheck for error reporting (@juergenhoetzel).
-  
+
 Bugfixes:
   - #75: Do not change current buffer when starting FSI (@rneatherway).
   - #76: Record type highlighting (@rneatherway).
@@ -196,4 +200,4 @@ Bugfixes:
   - #571: Correct range-check for emacs support
   - #572: Ensure fsi prompt is readonly
   - #452: Fetch SSL certs before building exe in emacs dir
-  
+

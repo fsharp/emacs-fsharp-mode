@@ -122,6 +122,12 @@
     (nil ,fsharp-type-def-regexp 1)
     ))
 
+(defun fsharp-imenu-load-index ()
+  "Hook up the provided regexen to enable imenu support."
+  (setq imenu-generic-expression fsharp-imenu-generic-expression))
+
+(add-hook 'fsharp-mode-hook #'fsharp-imenu-load-index)
+
 (defvar fsharp-var-pre-form
   (lambda ()
     (save-excursion
