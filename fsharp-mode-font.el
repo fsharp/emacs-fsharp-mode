@@ -68,6 +68,7 @@
 (defconst fsharp-pattern-function-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\([A-Za-z0-9_']+\\)\\s-*=\\s-*function")
 
+;; This colorizes the words *within* an active pattern. So in (| Holy|Cow|_ |), Holy, Cow, and _ will be locked.
 (defconst fsharp-active-pattern-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
 
@@ -95,6 +96,25 @@
 
 (defconst fsharp-attributes-regexp
   "\\[<[A-Za-z0-9_]+>\\]")
+
+(defconst fsharp-quote-regexp
+  "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)")
+
+(defconst fsharp-operator-active-pattern-regex
+  "\\((|\\)\\(?:[A-Za-z0-9_' ]*\\)\\(|\\(?:[A-Za-z0-9_' ]*\\)\\)*\\(|)\\)"
+  "Font lock the banana clips and pipe operators in active patterns.")
+
+(defconst fsharp-operator-quote-regex
+  "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)"
+  "Font lock <@/<@@ and @>/@@> operators.")
+
+(defconst fsharp-operator-pipe-regexp
+  "<|\\{1,3\\}\\||\\{1,3\\}>"
+  "Match the full range of pipe operators -- |>, ||>, |||>, etc.")
+
+(defconst fsharp-operator-case-regexp
+  "\\s-*\\(|\\)[A-Za-z0-9_' ]"
+  "Match literal | in contexts like match and type declarations.")
 
 ;; A lot of symbols in F# are actual, important operators. Highight them.
 ;;
@@ -226,6 +246,13 @@
       (,fsharp-member-function-regexp 1 font-lock-function-name-face)
       (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
       (,fsharp-constructor-regexp 1 font-lock-function-name-face)
+      (,fsharp-operator-active-pattern-regex . 'fsharp-ui-operator-face)
+      (,fsharp-operator-case-regexp . 'fsharp-ui-operator-face)
+      (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
+      ;; This one isn't right -- the quoted words are being highlighted too.
+      (,fsharp-operator-quote-regex  (0 'fsharp-ui-operator-face)
+                                     (1 'fsharp-ui-operator-face)
+                                     (2 'fsharp-ui-operator-face))
       ("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
         (1 font-lock-type-face)
         ;; 'prevent generic type arguments from being rendered in variable face
