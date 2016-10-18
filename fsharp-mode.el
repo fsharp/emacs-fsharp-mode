@@ -217,7 +217,6 @@
           company-auto-complete
           company-auto-complete-chars
           company-idle-delay
-          company-minimum-prefix-length
           company-require-match
           company-tooltip-align-annotations
           fsharp-ac-last-parsed-ticks
@@ -253,7 +252,6 @@
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
   (setq company-idle-delay 0.03)
-  (setq company-minimum-prefix-length 0)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
 
