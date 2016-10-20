@@ -227,7 +227,7 @@
         local-abbrev-table       fsharp-mode-abbrev-table
         paragraph-start          (concat "^$\\|" page-delimiter)
         paragraph-separate       paragraph-start
-        require-final-newline    t
+        require-final-newline    'visit-save
         indent-tabs-mode         nil
         comment-start            "//"
         comment-end              ""
