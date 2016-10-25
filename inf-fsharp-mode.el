@@ -52,20 +52,16 @@
 
 ;; Augment fsharp mode, so you can process fsharp code in the source files.
 
-(defun inferior-fsharp-mode ()
+(define-derived-mode inferior-fsharp-mode comint-mode "Inferior fsharp"
   "Major mode for interacting with an inferior fsharp process.
 Runs a fsharp toplevel as a subprocess of Emacs, with I/O through an
 Emacs buffer. A history of input phrases is maintained. Phrases can
 be sent from another buffer in fsharp mode.
 
 \\{inferior-fsharp-mode-map}"
-  (interactive)
-  (comint-mode)
   (setq comint-prompt-regexp "^# ?")
   (setq comint-prompt-read-only t)
-  (setq major-mode 'inferior-fsharp-mode)
 
-  (setq mode-name "Inferior fsharp")
   (make-local-variable 'paragraph-start)
   (setq paragraph-start (concat "^$\\|" page-delimiter))
   (make-local-variable 'paragraph-separate)
@@ -94,9 +90,7 @@ be sent from another buffer in fsharp mode.
   ;; use compilation mode to parse errors, but RET and C-cC-c should still be from comint-mode
   (compilation-minor-mode)
   (make-local-variable 'minor-mode-map-alist)
-  (setq minor-mode-map-alist (assq-delete-all 'compilation-minor-mode (copy-seq minor-mode-map-alist)))
-)
-
+  (setq minor-mode-map-alist (assq-delete-all 'compilation-minor-mode (copy-seq minor-mode-map-alist))))
 
 (defconst inferior-fsharp-buffer-subname "inferior-fsharp")
 (defconst inferior-fsharp-buffer-name
