@@ -208,6 +208,7 @@
           comment-column
           comment-start-skip
           parse-sexp-ignore-comments
+          indent-region-function
           indent-line-function
           add-log-current-defun-function
           underline-minimum-offset
