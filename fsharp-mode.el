@@ -222,9 +222,7 @@
           fsharp-ac-last-parsed-ticks
           fsharp-ac-errors))
 
-  (setq major-mode               'fsharp-mode
-        mode-name                "fsharp"
-        local-abbrev-table       fsharp-mode-abbrev-table
+  (setq local-abbrev-table       fsharp-mode-abbrev-table
         paragraph-start          (concat "^$\\|" page-delimiter)
         paragraph-separate       paragraph-start
         require-final-newline    'visit-save
