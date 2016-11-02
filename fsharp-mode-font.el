@@ -26,12 +26,10 @@
 
 ;;; Commentary:
 
-;; Mother of god.
-
 ;;; Code:
 
-(require 'fsharp-mode)
-(require 'dash)
+;; (require 'fsharp-mode)
+;; (require 'dash)
 
 (defgroup fsharp-ui nil
   "F# UI group for the defcustom interface."
@@ -60,51 +58,106 @@
   :group 'fsharp-ui)
 
 (defconst fsharp-access-control-regexp
-  "\\(?:private\\s-+\\|internal\\s-+\\|public\\s-+\\)*")
+  "private\\s-+\\|internal\\s-+\\|public\\s-+")
+
+(defconst fsharp-access-control-regexp-noncapturing
+  (format "\\(?:%s\\)" fsharp-access-control-regexp))
+
+;; TODO: move capture to the larger regex
+(defconst fsharp-inline-rec-regexp
+  "inline\\s-+\\|rec\\s-+"
+  "Match `inline' or `rec', followed by a space.")
+
+(defconst fsharp-inline-rec-regexp-noncapturing
+  (format "\\(?:%s\\)" fsharp-inline-rec-regexp)
+  "Match `inline' or `rec', followed by a space, with no capture.")
+
+(defconst fsharp-valid-identifier-regexp
+  "[A-Za-z0-9_']+"
+  "Match a normal valid F# identifier -- alphanumeric characters plus ' and underbar.")
 
 (defconst fsharp-function-def-regexp
-  "\\<\\(?:let\\|and\\|with\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\([A-Za-z0-9_']+\\)\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
+  (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
+          (format "\\(?:%s\\)?" fsharp-inline-rec-regexp)
+          (format "\\(%s\\)" fsharp-valid-identifier-regexp)
+          "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
+          ))
 
 (defconst fsharp-pattern-function-regexp
-  "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\([A-Za-z0-9_']+\\)\\s-*=\\s-*function")
+  (concat "\\<\\(?:let\\|and\\)\\s-+"
+          (format "\\(?:%s\\)?" fsharp-inline-rec-regexp)
+          (format "\\(%s\\)" fsharp-valid-identifier-regexp)
+          "\\s-*=\\s-*function")
+  "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
 
-;; This colorizes the words *within* an active pattern. So in (| Holy|Cow|_ |), Holy, Cow, and _ will be locked.
 (defconst fsharp-active-pattern-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
 
+;; (defconst fsharp-active-pattern-regexp
+;;   (concat "\\<\\(?:let\\|and\\)\\s-+m"
+;;           fsharp-inline-rec-regexp "?" ;; inline-rec is optional
+;;           "\\(?:|\\)\\([A-Za-z0-9'_]*\\)"
+;;           ;; "(\\(?:|\\)\\([a-zA-Z0-9']*\\(?:|\\([A-Za-z0-9'_]*\\)\\)+\\)\\(?:|\\))"
+;;           ;; "(\\(?:|\\)\\([A-Za-z0-9_'|]+\\)\\(?:|\\))" ;; Match words within banana clips but do not capture clips themselves
+;;           "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
+;;   "Matches the words and pipes *within* an active pattern. E.g., in `(|Holy|Cow|_ |)', Holy, Cow,  , and pipes_ will be matched.")
+
+(defconst fsharp-member-access-regexp
+  "\\<\\(?:override\\|member\\|abstract\\)\\s-+"
+  "Matches members declarations and modifiers on classes.")
+
 (defconst fsharp-member-function-regexp
-  "\\<\\(?:override\\|member\\|abstract\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(?:[A-Za-z0-9_']+\\.\\)?\\([A-Za-z0-9_']+\\)")
+  (concat fsharp-member-access-regexp
+          "\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(?:"
+          fsharp-valid-identifier-regexp
+          "\\.\\)?\\("
+          fsharp-valid-identifier-regexp
+          "\\)")
+  "Captures the final identifier in a member function declaration.")
 
 (defconst fsharp-overload-operator-regexp
-  "\\<\\(?:override\\|member\\|abstract\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(([!%&*+-./<=>?@^|~]+)\\)")
+  (concat fsharp-member-access-regexp
+          "\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(([!%&*+-./<=>?@^|~]+)\\)")
+  "Match operators when overloaded by a type/class.")
 
 (defconst fsharp-constructor-regexp
-  "^\\s-*\\<\\(new\\) *(.*)[^=]*=")
+  "^\\s-*\\<\\(new\\) *(.*)[^=]*="
+  "Matches the `new' keyword in a constructor")
 
 (defconst fsharp-type-def-regexp
-  (format
-   "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+%s\\([A-Za-z0-9_'.]+\\)"
-   fsharp-access-control-regexp))
+  (concat "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+"
+          fsharp-access-control-regexp "*" ;; match access control 0 or more times
+          "\\([A-Za-z0-9_'.]+\\)"))
 
 (defconst fsharp-var-or-arg-regexp
   "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
 
 (defconst fsharp-explicit-field-regexp
-  (format
-   "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?%s\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"
-   fsharp-access-control-regexp))
+  (concat "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?"
+          fsharp-access-control-regexp "*" ;; match access control 0 or more times
+          "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
 
 (defconst fsharp-attributes-regexp
-  "\\[<[A-Za-z0-9_]+>\\]")
+  "\\[<[A-Za-z0-9_]+>\\]"
+  "Match attributes like [<EntryPoint>]")
 
-(defconst fsharp-quote-regexp
-  "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)")
 
-(defconst fsharp-operator-active-pattern-regex
-  "\\((|\\)\\(?:[A-Za-z0-9_' ]*\\)\\(|\\(?:[A-Za-z0-9_' ]*\\)\\)*\\(|)\\)"
-  "Font lock the banana clips and pipe operators in active patterns.")
+;; F# makes extensive use of operators, many of which have some kind of
+;; structural significance.
+;;
+;; In particular:
+;; (| ... |)                 -- banana clips for Active Patterns
+;; <@ ... @> and <@@ ... @@> -- quoted expressions
+;; <| and |>                 -- left and right pipe (also <||, <|||, ||>, |||>)
+;; << and >>                 -- function composition
+;; |                         -- match / type expressions
 
-(defconst fsharp-operator-quote-regex
+
+(defconst fsharp-operator-active-pattern-regexp
+  "\\((|\\)\\(?:.*\\)\\(|)\\)"
+  "Font lock the banana clips in active patterns.")
+
+(defconst fsharp-operator-quote-regexp
   "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)"
   "Font lock <@/<@@ and @>/@@> operators.")
 
@@ -115,20 +168,6 @@
 (defconst fsharp-operator-case-regexp
   "\\s-*\\(|\\)[A-Za-z0-9_' ]"
   "Match literal | in contexts like match and type declarations.")
-
-;; A lot of symbols in F# are actual, important operators. Highight them.
-;;
-;; In particular:
-;; (| ... |)                 -- banana clips for Active Patterns
-;; <@ ... @> and <@@ ... @@> -- quoted expressions
-;; <| and |>                 -- left and right pipe (also <||, <|||, ||>, |||>)
-;; << and >>                 -- function composition
-;; |                         -- match / type expressions
-
-;; prototype: "<@@?\\|@?@>\\||\{1,3\}>"
-;; "<@@?\\|@?@>\\||\\{1,3\\}>\\|<|\\{1,3\\}\\|(|\\||)\\|\\s-+|"
-;; "<@@?\\|@?@>\\||\\{1,3\\}>\\|<|\\{1,3\\}\\|(|\\||)\\|\\(?:\\s-+\\)|"
-
 
 
 ;; This is not hooked up, thus doing no good at all :|
@@ -163,7 +202,7 @@
 (defvar fsharp-ui-preproessor-directives
   '("#if" "#else" "#endif"))
 
-    ;; Compiler directives (12.4)
+;; Compiler directives (12.4)
 (defvar fsharp-ui-compiler-directives
   '("#nowarn" "#load" "#r" "#reference" "#I"
     "#Include" "#q" "#quit" "#time" "#help"))
@@ -246,33 +285,33 @@
       (,fsharp-member-function-regexp 1 font-lock-function-name-face)
       (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
       (,fsharp-constructor-regexp 1 font-lock-function-name-face)
-      (,fsharp-operator-active-pattern-regex . 'fsharp-ui-operator-face)
-      (,fsharp-operator-case-regexp . 'fsharp-ui-operator-face)
+      (,fsharp-operator-active-pattern-regexp  (1 'fsharp-ui-operator-face)
+                                               (2 'fsharp-ui-operator-face))
+      (,fsharp-operator-case-regexp 1 'fsharp-ui-operator-face)
       (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
-      ;; This one isn't right -- the quoted words are being highlighted too.
-      (,fsharp-operator-quote-regex  (0 'fsharp-ui-operator-face)
-                                     (1 'fsharp-ui-operator-face)
-                                     (2 'fsharp-ui-operator-face))
+
+      (,fsharp-operator-quote-regexp  (1 'fsharp-ui-operator-face)
+                                      (2 'fsharp-ui-operator-face))
       ("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
-        (1 font-lock-type-face)
-        ;; 'prevent generic type arguments from being rendered in variable face
-        (2 'fsharp-ui-generic-face nil t))
+       (1 font-lock-type-face)
+       ;; 'prevent generic type arguments from being rendered in variable face
+       (2 'fsharp-ui-generic-face nil t))
       (,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
-                 fsharp-access-control-regexp)
-        (0 font-lock-keyword-face) ; let binding and function arguments
-        (,fsharp-var-or-arg-regexp
-         (,fsharp-var-pre-form) nil
-         (1 font-lock-variable-name-face nil t)))
+                (concat fsharp-access-control-regexp "*"))
+       (0 font-lock-keyword-face) ; let binding and function arguments
+       (,fsharp-var-or-arg-regexp
+        (,fsharp-var-pre-form) nil
+        (1 font-lock-variable-name-face nil t)))
       ("\\<fun\\>"
-        (0 font-lock-keyword-face) ; lambda function arguments
-        (,fsharp-var-or-arg-regexp
-         (,fsharp-fun-pre-form) nil
-         (1 font-lock-variable-name-face nil t)))
+       (0 font-lock-keyword-face) ; lambda function arguments
+       (,fsharp-var-or-arg-regexp
+        (,fsharp-fun-pre-form) nil
+        (1 font-lock-variable-name-face nil t)))
       (,fsharp-type-def-regexp
        (0 'font-lock-keyword-face) ; implicit constructor arguments
-        (,fsharp-var-or-arg-regexp
-         (,fsharp-var-pre-form) nil
-         (1 font-lock-variable-name-face nil t)))
+       (,fsharp-var-or-arg-regexp
+        (,fsharp-var-pre-form) nil
+        (1 font-lock-variable-name-face nil t)))
       (,fsharp-explicit-field-regexp
        (1 font-lock-variable-name-face)
        (2 font-lock-type-face))
