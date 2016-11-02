@@ -1,6 +1,16 @@
+## 1.9.3 (2016-10-31)
+Features
+  - #111: Update to FsAutoComplete 0.30.2 
+  - #109: Define inferior-fsharp-mode as variant of comint mode
+  
+Bugfixes:
+  - #110: Dont change default indent region function
+  - #105: Don't send trailing newline to fsautocomplete
+  - #104: Dont change `company-minimum-prefix-length'
+
 ## 1.9.2 (2016-09-30)
 Features
-  - #98 Enable imenu support
+  - #98: Enable imenu support
 
 ## 1.9.1 (2016-07-19)
 

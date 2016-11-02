@@ -140,7 +140,7 @@ since the last request."
         (fsharp-ac--log (format "Parsing \"%s\"\n" file))
         (process-send-string
          (fsharp-ac-completion-process (fsharp-ac--hostname file))
-         (format "parse \"%s\" %s\n%s\n<<EOF>>\n"
+         (format "parse \"%s\" %s\n%s<<EOF>>\n"
                  (fsharp-ac--localname file)
                  (if force-sync " sync" "")
                  (buffer-substring-no-properties (point-min) (point-max)))))
@@ -424,10 +424,11 @@ If HOST is nil, check process on local system."
     (interactive (list 'interactive))
     (cl-case command
         (interactive (company-begin-backend 'fsharp-ac/company-backend))
-        (prefix  (or (fsharp-ac-get-prefix)
-                     ;; Don't pass to next backend if we are not inside a string or comment
-                     (when (and (not (nth 3 (syntax-ppss))) (not (nth 4 (syntax-ppss))))
-                       'stop)))
+        (prefix  (when (not (company-in-string-or-comment))
+		     ;; Don't pass to next backend if we are not inside a string or comment
+		     (-if-let (prefix (fsharp-ac-get-prefix))
+			 (cons prefix t)
+		       'stop)))
         (ignore-case t)
         (sorted t)
         (candidates (cons :async 'fsharp-company-candidates))

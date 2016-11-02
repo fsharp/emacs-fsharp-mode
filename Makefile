@@ -12,6 +12,10 @@ integration_tests = $(test_d)/integration-tests.el
 unit_tests        = $(filter-out $(integration_tests), $(wildcard $(test_d)/*tests.el))
 utils             = $(test_d)/test-common.el
 
+# F# fontification test files
+faceup_inputs  = $(wildcard $(test_d)/apps/*/*.fs) $(wildcard $(test_d)/apps/*/*.fsx)
+faceup_outputs = $(patsubst %,%.faceup, $(faceup_inputs))
+
 # Emacs command format.
 emacs            = emacs
 load_files       = $(patsubst %,-l %, $(utils))
@@ -21,7 +25,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.29.0
+ac_version = 0.30.2
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
@@ -31,7 +35,7 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 
 # ----------------------------------------------------------------------------
 
-.PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run update-version release
+.PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run update-version release faceup
 
 # Building
 
@@ -99,6 +103,13 @@ check-declares : packages
           --eval "(dolist (file '($(foreach var,$(src_files),\"$(var)\"))) (when (check-declare-file file) (kill-emacs 1)))"
 
 check-compile : packages $(obj_files)
+
+faceup : $(faceup_outputs)
+
+%.faceup : % fsharp-mode-font.el
+	HOME=$(tmp_d) ;\
+	$(emacs) $(load_files) -batch \
+          --eval "(regen-faceup-output \"$<\")"
 
 .el.elc:
 	HOME=$(tmp_d) ;\

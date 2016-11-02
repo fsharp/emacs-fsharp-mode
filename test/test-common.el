@@ -119,6 +119,15 @@ glob emacs/test/*test.el."
   (run-fsharp-tests   
    (--filter (s-match "integration-tests.el" it) fsharp-test-files)))
 
+(defun regen-faceup-output (fname)
+  (interactive)
+  (configure-fsharp-tests)
+  (let ((fsharp-ac-intellisense-enabled nil))
+    (delete-file (concat fname ".faceup"))
+    (find-file fname)
+    (font-lock-fontify-region (point-min) (point-max))
+    (faceup-write-file)))
+
 ;;; Configuration
 
 (defun configure-fsharp-tests ()
