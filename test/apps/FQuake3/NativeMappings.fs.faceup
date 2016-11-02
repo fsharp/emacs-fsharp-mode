@@ -42,14 +42,14 @@ Copyright (C) 1999-2005 Id Software, Inc.
     «k:let» «k:mutable» «v:md3Map» = Map.empty<nativeint, Md3>
 
 «k:module» «t:Boolean» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<qboolean>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<qboolean>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         «k:match» native «k:with»
-        | qboolean.qtrue -> «k:true»
-        | _ -> «k:false»
+        «:fsharp-ui-operator-face:|» qboolean.qtrue -> «k:true»
+        «:fsharp-ui-operator-face:|» _ -> «k:false»
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<qboolean>») («v:value»: «t:bool») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<qboolean>») («v:value»: «t:bool») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         native <- «k:if» value «k:then» qboolean.qtrue «k:else» qboolean.qfalse
@@ -60,12 +60,12 @@ Copyright (C) 1999-2005 Id Software, Inc.
         «k:if» value «k:then» qboolean.qtrue «k:else» qboolean.qfalse
 
 «k:module» «t:Vec2» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<vec2_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec2_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         vec2 (native.value, native.value1)
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<vec2_t>») («v:v»: «t:vec2») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec2_t>») («v:v»: «t:vec2») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         native.value <- v.X
@@ -74,12 +74,12 @@ Copyright (C) 1999-2005 Id Software, Inc.
         NativePtr.write ptr native  
 
 «k:module» «t:Vec3» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<vec3_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         vec3 (native.value, native.value1, native.value2)
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<vec3_t>») («v:v»: «t:vec3») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») («v:v»: «t:vec3») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         native.value <- v.X
@@ -89,12 +89,12 @@ Copyright (C) 1999-2005 Id Software, Inc.
         NativePtr.write ptr native   
         
 «k:module» «t:Vec4» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<vec4_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec4_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         vec4 (native.value, native.value1, native.value2, native.value3)
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<vec4_t>») («v:v»: «t:vec4») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec4_t>») («v:v»: «t:vec4») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         native.value <- v.X
@@ -105,7 +105,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         NativePtr.write ptr native  
 
 «k:module» «t:Mat4» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<single>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<single>») =
         mat4 (
             (NativePtr.get ptr 0),
             (NativePtr.get ptr 1),
@@ -125,7 +125,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
             (NativePtr.get ptr 15)
         )
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<single>») («v:m»: «t:mat4») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<single>») («v:m»: «t:mat4») =
         NativePtr.set ptr 0 m.[0, 0]
         NativePtr.set ptr 1 m.[0, 1]
         NativePtr.set ptr 2 m.[0, 2]
@@ -144,7 +144,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         NativePtr.set ptr 15 m.[3, 3]
 
 «k:module» «t:Cvar» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<cvar_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<cvar_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -160,12 +160,12 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:Bounds» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<vec3_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») =
         Bounds (
-            Vec3.ofNativePtr <| NativePtr.add ptr 0,
-            Vec3.ofNativePtr <| NativePtr.add ptr 1)
+            Vec3.ofNativePtr <«:fsharp-ui-operator-face:|» NativePtr.add ptr 0,
+            Vec3.ofNativePtr <«:fsharp-ui-operator-face:|» NativePtr.add ptr 1)
 
-    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«n:<vec3_t>») («v:bounds»: «t:Bounds») =
+    «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») («v:bounds»: «t:Bounds») =
         «k:let» «k:mutable» «v:nativeX» = NativePtr.get ptr 0
         «k:let» «k:mutable» «v:nativeY» = NativePtr.get ptr 1
 
@@ -176,7 +176,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         NativePtr.set ptr 1 nativeY
 
 «k:module» «t:Message» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<msg_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<msg_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -190,7 +190,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:IPAddress» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<byte>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<byte>») =
         {
             Octet1 = NativePtr.get ptr 0;
             Octet2 = NativePtr.get ptr 1;
@@ -199,7 +199,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:Address» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<netadr_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<netadr_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -209,7 +209,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:Md3Frame» =
-    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<md3Frame_t>») =
+    «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<md3Frame_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -220,14 +220,14 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:Md3» =
-    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<md3Header_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<md3Header_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         «k:let» «v:hash» = NativePtr.toNativeInt ptr
 
         «k:match» Map.tryFind hash Cache.md3Map «k:with»
-        | Some x -> x
-        | None ->
+        «:fsharp-ui-operator-face:|» Some x -> x
+        «:fsharp-ui-operator-face:|» None ->
 
         «k:let» «v:bytes» = Array.zeroCreate<byte> native.ofsEnd
         Marshal.Copy (NativePtr.toNativeInt ptr, bytes, 0, native.ofsEnd)
@@ -236,7 +236,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         md3
 
 «k:module» «t:DirectoryInfo» =
-    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<directory_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<directory_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         «k:let» «v:path» = NativePtr.toStringAnsi &&native.path
@@ -245,7 +245,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         DirectoryInfo (Path.Combine (path, name))
 
 «k:module» «t:Pak» =
-    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<pack_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<pack_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -256,24 +256,24 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:ServerPakChecksum» =
-    «k:let» «f:createFrom_fs_serverPaks» («v:size»: «t:int») («v:ptr»: «t:nativeptr»«n:<int>») =
+    «k:let» «f:createFrom_fs_serverPaks» («v:size»: «t:int») («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<int>») =
         «k:match» NativePtr.isValid ptr «k:with»
-        | «k:false» -> []
-        | _ -> NativePtr.toList size ptr
+        «:fsharp-ui-operator-face:|» «k:false» -> []
+        «:fsharp-ui-operator-face:|» _ -> NativePtr.toList size ptr
 
 «k:module» «t:SearchPath» =
-    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«n:<searchpath_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
             DirectoryInfo = Option.ofNativePtr DirectoryInfo.ofNativePtr native.directory
         }
 
-    «k:let» «f:convertFrom_fs_searchpaths» («v:ptr»: «t:nativeptr»«n:<searchpath_t>») =
-        «k:let» «k:rec» «f:f» («v:searchPaths»: «t:SearchPath list») («v:ptr»: «t:nativeptr»«n:<searchpath_t>») =
+    «k:let» «f:convertFrom_fs_searchpaths» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
+        «k:let» «k:rec» «f:f» («v:searchPaths»: «t:SearchPath list») («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
             «k:match» NativePtr.isValid ptr «k:with»
-            | «k:false» -> searchPaths
-            | _ ->
+            «:fsharp-ui-operator-face:|» «k:false» -> searchPaths
+            «:fsharp-ui-operator-face:|» _ ->
             «k:let» «k:mutable» «v:native» = NativePtr.read ptr
             f (ofNativePtr ptr :: searchPaths) (native.next)
 
