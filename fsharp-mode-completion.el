@@ -36,6 +36,7 @@
 (autoload 'pos-tip-show "pos-tip")
 (autoload 'popup-tip "popup")
 
+(declare-function flycheck-fsharp-handle-nothing-changed "flycheck-fsharp.el")
 (declare-function fsharp-fontify-string "fsharp-doc.el" (str))
 (declare-function fsharp-mode/find-fsproj "fsharp-mode.el" (dir-or-file))
 
@@ -65,9 +66,8 @@ If set to nil, display in a help buffer instead.")
   "Face used for marking a usage of a symbol in F#"
   :group 'fsharp)
 
-;;; Both in seconds. Note that background process uses ms.
+;;; In seconds. Note that background process uses ms.
 (defvar fsharp-ac-blocking-timeout 0.4)
-(defvar fsharp-ac-idle-timeout 1)
 
 ;;; ----------------------------------------------------------------------------
 
@@ -89,11 +89,10 @@ If set to nil, display in a help buffer instead.")
   "Data returned by fsautocomplete for loaded projects.")
 (defvar fsharp-ac--project-files (make-hash-table :test 'equal)
   "Reverse mapping from files to the project that contains them.")
-(defvar fsharp-ac-idle-timer nil)
 (defvar fsharp-ac-verbose nil)
 (defvar fsharp-ac-current-candidate nil)
 (defvar fsharp-ac-current-helptext (make-hash-table :test 'equal))
-(defvar fsharp-ac-last-parsed-ticks 0
+(defvar-local fsharp-ac-last-parsed-ticks 0
   "BUFFER's tick counter, when the file was parsed.")
 (defvar fsharp-ac--last-parsed-buffer nil
   "Last parsed BUFFER, so that we reparse if we switch buffers.")
@@ -111,6 +110,10 @@ If set to nil, display in a help buffer instead.")
 
 (defvar fsharp-ac-handle-lint-function nil
   "Function to call to handle lint messages from fsautocomplete.exe.")
+
+;; only needs to stash errors, not lint info
+(defvar-local fsharp-ac-errors nil
+  "The most recent flycheck errors for the buffer, if any.")
 
 (defun fsharp-ac--log (str)
   (when fsharp-ac-debug
@@ -130,9 +133,12 @@ If set to nil, display in a help buffer instead.")
   "The optional FORCE-SYNC argument is for testing purposes.
 When used, the buffer is parsed even if it has not changed
 since the last request."
-  (when (or (/= (buffer-chars-modified-tick) fsharp-ac-last-parsed-ticks)
-            (not (eq fsharp-ac--last-parsed-buffer (current-buffer)))
-            force-sync)
+  (if (not (or (/= (buffer-chars-modified-tick) fsharp-ac-last-parsed-ticks)
+               (not (eq fsharp-ac--last-parsed-buffer (current-buffer)))
+               force-sync))
+      ;; we were called by flycheck, but nothing has actually changed, so use
+      ;; the old errors
+      (flycheck-fsharp-handle-nothing-changed)
     (setq fsharp-ac--last-parsed-buffer (current-buffer))
     (save-restriction
       (let ((file (fsharp-ac--buffer-truename)))
@@ -245,10 +251,7 @@ For indirect buffers return the truename of the base buffer."
   (gethash file fsharp-ac--project-files))
 
 (defun fsharp-ac--reset ()
-  (when fsharp-ac-idle-timer
-    (cancel-timer fsharp-ac-idle-timer))
   (setq fsharp-ac-status 'idle
-        fsharp-ac-idle-timer nil
         fsharp-ac-current-candidate nil)
   (fsharp-ac-completion-process-del (fsharp-ac--hostname default-directory))
   (clrhash fsharp-ac-current-helptext)
@@ -294,8 +297,7 @@ If HOST is nil, check process on local system."
     (condition-case err
         (progn
           (fsharp-ac--reset)
-          (fsharp-ac-completion-process-add (fsharp-ac--hostname default-directory) (fsharp-ac--configure-proc))
-          (fsharp-ac--reset-timer))
+          (fsharp-ac-completion-process-add (fsharp-ac--hostname default-directory) (fsharp-ac--configure-proc)))
       (error
        (setq fsharp-ac-intellisense-enabled nil)
        (message "Failed to start fsautocomplete (%s). Disabling intellisense. To reenable, set fsharp-ac-intellisense-enabled to t."
@@ -304,8 +306,6 @@ If HOST is nil, check process on local system."
 (defun fsharp-ac--process-sentinel (process event)
   "Default sentinel used by `fsharp-ac--configure-proc`."
   (when (memq (process-status process) '(exit signal))
-    (when fsharp-ac-idle-timer
-      (cancel-timer fsharp-ac-idle-timer))
     (--each (buffer-list) (with-current-buffer it
 			    (when (eq major-mode 'fsharp-mode)
 			      (setq fsharp-ac-last-parsed-ticks 0)
@@ -348,14 +348,6 @@ If HOST is nil, check process on local system."
 	    nil))
       (error "%s not found" fsac))))
 
-(defun fsharp-ac--reset-timer ()
-  (when fsharp-ac-idle-timer
-    (cancel-timer fsharp-ac-idle-timer))
-  (setq fsharp-ac-idle-timer
-        (run-with-idle-timer fsharp-ac-idle-timeout
-                             t
-                             'fsharp-ac--parse-current-file)))
-
 (defun fsharp-ac-document (item)
   (let* ((ticks (s-match "^``\\(.*\\)``$" item))
          (key (if ticks (cadr ticks) item))
@@ -396,8 +388,8 @@ If HOST is nil, check process on local system."
   (if (and (fsharp-ac-can-make-request t)
              (eq fsharp-ac-status 'idle))
       (progn
-  (setq fsharp-company-callback callback)
-  (fsharp-ac-make-completion-request))
+        (setq fsharp-company-callback callback)
+        (fsharp-ac-make-completion-request))
     (funcall callback nil)))
 
 (defun fsharp-ac-add-annotation-prop (s candidate)
@@ -533,10 +525,10 @@ on QUIET to FSHARP-AC-CAN-MAKE-REQUEST. This is a bit of hack to
 prevent usage errors being displayed by FSHARP-DOC-MODE."
   (interactive)
   (when (fsharp-ac-can-make-request quiet)
-     (fsharp-ac-send-pos-request "typesig"
-                                 (fsharp-ac--buffer-truename)
-                                 (line-number-at-pos)
-                                 (+ 1 (current-column)))))
+    (fsharp-ac-send-pos-request "typesig"
+                                (fsharp-ac--buffer-truename)
+                                (line-number-at-pos)
+                                (+ 1 (current-column)))))
 
 (defun fsharp-ac/symboluse-at-point ()
   "Find the uses in this file of the symbol at point."
@@ -577,8 +569,6 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
 
 (defstruct fsharp-error start end face priority text file)
 (defstruct fsharp-symbol-use start end face file)
-
-(defvar fsharp-ac-errors)
 
 (defun fsharp-ac-line-column-to-pos (line col)
   (save-excursion
@@ -690,8 +680,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
          ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
          ("completion" (fsharp-ac-handle-completion data))
          ("helptext" (fsharp-ac-handle-doctext data))
-         ("lint" (-some-> fsharp-ac-handle-lint-function (funcall data)))
-         ("errors" (-some-> fsharp-ac-handle-errors-function (funcall data)))
+         ("lint" (funcall fsharp-ac-handle-lint-function data))
+         ("errors" (funcall fsharp-ac-handle-errors-function data))
          ("project" (fsharp-ac-handle-project data))
          ("tooltip" (fsharp-ac-handle-tooltip data))
          ("typesig" (fsharp-ac--handle-typesig data))

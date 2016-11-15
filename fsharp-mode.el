@@ -219,9 +219,7 @@
           company-auto-complete-chars
           company-idle-delay
           company-require-match
-          company-tooltip-align-annotations
-          fsharp-ac-last-parsed-ticks
-          fsharp-ac-errors))
+          company-tooltip-align-annotations))
 
   (setq local-abbrev-table       fsharp-mode-abbrev-table
         paragraph-start          (concat "^$\\|" page-delimiter)
@@ -266,8 +264,8 @@
       (setq compile-command (fsharp-mode-choose-compile-command file))
       (fsharp-mode--load-with-binding file)))
 
-  (turn-on-fsharp-doc-mode)
   (flycheck-mode 1)
+  (turn-on-fsharp-doc-mode)
   (run-hooks 'fsharp-mode-hook))
 
 (defun fsharp-mode--load-with-binding (file)

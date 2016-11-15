@@ -68,32 +68,53 @@ See URL `https://github.com/fsharp/FsAutoComplete'."
 (defun flycheck-fsharp-handle-lint (data)
   "Extract the errors from the given process response DATA.  Return a list of `flycheck-error'."
   (-if-let ((checker . callback) flycheck-fsharp--lint-callback-info)
-      (funcall callback 'finished
-	       (--map (let* ((range (gethash "Range" it))
-			     (line (gethash "StartLine" range))
-			     (column (gethash "StartColumn" range))
-			     (msg (gethash "Info" it))
-			     (file (fsharp-ac--tramp-file (gethash "FileName" range))))
-			(flycheck-error-new-at
-			 line column 'info msg :checker checker :filename file)) data))
-    (message "Warning: `flycheck-fsharp--lint-callback-info` not set (flycheck-fsautocomlete not enabled?)")))
+      (condition-case err
+          (funcall callback 'finished
+                   (--map (let* ((range (gethash "Range" it))
+                                 (line (gethash "StartLine" range))
+                                 (column (gethash "StartColumn" range))
+                                 (msg (gethash "Info" it))
+                                 (file (fsharp-ac--tramp-file (gethash "FileName" range))))
+                            (flycheck-error-new-at
+                             line column 'info msg :checker checker :filename file)) data))
+        (funcall callback 'errored (error-message-string err)))
+    ;; XXX this should use (funcall callback 'suspicious "the message below"),
+    ;; but it would require refactoring things to be able to use this function
+    ;; as the flycheck :start function instead of having a :start function that
+    ;; sets the above "callback info"
+    (message "Warning: `flycheck-fsharp--lint-callback-info` not set (flycheck-fsautocomplete not enabled?)")))
+
+(defun flycheck-fsharp-handle-nothing-changed ()
+  (-when-let ((checker . callback) flycheck-fsharp--error-callback-info)
+    (funcall callback 'finished fsharp-ac-errors)))
 
 (defun flycheck-fsharp-handle-errors (data)
   "Extract the errors from the given process response DATA.  Return a list of `flycheck-error'."
   (-if-let ((checker . callback) flycheck-fsharp--error-callback-info)
-      (funcall callback 'finished
-	       (--map (let ((line (gethash "StartLine" it))
-			    (column (gethash "StartColumn" it))
-			    ;; we ignore EndLine and EndColumn here because flycheck uses
-			    ;; (bounds-of-thing-at-point thing) to identify the region, see:
-			    ;; (bounds-of-thing-at-point thing)
-			    (level (if (string= "Error" (gethash "Severity" it))
-				       'error
-				     'warning))
-			    (msg (gethash "Message" it))
-			    (file (fsharp-ac--tramp-file (gethash "FileName" it))))
-			(flycheck-error-new-at
-			 line column level msg :checker checker :filename file)) data))
+      (condition-case err
+          (progn
+            (setq
+             fsharp-ac-errors
+             (--map (let ((line (gethash "StartLine" it))
+                          (column (gethash "StartColumn" it))
+                          ;; we ignore EndLine and EndColumn here because flycheck uses
+                          ;; (bounds-of-thing-at-point thing) to identify the region, see:
+                          ;; (bounds-of-thing-at-point thing)
+                          (level (if (string= "Error" (gethash "Severity" it))
+                                     'error
+                                   'warning))
+                          (msg (gethash "Message" it))
+                          (file (fsharp-ac--tramp-file (gethash "FileName"
+                                                                it))))
+                      (flycheck-error-new-at
+                       line column level msg :checker checker :filename file))
+                    data))
+            (funcall callback 'finished fsharp-ac-errors))
+        (funcall callback 'errored (error-message-string err)))
+    ;; XXX this should use (funcall callback 'suspicious "the message below"),
+    ;; but it would require refactoring things to be able to use this function
+    ;; as the flycheck :start function instead of having a :start function that
+    ;; sets the above "callback info"
     (message "Warning: `flycheck-fsharp--error-callback-info` not set (flycheck-fsautocomplete not enabled?)")))
 
 (setq fsharp-ac-handle-errors-function 'flycheck-fsharp-handle-errors)

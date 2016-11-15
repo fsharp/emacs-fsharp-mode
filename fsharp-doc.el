@@ -50,9 +50,12 @@
   nil
   ;; Body
   (fsharp-doc-reset-timer)
-  (when fsharp-doc-mode
-    (fsharp-doc-start-timer)
+  (cond
+   (fsharp-doc-mode
+    (add-hook 'post-command-hook 'fsharp-doc-request-info-soon 'local)
     (run-hooks 'fsharp-doc-mode-hook))
+   (t
+    (remove-hook 'post-command-hook 'fsharp-doc-request-info-soon 'local)))
   fsharp-doc-mode)
 
 (defun turn-on-fsharp-doc-mode ()
@@ -63,13 +66,14 @@
 
 ;;; -----------------------------------------------------------------------------
 
-(defvar fsharp-doc-timer nil)
+(defvar-local fsharp-doc-timer nil)
 
-(defun fsharp-doc-start-timer ()
-  (unless fsharp-doc-timer
+(defun fsharp-doc-request-info-soon ()
+  (fsharp-doc-reset-timer)
+  (when fsharp-doc-mode
     (setq fsharp-doc-timer
-          (run-with-idle-timer fsharp-doc-idle-delay t
-                               'fsharp-doc--request-info))))
+          (run-at-time fsharp-doc-idle-delay nil
+                       'fsharp-doc--request-info))))
 
 (defun fsharp-doc-reset-timer ()
   (when fsharp-doc-timer
@@ -99,23 +103,24 @@
 
 (defun fsharp-doc--request-info ()
   "Send a request for tooltip and usage information unless at an error."
-  (interactive)
-  (let ((in-usage-overlay (fsharp-ac/usage-overlay-at (point))))
-    (unless in-usage-overlay
-      (fsharp-ac--clear-symbol-uses))
-    (when (and fsharp-doc-mode
-               (thing-at-point 'symbol)
-               (not (eq (char-after) ? )))
-      (unless (or (equal (point) fsharp-doc-prevpoint)
-                  (not (eq fsharp-ac-status 'idle))
-                  executing-kbd-macro
-                  (flycheck-overlay-errors-at (point))
-                  (active-minibuffer-window)
-                  cursor-in-echo-area)
-        (setq fsharp-doc-prevpoint (point))
-        (fsharp-ac/show-typesig-at-point t)
-        (unless in-usage-overlay
-          (fsharp-ac/symboluse-at-point))))))
+  (with-demoted-errors "F# doc display error: %s"
+    (fsharp-doc-reset-timer)
+    (let ((in-usage-overlay (fsharp-ac/usage-overlay-at (point))))
+      (unless in-usage-overlay
+        (fsharp-ac--clear-symbol-uses))
+      (when (and fsharp-doc-mode
+                 (thing-at-point 'symbol)
+                 (not (eq (char-after) ? )))
+        (unless (or (equal (point) fsharp-doc-prevpoint)
+                    (not (eq fsharp-ac-status 'idle))
+                    executing-kbd-macro
+                    (flycheck-overlay-errors-at (point))
+                    (active-minibuffer-window)
+                    cursor-in-echo-area)
+          (setq fsharp-doc-prevpoint (point))
+          (fsharp-ac/show-typesig-at-point t)
+          (unless in-usage-overlay
+            (fsharp-ac/symboluse-at-point)))))))
 
 (provide 'fsharp-doc)
 
