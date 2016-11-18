@@ -271,57 +271,56 @@
    'symbols))
 
 (defconst fsharp-font-lock-keywords
-  (eval-when-compile
-    `((,fsharp-ui-word-list-regexp 0 font-lock-keyword-face)
-      ;; control
+  `((,fsharp-ui-word-list-regexp 0 font-lock-keyword-face)
+    ;; control
 
-      ;; attributes
-      (,fsharp-attributes-regexp . font-lock-preprocessor-face)
-      ;; ;; type defines
-      (,fsharp-type-def-regexp 1 font-lock-type-face)
-      (,fsharp-function-def-regexp 1 font-lock-function-name-face)
-      (,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
-      (,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
-      (,fsharp-member-function-regexp 1 font-lock-function-name-face)
-      (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
-      (,fsharp-constructor-regexp 1 font-lock-function-name-face)
-      (,fsharp-operator-active-pattern-regexp  (1 'fsharp-ui-operator-face)
-                                               (2 'fsharp-ui-operator-face))
-      (,fsharp-operator-case-regexp 1 'fsharp-ui-operator-face)
-      (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
+    ;; attributes
+    (,fsharp-attributes-regexp . font-lock-preprocessor-face)
+    ;; ;; type defines
+    (,fsharp-type-def-regexp 1 font-lock-type-face)
+    (,fsharp-function-def-regexp 1 font-lock-function-name-face)
+    (,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
+    (,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
+    (,fsharp-member-function-regexp 1 font-lock-function-name-face)
+    (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
+    (,fsharp-constructor-regexp 1 font-lock-function-name-face)
+    (,fsharp-operator-active-pattern-regexp  (1 'fsharp-ui-operator-face)
+                                             (2 'fsharp-ui-operator-face))
+    (,fsharp-operator-case-regexp 1 'fsharp-ui-operator-face)
+    (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
 
-      (,fsharp-operator-quote-regexp  (1 'fsharp-ui-operator-face)
-                                      (2 'fsharp-ui-operator-face))
-      ("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
-       (1 font-lock-type-face)
-       ;; 'prevent generic type arguments from being rendered in variable face
-       (2 'fsharp-ui-generic-face nil t))
-      (,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
-                (concat fsharp-access-control-regexp "*"))
-       (0 font-lock-keyword-face) ; let binding and function arguments
-       (,fsharp-var-or-arg-regexp
-        (,fsharp-var-pre-form) nil
-        (1 font-lock-variable-name-face nil t)))
-      ("\\<fun\\>"
-       (0 font-lock-keyword-face) ; lambda function arguments
-       (,fsharp-var-or-arg-regexp
-        (,fsharp-fun-pre-form) nil
-        (1 font-lock-variable-name-face nil t)))
-      (,fsharp-type-def-regexp
-       (0 'font-lock-keyword-face) ; implicit constructor arguments
-       (,fsharp-var-or-arg-regexp
-        (,fsharp-var-pre-form) nil
-        (1 font-lock-variable-name-face nil t)))
-      (,fsharp-explicit-field-regexp
-       (1 font-lock-variable-name-face)
-       (2 font-lock-type-face))
+    (,fsharp-operator-quote-regexp  (1 'fsharp-ui-operator-face)
+                                    (2 'fsharp-ui-operator-face))
+    ("[^:]:\\s-*\\(\\<[A-Za-z0-9_' ]*[^ ;\n,)}=<-]\\)\\(<[^>]*>\\)?"
+     (1 font-lock-type-face)
+     ;; 'prevent generic type arguments from being rendered in variable face
+     (2 'fsharp-ui-generic-face nil t))
+    (,(format "^\\s-*\\<\\(let\\|use\\|override\\|member\\|and\\|\\(?:%snew\\)\\)\\_>"
+              (concat fsharp-access-control-regexp "*"))
+     (0 font-lock-keyword-face) ; let binding and function arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-var-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+    ("\\<fun\\>"
+     (0 font-lock-keyword-face) ; lambda function arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-fun-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+    (,fsharp-type-def-regexp
+     (0 'font-lock-keyword-face) ; implicit constructor arguments
+     (,fsharp-var-or-arg-regexp
+      (,fsharp-var-pre-form) nil
+      (1 font-lock-variable-name-face nil t)))
+    (,fsharp-explicit-field-regexp
+     (1 font-lock-variable-name-face)
+     (2 font-lock-type-face))
 
-      ;; open namespace
-      ("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
+    ;; open namespace
+    ("\\<open\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
 
-      ;; module/namespace
-      ("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
-      )))
+    ;; module/namespace
+    ("\\_<\\(?:module\\|namespace\\)\s\\([A-Za-z0-9_.]+\\)" 1 font-lock-type-face)
+    ))
 
 (defun fsharp-ui-setup-font-lock ()
   "Set up font locking for F# Mode."
