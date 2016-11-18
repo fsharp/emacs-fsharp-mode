@@ -35,7 +35,117 @@
 ;;; Code:
 
 (require 'faceup)
+(require 'ert)
 
+(defun fsharp-testing-should-match (regexp match-list)
+  (dolist (should-match match-list)
+    (should (= 0 (string-match-p regexp should-match)))))
+
+(defun fsharp-testing-should-not-match (regexp not-match-list)
+  (dolist (should-not-match not-match-list)
+    (should-not (string-match-p regexp should-not-match))))
+
+(defun fsharp-testing-match-lists (regexp match-list not-match-list)
+  (fsharp-testing-should-match regexp match-list)
+  (fsharp-testing-should-not-match regexp not-match-list))
+
+;;---------------------------Test Font-Lock Regexen-----------------------------
+;; Simple regexen
+(ert-deftest fsharp-mode-access-control-regexp-test ()
+  (let ((should-matches '("private " "internal " "public "))
+        (should-not-matches '("privateer" "internalized" "publication")))
+    (fsharp-testing-match-lists fsharp-access-control-regexp-noncapturing
+                                should-matches
+                                should-not-matches)))
+
+(ert-deftest fsharp-mode-inline-rec-regex-test ()
+  (let ((should-matches '("inline " "rec "))
+        (should-not-matches '("inlined" "reccomend")))
+    (fsharp-testing-match-lists fsharp-inline-rec-regexp-noncapturing
+                                should-matches
+                                should-not-matches)))
+
+(ert-deftest fsharp-mode-valid-identifier-regex-test ()
+  (let ((should-matches '("testIdentifier" "Test_Identifier" "Int32'"))
+        ;; Primarily, this regex needs to not catch symbolic operators
+        (should-not-matches '("|>" "{}" "<@" ">>>")))
+    (fsharp-testing-match-lists fsharp-valid-identifier-regexp
+                                should-matches
+                                should-not-matches)))
+
+;; Composite regexen
+(defun test-capture (regexp s should-capture &optional second-capture)
+  "Be sure REGEXP matches against S, and captures SHOULD-CAPTURE."
+  (and (string-match regexp s)
+       (string= should-capture (match-string 1 s))
+       (if second-capture
+           (string= second-capture (match-string 2 s))
+         't)))
+
+(ert-deftest fsharp-mode-function-def-regexp-test ()
+  (let ((test-string-1 "let functionName arg1 = 5")
+        (test-string-2 "let identifier = 2")
+        (test-string-3 "let funcWithNoArgs() = [|2|]")
+        (test-string-4 "let funcWithTupleArgs (hi: string) = hi")
+        (test-fdef-regexp (apply-partially 'test-capture fsharp-function-def-regexp)))
+    ;; test-string-1 -- match a funciton name
+    (funcall test-fdef-regexp test-string-1 "functionName")
+    (should (not (string-match fsharp-function-def-regexp test-string-2)))
+    (funcall test-fdef-regexp test-string-3 "funcWithNoArgs")
+    (funcall test-fdef-regexp test-string-4 "funcWithTupleArgs")))
+
+(ert-deftest fsharp-pattern-function-regexp-test ()
+  (let ((test-string "let funcForMatching = function"))
+    (test-capture fsharp-pattern-function-regexp test-string "funcForMatching")))
+
+
+(ert-deftest fsharp-active-pattern-regexp-test ()
+  (let ((test-string-1 "let (|Foo|) = ")
+        (test-string-2 "let (|Foo|Bar|)")
+        (test-apattern-capture (apply-partially 'test-capture fsharp-active-pattern-regexp)))
+    (funcall test-apattern-capture test-string-1 "Foo")
+    (funcall test-apattern-capture test-string-2 "Foo|Bar")))
+
+(ert-deftest fsharp-member-function-regexp-test ()
+  (let ((test-string-1 "member rec this.functionName")
+        (test-string-2 "member self.DifferentFunction")
+        (test-mpattern-capture (apply-partially 'test-capture fsharp-member-function-regexp)))
+    (funcall test-mpattern-capture test-string-1 "functionName")
+    (funcall test-mpattern-capture test-string-2 "DifferentFunction")))
+
+(ert-deftest fsharp-constructor-regexp-test ()
+  (let ((test-string-1 "new Foo()")
+        (test-string-2 "let newFoo ="))
+    (test-capture fsharp-constructor-regexp test-string-1 "new")
+    (should (not (string-match fsharp-constructor-regexp test-string-2)))))
+
+;; Operators
+(ert-deftest fsharp-operator-active-pattern-regexp-test ()
+  (let ((test-string "(|Foo|Bar|)"))
+    (test-capture fsharp-operator-active-pattern-regexp test-string "(|" "|)")))
+
+(ert-deftest fsharp-operator-quote-regexp-test ()
+  (let ((test-string "<@ SomeCode @>"))
+    (test-capture fsharp-operator-quote-regexp test-string "<@" "@>")))
+
+(ert-deftest fsharp-operator-pipe-regexp-test ()
+  (let ((test-string-1 "|> foo")
+        (test-string-2 "foo |> bar")
+        (test-string-3 "(foo, bar) ||> zorb")
+        (test-string-4 "|||> blerp")
+        (test-pipe-pattern (apply-partially 'test-capture fsharp-operator-pipe-regexp)))
+    (funcall test-pipe-pattern test-string-1 "|>")
+    (funcall test-pipe-pattern test-string-2 "|>")
+    (funcall test-pipe-pattern test-string-3 "||>")
+    (funcall test-pipe-pattern test-string-4 "|||>")))
+
+(ert-deftest fsharp-operator-case-regexp-test ()
+  (let ((test-string-1 "| foo")
+        (test-string-2 "|> foo"))
+    (test-capture fsharp-operator-case-regexp test-string-1 "|")
+    (should (not (string-match fsharp-operator-case-regexp test-string-2)))))
+
+;; Faceup Tests of Font Locking
 (defvar fsharp-mode-face-test-file-name (faceup-this-file-directory)
   "The file name of this file.")
 
@@ -55,7 +165,7 @@ FILE is interpreted as relative to this source directory."
     (should (fsharp-mode-face-test-apps "apps/FQuake3/NativeMappings.fs"))
     (should (fsharp-mode-face-test-apps "apps/FSharp.Compatibility/Format.fs"))
     (should (fsharp-mode-face-test-apps "apps/RecordHighlighting/Test.fsx"))
-            ))
+    ))
 
 
 (defun fsharp-font-lock-test (faceup)

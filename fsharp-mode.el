@@ -26,6 +26,8 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+;;; Code:
+
 (require 'fsharp-mode-completion)
 (require 'flycheck-fsharp)
 (require 'fsharp-doc)
@@ -34,6 +36,11 @@
 (require 'compile)
 (require 'dash)
 (require 'fsharp-mode-indent-smie)
+
+(defgroup fsharp nil
+  "Support for the Fsharp programming language, <http://www.fsharp.net/>"
+  :group 'languages
+  :prefix "fsharp-")
 
 ;;; Compilation
 
@@ -128,31 +135,31 @@
   "Syntax table in use in fsharp mode buffers.")
 (unless fsharp-mode-syntax-table
   (setq fsharp-mode-syntax-table (make-syntax-table))
-  ; backslash is an escape sequence
+                                        ; backslash is an escape sequence
   (modify-syntax-entry ?\\ "\\" fsharp-mode-syntax-table)
 
-  ; ( is first character of comment start
+                                        ; ( is first character of comment start
   (modify-syntax-entry ?\( "()1n" fsharp-mode-syntax-table)
-  ; * is second character of comment start,
-  ; and first character of comment end
+                                        ; * is second character of comment start,
+                                        ; and first character of comment end
   (modify-syntax-entry ?*  ". 23n" fsharp-mode-syntax-table)
-  ; ) is last character of comment end
+                                        ; ) is last character of comment end
   (modify-syntax-entry ?\) ")(4n" fsharp-mode-syntax-table)
 
-  ; // is the beginning of a comment "b"
+                                        ; // is the beginning of a comment "b"
   (modify-syntax-entry ?/ ". 12b" fsharp-mode-syntax-table)
-  ; // \n is the end of a comment "b"
+                                        ; // \n is the end of a comment "b"
   (modify-syntax-entry ?\n "> b" fsharp-mode-syntax-table)
 
-  ; quote and underscore are part of symbols
-  ; so are # and ! as they can form part of types/preprocessor
-  ; directives and also keywords
+                                        ; quote and underscore are part of symbols
+                                        ; so are # and ! as they can form part of types/preprocessor
+                                        ; directives and also keywords
   (modify-syntax-entry ?' "_" fsharp-mode-syntax-table)
   (modify-syntax-entry ?_ "_" fsharp-mode-syntax-table)
   (modify-syntax-entry ?# "_" fsharp-mode-syntax-table)
   (modify-syntax-entry ?! "_" fsharp-mode-syntax-table)
 
-  ; ISO-latin accented letters and EUC kanjis are part of words
+                                        ; ISO-latin accented letters and EUC kanjis are part of words
   (let ((i 160))
     (while (< i 256)
       (modify-syntax-entry i "w" fsharp-mode-syntax-table)
@@ -241,10 +248,10 @@
         fsharp-last-comment-start      (make-marker)
         fsharp-last-comment-end        (make-marker))
 
-  ; Syntax highlighting
+                                        ; Syntax highlighting
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
-  ; Some reasonable defaults for company mode
+                                        ; Some reasonable defaults for company mode
   (add-to-list 'company-backends 'fsharp-ac/company-backend)
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
@@ -396,11 +403,11 @@ folders relative to DIR-OR-FILE."
 
 (defun fsharp-mode/find-sln (dir-or-file)
   (fsharp-mode-search-upwards (rx (0+ nonl) ".sln" eol)
-     (file-name-directory dir-or-file)))
+                              (file-name-directory dir-or-file)))
 
 (defun fsharp-mode/find-fsproj (dir-or-file)
   (fsharp-mode-search-upwards (rx (0+ nonl) ".fsproj" eol)
-     (file-name-directory dir-or-file)))
+                              (file-name-directory dir-or-file)))
 
 (defun fsharp-mode-search-upwards (regex dir)
   (when dir

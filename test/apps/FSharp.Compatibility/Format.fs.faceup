@@ -23,67 +23,67 @@
 
  **************************************************************)»
 «m:// »«x:TODO : Recreate 'size' as a measure type on int
-»«k:type» «t:size» = int
+»«k:type» size = int
 «k:let» «k:inline» «f:size_of_int» («v:n» : «t:int») : «t:size» = n
 «k:let» «k:inline» «f:int_of_size» («v:s» : «t:size») : «t:int» = s
   
 «x:(* Tokens are one of the following : *)»
-«k:type» «t:pp_token» =
+«k:type» pp_token =
     «x:(* normal text *)»
-    | Pp_text «k:of» string
+    «:fsharp-ui-operator-face:|» Pp_text «k:of» string
     «x:(* complete break *)»
-    | Pp_break «k:of» int * int
+    «:fsharp-ui-operator-face:|» Pp_break «k:of» int * int
     «x:(* go to next tabulation *)»
-    | Pp_tbreak «k:of» int * int
+    «:fsharp-ui-operator-face:|» Pp_tbreak «k:of» int * int
     «x:(* set a tabulation *)»
-    | Pp_stab
+    «:fsharp-ui-operator-face:|» Pp_stab
     «x:(* beginning of a block *)»
-    | Pp_begin «k:of» int * block_type
+    «:fsharp-ui-operator-face:|» Pp_begin «k:of» int * block_type
     «x:(* end of a block *)»
-    | Pp_end
+    «:fsharp-ui-operator-face:|» Pp_end
     «x:(* beginning of a tabulation block *)»
-    | Pp_tbegin «k:of» tblock
+    «:fsharp-ui-operator-face:|» Pp_tbegin «k:of» tblock
     «x:(* end of a tabulation block *)»
-    | Pp_tend
+    «:fsharp-ui-operator-face:|» Pp_tend
     «x:(* to force a newline inside a block *)»
-    | Pp_newline
+    «:fsharp-ui-operator-face:|» Pp_newline
     «x:(* to do something only if this very line has been broken *)»
-    | Pp_if_newline
+    «:fsharp-ui-operator-face:|» Pp_if_newline
     «x:(* opening a tag name *)»
-    | Pp_open_tag «k:of» tag
+    «:fsharp-ui-operator-face:|» Pp_open_tag «k:of» tag
     «x:(* closing the most recently opened tag *)»
-    | Pp_close_tag
+    «:fsharp-ui-operator-face:|» Pp_close_tag
 
 «k:and» «v:tag» = string
 
 «k:and» «v:block_type» =
     «x:(* Horizontal block no line breaking *)»
-    | Pp_hbox
+    «:fsharp-ui-operator-face:|» Pp_hbox
     «x:(* Vertical block each break leads to a new line *)»
-    | Pp_vbox
+    «:fsharp-ui-operator-face:|» Pp_vbox
     «x:(* Horizontal-vertical block: same as vbox, except if this block
                 is small enough to fit on a single line *)»
-    | Pp_hvbox
+    «:fsharp-ui-operator-face:|» Pp_hvbox
     «x:(* Horizontal or Vertical block: breaks lead to new line
                 only when necessary to print the content of the block *)»
-    | Pp_hovbox
+    «:fsharp-ui-operator-face:|» Pp_hovbox
     «x:(* Horizontal or Indent block: breaks lead to new line
                 only when necessary to print the content of the block, or
                 when it leads to a new indentation of the current line *)»
-    | Pp_box
+    «:fsharp-ui-operator-face:|» Pp_box
     «x:(* Internal usage: when a block fits on a single line *)»
-    | Pp_fits
+    «:fsharp-ui-operator-face:|» Pp_fits
 
 «k:and» «v:tblock» =
     «x:(* Tabulation box *)»
-    | Pp_tbox «k:of» (int list) ref
+    «:fsharp-ui-operator-face:|» Pp_tbox «k:of» (int list) ref
 
 «x:(* The Queue:
    contains all formatting elements.
    elements are tuples (size, token, length), where
    size is set when the size of the block is known
    len is the declared length of the token. *)»
-«k:type» «t:pp_queue_elem» = {
+«k:type» pp_queue_elem = {
     «k:mutable» elem_size : «t:size»;
     token : «t:pp_token»;
     length : «t:int»;
@@ -92,33 +92,33 @@
 «x:(* Scan stack:
    each element is (left_total, queue element) where left_total
    is the value of pp_left_total when the element has been enqueued. *)»
-«k:type» «t:pp_scan_elem» =
-    | Scan_elem «k:of» int * pp_queue_elem
+«k:type» pp_scan_elem =
+    «:fsharp-ui-operator-face:|» Scan_elem «k:of» int * pp_queue_elem
 
 «x:(* Formatting stack:
    used to break the lines while printing tokens.
    The formatting stack contains the description of
    the currently active blocks. *)»
-«k:type» «t:pp_format_elem» =
-    | Format_elem «k:of» block_type * int
+«k:type» pp_format_elem =
+    «:fsharp-ui-operator-face:|» Format_elem «k:of» block_type * int
 
 «x:(* General purpose queues, used in the formatter. *)»
-«k:type» «t:'a» «v:queue_elem» =
-  | Nil
-  | Cons «k:of» 'a queue_cell
+«k:type» 'a queue_elem =
+  «:fsharp-ui-operator-face:|» Nil
+  «:fsharp-ui-operator-face:|» Cons «k:of» 'a queue_cell
 
 «k:and» «f:'a» «v:queue_cell» = {
     «k:mutable» head : 'a;
     «k:mutable» tail : 'a queue_elem;
 }
 
-«k:type» «t:'a» «v:queue» = {
+«k:type» 'a queue = {
     «k:mutable» insert : 'a queue_elem;
     «k:mutable» body : 'a queue_elem;
 }
 
 «x:(* The formatter specific tag handling functions. *)»
-«k:type» «t:formatter_tag_functions» = {
+«k:type» formatter_tag_functions = {
     mark_open_tag : «t:tag» -> string;
     mark_close_tag : «t:tag» -> string;
     print_open_tag : «t:tag» -> unit;
@@ -126,7 +126,7 @@
   }
 
 «x:(* A formatter with all its machinery. *)»
-«k:type» «t:formatter» = {
+«k:type» formatter = {
     «k:mutable» pp_scan_stack : «t:pp_scan_elem list»;
     «k:mutable» pp_format_stack : «t:pp_format_elem list»;
     «k:mutable» pp_tbox_stack : «t:tblock list»;
@@ -193,26 +193,26 @@
 «k:let» «f:add_queue» «v:x» «v:q» =
     «k:let» «v:c» = Cons { head = x; tail = Nil; }
     «k:match» q «k:with»
-    | { insert = Cons cell; body = _ } ->
+    «:fsharp-ui-operator-face:|» { insert = Cons cell; body = _ } ->
         (q.insert <- c; cell.tail <- c)
-    | «x:(* Invariant: when insert is Nil body should be Nil. *)»
+    «:fsharp-ui-operator-face:|» «x:(* Invariant: when insert is Nil body should be Nil. *)»
         { insert = Nil; body = _ } -> (q.insert <- c; q.body <- c)
   
 «k:exception» Empty_queue
   
 «k:let» «v:peek_queue» =
   «k:function»
-  | { body = Cons { head = x; tail = _ }; insert = _ } -> x
-  | { body = Nil; insert = _ } -> raise Empty_queue
+  «:fsharp-ui-operator-face:|» { body = Cons { head = x; tail = _ }; insert = _ } -> x
+  «:fsharp-ui-operator-face:|» { body = Nil; insert = _ } -> raise Empty_queue
   
 «k:let» «v:take_queue» =
   «k:function»
-  | ({ body = Cons { head = x; tail = tl }; insert = _ } «k:as» q) ->
+  «:fsharp-ui-operator-face:|» ({ body = Cons { head = x; tail = tl }; insert = _ } «k:as» q) ->
       (q.body <- tl;
        «k:if» tl = Nil «k:then» q.insert <- Nil «k:else» ();
        «x:(* Maintain the invariant. *)»
        x)
-  | { body = Nil; insert = _ } -> raise Empty_queue
+  «:fsharp-ui-operator-face:|» { body = Nil; insert = _ } -> raise Empty_queue
   
 «x:(* Enter a token in the pretty-printer queue. *)»
 «k:let» «f:pp_enqueue» «v:state» (({ «v:length» = len; elem_size = _; token = _ } «k:as» token)) =
@@ -276,21 +276,21 @@
    by simulating a break. *)»
 «k:let» «f:pp_force_break_line» «v:state» =
   «k:match» state.pp_format_stack «k:with»
-  | Format_elem (bl_ty, width) :: _ ->
+  «:fsharp-ui-operator-face:|» Format_elem (bl_ty, width) :: _ ->
       «k:if» width > state.pp_space_left
       «k:then»
         («k:match» bl_ty «k:with»
-         | Pp_fits -> ()
-         | Pp_hbox -> ()
-         | Pp_vbox | Pp_hvbox | Pp_hovbox | Pp_box -> break_line state width)
+         «:fsharp-ui-operator-face:|» Pp_fits -> ()
+         «:fsharp-ui-operator-face:|» Pp_hbox -> ()
+         «:fsharp-ui-operator-face:|» Pp_vbox «:fsharp-ui-operator-face:|» Pp_hvbox «:fsharp-ui-operator-face:|» Pp_hovbox «:fsharp-ui-operator-face:|» Pp_box -> break_line state width)
       «k:else» ()
-  | [] -> pp_output_newline state
+  «:fsharp-ui-operator-face:|» [] -> pp_output_newline state
   
 «x:(* To skip a token, if the previous line has been broken. *)»
 «k:let» «f:pp_skip_token» «v:state» =
   «x:(* When calling pp_skip_token the queue cannot be empty. *)»
   «k:match» take_queue state.pp_queue «k:with»
-  | { elem_size = size; length = len; token = _ } ->
+  «:fsharp-ui-operator-face:|» { elem_size = size; length = len; token = _ } ->
       (state.pp_left_total <- state.pp_left_total - len;
        state.pp_space_left <- state.pp_space_left + (int_of_size size))
   
@@ -302,11 +302,11 @@
 «x:(* To format a token. *)»
 «k:let» «f:format_pp_token» «v:state» «v:size» =
   «k:function»
-  | Pp_text s ->
+  «:fsharp-ui-operator-face:|» Pp_text s ->
       (state.pp_space_left <- state.pp_space_left - size;
        pp_output_string state s;
        state.pp_is_new_line <- «k:false»)
-  | Pp_begin (off, ty) ->
+  «:fsharp-ui-operator-face:|» Pp_begin (off, ty) ->
       «k:let» «v:insertion_point» = state.pp_margin - state.pp_space_left
       «k:in»
         («k:if» insertion_point > state.pp_max_indent
@@ -315,68 +315,68 @@
          «k:let» «v:offset» = state.pp_space_left - off «k:in»
          «k:let» «v:bl_type» =
            («k:match» ty «k:with»
-            | Pp_vbox -> Pp_vbox
-            | Pp_hbox | Pp_hvbox | Pp_hovbox | Pp_box | Pp_fits ->
+            «:fsharp-ui-operator-face:|» Pp_vbox -> Pp_vbox
+            «:fsharp-ui-operator-face:|» Pp_hbox «:fsharp-ui-operator-face:|» Pp_hvbox «:fsharp-ui-operator-face:|» Pp_hovbox «:fsharp-ui-operator-face:|» Pp_box «:fsharp-ui-operator-face:|» Pp_fits ->
                 «k:if» size > state.pp_space_left «k:then» ty «k:else» Pp_fits)
          «k:in»
            state.pp_format_stack <-
              (Format_elem (bl_type, offset)) :: state.pp_format_stack)
-  | Pp_end ->
+  «:fsharp-ui-operator-face:|» Pp_end ->
       («k:match» state.pp_format_stack «k:with»
-       | _ :: ls -> state.pp_format_stack <- ls
-       | [] -> ())
-  | «x:(* No more block to close. *)» Pp_tbegin ((Pp_tbox _ «k:as» tbox)) ->
+       «:fsharp-ui-operator-face:|» _ :: ls -> state.pp_format_stack <- ls
+       «:fsharp-ui-operator-face:|» [] -> ())
+  «:fsharp-ui-operator-face:|» «x:(* No more block to close. *)» Pp_tbegin ((Pp_tbox _ «k:as» tbox)) ->
       state.pp_tbox_stack <- tbox :: state.pp_tbox_stack
-  | Pp_tend ->
+  «:fsharp-ui-operator-face:|» Pp_tend ->
       («k:match» state.pp_tbox_stack «k:with»
-       | _ :: ls -> state.pp_tbox_stack <- ls
-       | [] -> ())
-  | «x:(* No more tabulation block to close. *)» Pp_stab ->
+       «:fsharp-ui-operator-face:|» _ :: ls -> state.pp_tbox_stack <- ls
+       «:fsharp-ui-operator-face:|» [] -> ())
+  «:fsharp-ui-operator-face:|» «x:(* No more tabulation block to close. *)» Pp_stab ->
       («k:match» state.pp_tbox_stack «k:with»
-       | Pp_tbox tabs :: _ ->
+       «:fsharp-ui-operator-face:|» Pp_tbox tabs :: _ ->
            «k:let» «k:rec» «f:add_tab» «v:n» =
              («k:function»
-              | [] -> [ n ]
-              | (x :: l «k:as» ls) ->
+              «:fsharp-ui-operator-face:|» [] -> [ n ]
+              «:fsharp-ui-operator-face:|» (x :: l «k:as» ls) ->
                   «k:if» n < x «k:then» n :: ls «k:else» x :: (add_tab n l))
            «k:in» tabs := add_tab (state.pp_margin - state.pp_space_left) !tabs
-       | [] -> ())
-  | «x:(* No opened tabulation block. *)» Pp_tbreak (n, off) ->
+       «:fsharp-ui-operator-face:|» [] -> ())
+  «:fsharp-ui-operator-face:|» «x:(* No opened tabulation block. *)» Pp_tbreak (n, off) ->
       «k:let» «v:insertion_point» = state.pp_margin - state.pp_space_left
       «k:in»
         («k:match» state.pp_tbox_stack «k:with»
-         | Pp_tbox tabs :: _ ->
+         «:fsharp-ui-operator-face:|» Pp_tbox tabs :: _ ->
              «k:let» «k:rec» «f:find» «v:n» =
                («k:function»
-                | x :: l -> «k:if» x >= n «k:then» x «k:else» find n l
-                | [] -> raise Not_found) «k:in»
+                «:fsharp-ui-operator-face:|» x :: l -> «k:if» x >= n «k:then» x «k:else» find n l
+                «:fsharp-ui-operator-face:|» [] -> raise Not_found) «k:in»
              «k:let» «v:tab» =
                («k:match» !tabs «k:with»
-                | x :: _ ->
-                    («k:try» find insertion_point !tabs «k:with» | Not_found -> x)
-                | _ -> insertion_point) «k:in»
+                «:fsharp-ui-operator-face:|» x :: _ ->
+                    («k:try» find insertion_point !tabs «k:with» «:fsharp-ui-operator-face:|» Not_found -> x)
+                «:fsharp-ui-operator-face:|» _ -> insertion_point) «k:in»
              «k:let» «v:offset» = tab - insertion_point
              «k:in»
                «k:if» offset >= 0
                «k:then» break_same_line state (offset + n)
                «k:else» break_new_line state (tab + off) state.pp_margin
-         | [] -> ())
-  | «x:(* No opened tabulation block. *)» Pp_newline ->
+         «:fsharp-ui-operator-face:|» [] -> ())
+  «:fsharp-ui-operator-face:|» «x:(* No opened tabulation block. *)» Pp_newline ->
       («k:match» state.pp_format_stack «k:with»
-       | Format_elem (_, width) :: _ -> break_line state width
-       | [] -> pp_output_newline state)
-  | «x:(* No opened block. *)» Pp_if_newline ->
+       «:fsharp-ui-operator-face:|» Format_elem (_, width) :: _ -> break_line state width
+       «:fsharp-ui-operator-face:|» [] -> pp_output_newline state)
+  «:fsharp-ui-operator-face:|» «x:(* No opened block. *)» Pp_if_newline ->
       «k:if» state.pp_current_indent <> (state.pp_margin - state.pp_space_left)
       «k:then» pp_skip_token state
-  | Pp_break (n, off) ->
+  «:fsharp-ui-operator-face:|» Pp_break (n, off) ->
       («k:match» state.pp_format_stack «k:with»
-       | Format_elem (ty, width) :: _ ->
+       «:fsharp-ui-operator-face:|» Format_elem (ty, width) :: _ ->
            («k:match» ty «k:with»
-            | Pp_hovbox ->
+            «:fsharp-ui-operator-face:|» Pp_hovbox ->
                 «k:if» size > state.pp_space_left
                 «k:then» break_new_line state off width
                 «k:else» break_same_line state n
-            | Pp_box -> «x:(* Have the line just been broken here ? *)»
+            «:fsharp-ui-operator-face:|» Pp_box -> «x:(* Have the line just been broken here ? *)»
                 «k:if» state.pp_is_new_line
                 «k:then» break_same_line state n
                 «k:else»
@@ -388,22 +388,22 @@
                         ((state.pp_margin - width) + off)
                     «k:then» break_new_line state off width
                     «k:else» break_same_line state n
-            | Pp_hvbox -> break_new_line state off width
-            | Pp_fits -> break_same_line state n
-            | Pp_vbox -> break_new_line state off width
-            | Pp_hbox -> break_same_line state n)
-       | [] -> ())
-  | «x:(* No opened block. *)» Pp_open_tag tag_name ->
+            «:fsharp-ui-operator-face:|» Pp_hvbox -> break_new_line state off width
+            «:fsharp-ui-operator-face:|» Pp_fits -> break_same_line state n
+            «:fsharp-ui-operator-face:|» Pp_vbox -> break_new_line state off width
+            «:fsharp-ui-operator-face:|» Pp_hbox -> break_same_line state n)
+       «:fsharp-ui-operator-face:|» [] -> ())
+  «:fsharp-ui-operator-face:|» «x:(* No opened block. *)» Pp_open_tag tag_name ->
       «k:let» «v:marker» = state.pp_mark_open_tag tag_name
       «k:in»
         (pp_output_string state marker;
          state.pp_mark_stack <- tag_name :: state.pp_mark_stack)
-  | Pp_close_tag ->
+  «:fsharp-ui-operator-face:|» Pp_close_tag ->
       («k:match» state.pp_mark_stack «k:with»
-       | tag_name :: tags ->
+       «:fsharp-ui-operator-face:|» tag_name :: tags ->
            «k:let» «v:marker» = state.pp_mark_close_tag tag_name
            «k:in» (pp_output_string state marker; state.pp_mark_stack <- tags)
-       | [] -> ())
+       «:fsharp-ui-operator-face:|» [] -> ())
   
 «x:(* No more tag to close. *)»
 «x:(* Print if token size is known or printing is delayed.
@@ -414,7 +414,7 @@
    Note: [advance_loop] must be tail recursive to prevent stack overflows. *)»
 «k:let» «k:rec» «f:advance_loop» «v:state» =
   «k:match» peek_queue state.pp_queue «k:with»
-  | { elem_size = size; token = tok; length = len } ->
+  «:fsharp-ui-operator-face:|» { elem_size = size; token = tok; length = len } ->
       «k:let» «v:size» = int_of_size size
       «k:in»
         «k:if»
@@ -429,7 +429,7 @@
            advance_loop state)
         «k:else» ()
   
-«k:let» «f:advance_left» «v:state» = «k:try» advance_loop state «k:with» | Empty_queue -> ()
+«k:let» «f:advance_left» «v:state» = «k:try» advance_loop state «k:with» «:fsharp-ui-operator-face:|» Empty_queue -> ()
   
 «k:let» «f:enqueue_advance» «v:state» «v:tok» = (pp_enqueue state tok; advance_left state)
   
@@ -462,7 +462,7 @@
    since scan_push is used on breaks and opening of boxes. *)»
 «k:let» «f:set_size» «v:state» «v:ty» =
   «k:match» state.pp_scan_stack «k:with»
-  | Scan_elem (left_tot,
+  «:fsharp-ui-operator-face:|» Scan_elem (left_tot,
       (({ elem_size = size; token = tok; length = _ } «k:as» queue_elem))) :: t
       ->
       «k:let» «v:size» = int_of_size size
@@ -472,24 +472,24 @@
         «k:then» clear_scan_stack state
         «k:else»
           («k:match» tok «k:with»
-           | Pp_break (_, _) | Pp_tbreak (_, _) ->
+           «:fsharp-ui-operator-face:|» Pp_break (_, _) «:fsharp-ui-operator-face:|» Pp_tbreak (_, _) ->
                «k:if» ty
                «k:then»
                  (queue_elem.elem_size <-
                     size_of_int (state.pp_right_total + size);
                   state.pp_scan_stack <- t)
                «k:else» ()
-           | Pp_begin (_, _) ->
+           «:fsharp-ui-operator-face:|» Pp_begin (_, _) ->
                «k:if» «k:not» ty
                «k:then»
                  (queue_elem.elem_size <-
                     size_of_int (state.pp_right_total + size);
                   state.pp_scan_stack <- t)
                «k:else» ()
-           | Pp_text _ | Pp_stab | Pp_tbegin _ | Pp_tend | Pp_end |
-               Pp_newline | Pp_if_newline | Pp_open_tag _ | Pp_close_tag ->
+           «:fsharp-ui-operator-face:|» Pp_text _ «:fsharp-ui-operator-face:|» Pp_stab «:fsharp-ui-operator-face:|» Pp_tbegin _ «:fsharp-ui-operator-face:|» Pp_tend «:fsharp-ui-operator-face:|» Pp_end |
+               Pp_newline «:fsharp-ui-operator-face:|» Pp_if_newline «:fsharp-ui-operator-face:|» Pp_open_tag _ «:fsharp-ui-operator-face:|» Pp_close_tag ->
                ())
-  | «x:(* scan_push is only used for breaks and boxes. *)» [] -> ()
+  «:fsharp-ui-operator-face:|» «x:(* scan_push is only used for breaks and boxes. *)» [] -> ()
   
 «x:(* scan_stack is never empty. *)»
 «x:(* Push a token on scan stack. If b is true set_size is called. *)»
@@ -556,9 +556,9 @@
    «k:if» state.pp_print_tags
    «k:then»
      («k:match» state.pp_tag_stack «k:with»
-      | tag_name :: tags ->
+      «:fsharp-ui-operator-face:|» tag_name :: tags ->
           (state.pp_print_close_tag tag_name; state.pp_tag_stack <- tags)
-      | _ -> ())
+      «:fsharp-ui-operator-face:|» _ -> ())
    «k:else» ())
   
 «x:(* No more tag to close. *)»
@@ -781,16 +781,16 @@
             «x:(* If possible maintain pp_min_space_left to its actual value,
          if this leads to a too small max_indent, take half of the
          new margin, if it is greater than 1. *)»
-            «v:max»
-              («v:max» («v:state».«v:pp_margin» - «v:state».«v:pp_min_space_left»)
-                 («v:state».«v:pp_margin» / 2))
+            max
+              (max (state.pp_margin - state.pp_min_space_left)
+                 (state.pp_margin / 2))
               1
-        «k:in» «x:(* Rebuild invariants. *)» «v:pp_set_max_indent» «v:state» «v:new_max_indent»))
+        «k:in» «x:(* Rebuild invariants. *)» pp_set_max_indent state new_max_indent))
   «k:else» ()
   
 «k:let» «f:pp_get_margin» «v:state» () = state.pp_margin
   
-«k:type» «t:formatter_out_functions» = {
+«k:type» formatter_out_functions = {
     out_string : «t:string» -> int -> int -> unit;
     out_flush : «t:unit» -> unit;
     out_newline : «t:unit» -> unit;
@@ -1028,7 +1028,7 @@
   
 «x:(* Finding an integer size out of a sub-string of the format. *)»
 «k:let» «f:format_int_of_string» «v:fmt» «v:i» «v:s» =
-  «k:let» «v:sz» = «k:try» int_of_string s «k:with» | Failure _ -> invalid_integer fmt i
+  «k:let» «v:sz» = «k:try» int_of_string s «k:with» «:fsharp-ui-operator-face:|» Failure _ -> invalid_integer fmt i
   «k:in» size_of_int sz
   
 «x:(* Getting strings out of buffers. *)»
@@ -1047,8 +1047,8 @@
   
 «x:(* To turn out a character accumulator into the proper string result. *)»
 «k:let» «f:implode_rev» «v:s0» = «k:function»
-  | [] -> s0
-  | l -> String.concat «s:""» (List.rev (s0 :: l))
+  «:fsharp-ui-operator-face:|» [] -> s0
+  «:fsharp-ui-operator-face:|» l -> String.concat «s:""» (List.rev (s0 :: l))
   
 «x:(* [mkprintf] is the printf-like function generator: given the
    - [to_s] flag that tells if we are printing into a string,
@@ -1068,46 +1068,46 @@
       «k:let» «v:print_as» = ref None «k:in»
       «k:let» «k:rec» «f:pp_print_as_char» «v:c» =
         «k:match» !print_as «k:with»
-        | None -> pp_print_char ppf c
-        | Some size ->
+        «:fsharp-ui-operator-face:|» None -> pp_print_char ppf c
+        «:fsharp-ui-operator-face:|» Some size ->
             (pp_print_as_size ppf size (String.make 1 c); print_as := None)
       «k:and» «f:pp_print_as_string» «v:s» =
         «k:match» !print_as «k:with»
-        | None -> pp_print_string ppf s
-        | Some size -> (pp_print_as_size ppf size s; print_as := None) «k:in»
+        «:fsharp-ui-operator-face:|» None -> pp_print_string ppf s
+        «:fsharp-ui-operator-face:|» Some size -> (pp_print_as_size ppf size s; print_as := None) «k:in»
       «k:let» «k:rec» «f:doprn» «v:n» «v:i» =
         «k:if» i >= len
         «k:then» Obj.magic (k ppf)
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:'%'» ->
+           «:fsharp-ui-operator-face:|» «s:'%'» ->
                Tformat.scan_format fmt v n i cont_s cont_a cont_t cont_f
                  cont_m
-           | «s:'@'» ->
+           «:fsharp-ui-operator-face:|» «s:'@'» ->
                «k:let» «v:i» = succ i
                «k:in»
                  «k:if» i >= len
                  «k:then» invalid_format fmt i
                  «k:else»
                    («k:match» Sformat.get fmt i «k:with»
-                    | «s:'['» -> do_pp_open_box ppf n (succ i)
-                    | «s:']'» -> (pp_close_box ppf (); doprn n (succ i))
-                    | «s:'{'» -> do_pp_open_tag ppf n (succ i)
-                    | «s:'}'» -> (pp_close_tag ppf (); doprn n (succ i))
-                    | «s:' '» -> (pp_print_space ppf (); doprn n (succ i))
-                    | «s:','» -> (pp_print_cut ppf (); doprn n (succ i))
-                    | «s:'?'» -> (pp_print_flush ppf (); doprn n (succ i))
-                    | «s:'.'» -> (pp_print_newline ppf (); doprn n (succ i))
-                    | «s:'\n'» -> (pp_force_newline ppf (); doprn n (succ i))
-                    | «s:';'» -> do_pp_break ppf n (succ i)
-                    | «s:'<'» ->
+                    «:fsharp-ui-operator-face:|» «s:'['» -> do_pp_open_box ppf n (succ i)
+                    «:fsharp-ui-operator-face:|» «s:']'» -> (pp_close_box ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:'{'» -> do_pp_open_tag ppf n (succ i)
+                    «:fsharp-ui-operator-face:|» «s:'}'» -> (pp_close_tag ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:' '» -> (pp_print_space ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:','» -> (pp_print_cut ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:'?'» -> (pp_print_flush ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:'.'» -> (pp_print_newline ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:'\n'» -> (pp_force_newline ppf (); doprn n (succ i))
+                    «:fsharp-ui-operator-face:|» «s:';'» -> do_pp_break ppf n (succ i)
+                    «:fsharp-ui-operator-face:|» «s:'<'» ->
                         «k:let» «f:got_size» «v:size» «v:n» «v:i» =
                           (print_as := Some size; doprn n (skip_gt i))
                         «k:in» get_int n (succ i) got_size
-                    | («s:'@'» | «s:'%'» «k:as» c) ->
+                    «:fsharp-ui-operator-face:|» («s:'@'» «:fsharp-ui-operator-face:|» «s:'%'» «k:as» c) ->
                         (pp_print_as_char c; doprn n (succ i))
-                    | _ -> invalid_format fmt i)
-           | c -> (pp_print_as_char c; doprn n (succ i)))
+                    «:fsharp-ui-operator-face:|» _ -> invalid_format fmt i)
+           «:fsharp-ui-operator-face:|» c -> (pp_print_as_char c; doprn n (succ i)))
       «k:and» «f:cont_s» «v:n» «v:s» «v:i» = (pp_print_as_string s; doprn n i)
       «k:and» «f:cont_a» «v:n» «v:printer» «v:arg» «v:i» =
         («k:if» to_s
@@ -1128,8 +1128,8 @@
         «k:then» invalid_integer fmt i
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:' '» -> get_int n (succ i) c
-           | «s:'%'» ->
+           «:fsharp-ui-operator-face:|» «s:' '» -> get_int n (succ i) c
+           «:fsharp-ui-operator-face:|» «s:'%'» ->
                «k:let» «k:rec» «f:cont_s» «v:n» «v:s» «v:i» = c (format_int_of_string fmt i s) n i
                «k:and» «f:cont_a» «v:_n» «v:_printer» «v:_arg» «v:i» = invalid_integer fmt i
                «k:and» «f:cont_t» «v:_n» «v:_printer» «v:i» = invalid_integer fmt i
@@ -1138,16 +1138,16 @@
                «k:in»
                  Tformat.scan_format fmt v n i cont_s cont_a cont_t cont_f
                    cont_m
-           | _ ->
+           «:fsharp-ui-operator-face:|» _ ->
                «k:let» «k:rec» «f:get» «v:j» =
                  «k:if» j >= len
                  «k:then» invalid_integer fmt j
                  «k:else»
                    («k:match» Sformat.get fmt j «k:with»
-                    | x «k:when» x >= «s:'0'» && x <= «s:'9'» ->
+                    «:fsharp-ui-operator-face:|» x «k:when» x >= «s:'0'» && x <= «s:'9'» ->
                         get (succ j)
-                    | «s:'-'» -> get (succ j)
-                    | _ ->
+                    «:fsharp-ui-operator-face:|» «s:'-'» -> get (succ j)
+                    «:fsharp-ui-operator-face:|» _ ->
                         «k:let» «v:size» =
                           «k:if» j = i
                           «k:then» size_of_int 0
@@ -1163,38 +1163,38 @@
         «k:then» invalid_format fmt i
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:' '» -> skip_gt (succ i)
-           | «s:'>'» -> succ i
-           | _ -> invalid_format fmt i)
+           «:fsharp-ui-operator-face:|» «s:' '» -> skip_gt (succ i)
+           «:fsharp-ui-operator-face:|» «s:'>'» -> succ i
+           «:fsharp-ui-operator-face:|» _ -> invalid_format fmt i)
       «k:and» «f:get_box_kind» «v:i» =
         «k:if» i >= len
         «k:then» (Pp_box, i)
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:'h'» ->
+           «:fsharp-ui-operator-face:|» «s:'h'» ->
                «k:let» «v:i» = succ i
                «k:in»
                  «k:if» i >= len
                  «k:then» (Pp_hbox, i)
                  «k:else»
                    («k:match» Sformat.get fmt i «k:with»
-                    | «s:'o'» ->
+                    «:fsharp-ui-operator-face:|» «s:'o'» ->
                         «k:let» «v:i» = succ i
                         «k:in»
                           «k:if» i >= len
                           «k:then» format_invalid_arg «s:"bad box format"» fmt i
                           «k:else»
                             («k:match» Sformat.get fmt i «k:with»
-                             | «s:'v'» -> (Pp_hovbox, (succ i))
-                             | c ->
+                             «:fsharp-ui-operator-face:|» «s:'v'» -> (Pp_hovbox, (succ i))
+                             «:fsharp-ui-operator-face:|» c ->
                                  format_invalid_arg
                                    («s:"bad box name ho"» ^ (String.make 1 c))
                                    fmt i)
-                    | «s:'v'» -> (Pp_hvbox, (succ i))
-                    | _ -> (Pp_hbox, i))
-           | «s:'b'» -> (Pp_box, (succ i))
-           | «s:'v'» -> (Pp_vbox, (succ i))
-           | _ -> (Pp_box, i))
+                    «:fsharp-ui-operator-face:|» «s:'v'» -> (Pp_hvbox, (succ i))
+                    «:fsharp-ui-operator-face:|» _ -> (Pp_hbox, i))
+           «:fsharp-ui-operator-face:|» «s:'b'» -> (Pp_box, (succ i))
+           «:fsharp-ui-operator-face:|» «s:'v'» -> (Pp_vbox, (succ i))
+           «:fsharp-ui-operator-face:|» _ -> (Pp_box, i))
       «k:and» «f:get_tag_name» «v:n» «v:i» «v:c» =
         «k:let» «k:rec» «f:get» «v:accu» «v:n» «v:i» «v:j» =
           «k:if» j >= len
@@ -1205,12 +1205,12 @@
               n j
           «k:else»
             («k:match» Sformat.get fmt j «k:with»
-             | «s:'>'» ->
+             «:fsharp-ui-operator-face:|» «s:'>'» ->
                  c
                    (implode_rev
                       (Sformat.sub fmt (Sformat.index_of_int i) (j - i)) accu)
                    n j
-             | «s:'%'» ->
+             «:fsharp-ui-operator-face:|» «s:'%'» ->
                  «k:let» «v:s0» = Sformat.sub fmt (Sformat.index_of_int i) (j - i) «k:in»
                  «k:let» «k:rec» «f:cont_s» «v:n» «v:s» «v:i» = get (s :: s0 :: accu) n i i
                  «k:and» «f:cont_a» «v:n» «v:printer» «v:arg» «v:i» =
@@ -1232,14 +1232,14 @@
                  «k:in»
                    Tformat.scan_format fmt v n j cont_s cont_a cont_t cont_f
                      cont_m
-             | _ -> get accu n i (succ j))
+             «:fsharp-ui-operator-face:|» _ -> get accu n i (succ j))
         «k:in» get [] n i i
       «k:and» «f:do_pp_break» «v:ppf» «v:n» «v:i» =
         «k:if» i >= len
         «k:then» (pp_print_space ppf (); doprn n i)
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:'<'» ->
+           «:fsharp-ui-operator-face:|» «s:'<'» ->
                «k:let» «k:rec» «f:got_nspaces» «v:nspaces» «v:n» «v:i» =
                  get_int n i (got_offset nspaces)
                «k:and» «f:got_offset» «v:nspaces» «v:offset» «v:n» «v:i» =
@@ -1247,29 +1247,29 @@
                     (int_of_size offset);
                   doprn n (skip_gt i))
                «k:in» get_int n (succ i) got_nspaces
-           | _c -> (pp_print_space ppf (); doprn n i))
+           «:fsharp-ui-operator-face:|» _c -> (pp_print_space ppf (); doprn n i))
       «k:and» «f:do_pp_open_box» «v:ppf» «v:n» «v:i» =
         «k:if» i >= len
         «k:then» (pp_open_box_gen ppf 0 Pp_box; doprn n i)
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:'<'» ->
+           «:fsharp-ui-operator-face:|» «s:'<'» ->
                «k:let» («v:kind», «v:i») = get_box_kind (succ i) «k:in»
                «k:let» «f:got_size» «v:size» «v:n» «v:i» =
                  (pp_open_box_gen ppf (int_of_size size) kind;
                   doprn n (skip_gt i))
                «k:in» get_int n i got_size
-           | _c -> (pp_open_box_gen ppf 0 Pp_box; doprn n i))
+           «:fsharp-ui-operator-face:|» _c -> (pp_open_box_gen ppf 0 Pp_box; doprn n i))
       «k:and» «f:do_pp_open_tag» «v:ppf» «v:n» «v:i» =
         «k:if» i >= len
         «k:then» (pp_open_tag ppf «s:""»; doprn n i)
         «k:else»
           («k:match» Sformat.get fmt i «k:with»
-           | «s:'<'» ->
+           «:fsharp-ui-operator-face:|» «s:'<'» ->
                «k:let» «f:got_name» «v:tag_name» «v:n» «v:i» =
                  (pp_open_tag ppf tag_name; doprn n (skip_gt i))
                «k:in» get_tag_name n (succ i) got_name
-           | _c -> (pp_open_tag ppf «s:""»; doprn n i))
+           «:fsharp-ui-operator-face:|» _c -> (pp_open_tag ppf «s:""»; doprn n i))
       «k:in» doprn (Sformat.index_of_int 0) 0
     «k:in» Tformat.kapr kpr fmt
   «k:in» kprintf
