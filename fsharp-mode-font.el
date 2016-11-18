@@ -257,22 +257,22 @@
 (defvar fsharp-ui-async-words
   '("async"))
 
-(defvar fsharp-ui-word-list
-  (-concat `(,@fsharp-ui-async-words
-             ,@fsharp-ui-compiler-directives
-             ,@fsharp-ui-fsharp-threefour-keywords
-             ,@fsharp-ui-identifier-replacements
-             ,@fsharp-ui-lexical-matters
-             ,@fsharp-ui-ocaml-reserved-words
-             ,@fsharp-ui-preproessor-directives
-             ,@fsharp-ui-reserved-words
-             ,@fsharp-ui-line-directives)))
+(defconst fsharp-ui-word-list-regexp
+  (regexp-opt
+   `(,@fsharp-ui-async-words
+     ,@fsharp-ui-compiler-directives
+     ,@fsharp-ui-fsharp-threefour-keywords
+     ,@fsharp-ui-identifier-replacements
+     ,@fsharp-ui-lexical-matters
+     ,@fsharp-ui-ocaml-reserved-words
+     ,@fsharp-ui-preproessor-directives
+     ,@fsharp-ui-reserved-words
+     ,@fsharp-ui-line-directives)
+   'symbols))
 
 (defconst fsharp-font-lock-keywords
   (eval-when-compile
-    `(
-      (,(regexp-opt fsharp-ui-word-list 'symbols) 0 font-lock-keyword-face)
-
+    `((,fsharp-ui-word-list-regexp 0 font-lock-keyword-face)
       ;; control
 
       ;; attributes
