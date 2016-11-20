@@ -63,6 +63,11 @@ with initial value INITVALUE and optional DOCSTRING."
   `(eval-and-compile
      (defvar ,sym ,init ,docstring)))
 
+(def-fsharp-compiled-var fsharp-shebang-regexp
+  "\\(^#!.*?\\)\\([A-Za-z0-9_-]+\\)$"
+  "Capture the #! and path of a shebag in one group and the
+  executable in another.")
+
 (def-fsharp-compiled-var fsharp-access-control-regexp
   "private\\s-+\\|internal\\s-+\\|public\\s-+"
   "Match `private', `internal', or `public', followed by a space,
@@ -194,7 +199,7 @@ with initial value INITVALUE and optional DOCSTRING."
 
 ;; Preprocessor directives (3.3)
 (def-fsharp-compiled-var fsharp-ui-preproessor-directives
-  '("#if" "#else" "#endif"))
+  '("#if" "#else" "#endif" "#light"))
 
 ;; Compiler directives (12.4)
 (def-fsharp-compiled-var fsharp-ui-compiler-directives
@@ -268,8 +273,10 @@ with initial value INITVALUE and optional DOCSTRING."
 (defconst fsharp-font-lock-keywords
   (eval-when-compile
     `((,fsharp-ui-word-list-regexp 0 font-lock-keyword-face)
-      ;; control
-
+      ;; shebang
+      (,fsharp-shebang-regexp
+       (1 font-lock-comment-face)
+       (2 font-lock-keyword-face))
       ;; attributes
       (,fsharp-attributes-regexp . font-lock-preprocessor-face)
       ;; ;; type defines
