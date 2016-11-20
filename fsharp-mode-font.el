@@ -58,12 +58,14 @@
   :group 'fsharp-ui)
 
 (defconst fsharp-access-control-regexp
-  "private\\s-+\\|internal\\s-+\\|public\\s-+")
+  "private\\s-+\\|internal\\s-+\\|public\\s-+"
+  "Match `private', `internal', or `public', followed by a space,
+  with no capture.")
 
 (defconst fsharp-access-control-regexp-noncapturing
-  (format "\\(?:%s\\)" fsharp-access-control-regexp))
+  (format "\\(?:%s\\)" fsharp-access-control-regexp)
+  "Same as `fsharp-access-control-regexp', but captures")
 
-;; TODO: move capture to the larger regex
 (defconst fsharp-inline-rec-regexp
   "inline\\s-+\\|rec\\s-+"
   "Match `inline' or `rec', followed by a space.")
@@ -74,33 +76,27 @@
 
 (defconst fsharp-valid-identifier-regexp
   "[A-Za-z0-9_']+"
-  "Match a normal valid F# identifier -- alphanumeric characters plus ' and underbar.")
+  "Match a normal, valid F# identifier -- alphanumeric characters
+  plus ' and underbar. Does not capture")
 
 (defconst fsharp-function-def-regexp
   (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
-          (format "\\(?:%s\\)?" fsharp-inline-rec-regexp)
+          fsharp-inline-rec-regexp-noncapturing
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
           ))
 
 (defconst fsharp-pattern-function-regexp
   (concat "\\<\\(?:let\\|and\\)\\s-+"
-          (format "\\(?:%s\\)?" fsharp-inline-rec-regexp)
+          fsharp-inline-rec-regexp-noncapturing
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\s-*=\\s-*function")
   "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
 
+;; Note that this regexp is used for iMenu. To font-lock active patterns, we
+;; need to use an anchored match in fsharp-font-lock-keywords.
 (defconst fsharp-active-pattern-regexp
   "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
-
-;; (defconst fsharp-active-pattern-regexp
-;;   (concat "\\<\\(?:let\\|and\\)\\s-+m"
-;;           fsharp-inline-rec-regexp "?" ;; inline-rec is optional
-;;           "\\(?:|\\)\\([A-Za-z0-9'_]*\\)"
-;;           ;; "(\\(?:|\\)\\([a-zA-Z0-9']*\\(?:|\\([A-Za-z0-9'_]*\\)\\)+\\)\\(?:|\\))"
-;;           ;; "(\\(?:|\\)\\([A-Za-z0-9_'|]+\\)\\(?:|\\))" ;; Match words within banana clips but do not capture clips themselves
-;;           "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
-;;   "Matches the words and pipes *within* an active pattern. E.g., in `(|Holy|Cow|_ |)', Holy, Cow,  , and pipes_ will be matched.")
 
 (defconst fsharp-member-access-regexp
   "\\<\\(?:override\\|member\\|abstract\\)\\s-+"
@@ -169,8 +165,6 @@
   "\\s-*\\(|\\)[A-Za-z0-9_' ]"
   "Match literal | in contexts like match and type declarations.")
 
-
-;; This is not hooked up, thus doing no good at all :|
 (defvar fsharp-imenu-generic-expression
   `((nil ,(concat "^\\s-*" fsharp-function-def-regexp) 1)
     (nil ,(concat "^\\s-*" fsharp-pattern-function-regexp) 1)
@@ -179,7 +173,8 @@
     (nil ,(concat "^\\s-*" fsharp-overload-operator-regexp) 1)
     (nil ,fsharp-constructor-regexp 1)
     (nil ,fsharp-type-def-regexp 1)
-    ))
+    )
+  "Provide iMenu support through font-locking regexen.")
 
 (defun fsharp-imenu-load-index ()
   "Hook up the provided regexen to enable imenu support."
@@ -280,7 +275,11 @@
     (,fsharp-type-def-regexp 1 font-lock-type-face)
     (,fsharp-function-def-regexp 1 font-lock-function-name-face)
     (,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
-    (,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
+    ;; (,fsharp-active-pattern-regexp 1 font-lock-function-name-face)
+    ("(|" (0 'fsharp-ui-operator-face)
+     ("\\([A-Za-z'_]+\\)\\(|)?\\)" nil nil
+      (1 font-lock-function-name-face)
+      (2 'fsharp-ui-operator-face)))
     (,fsharp-member-function-regexp 1 font-lock-function-name-face)
     (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
     (,fsharp-constructor-regexp 1 font-lock-function-name-face)
