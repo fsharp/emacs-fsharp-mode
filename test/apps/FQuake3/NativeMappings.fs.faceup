@@ -220,7 +220,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:Md3» =
-    «k:let» «v:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<md3Header_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<md3Header_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         «k:let» «v:hash» = NativePtr.toNativeInt ptr
@@ -236,7 +236,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         md3
 
 «k:module» «t:DirectoryInfo» =
-    «k:let» «v:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<directory_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<directory_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         «k:let» «v:path» = NativePtr.toStringAnsi &&native.path
@@ -245,7 +245,7 @@ Copyright (C) 1999-2005 Id Software, Inc.
         DirectoryInfo (Path.Combine (path, name))
 
 «k:module» «t:Pak» =
-    «k:let» «v:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<pack_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<pack_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
@@ -256,20 +256,20 @@ Copyright (C) 1999-2005 Id Software, Inc.
         }
 
 «k:module» «t:ServerPakChecksum» =
-    «k:let» «v:createFrom_fs_serverPaks» («v:size»: «t:int») («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<int>») =
+    «k:let» «f:createFrom_fs_serverPaks» («v:size»: «t:int») («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<int>») =
         «k:match» NativePtr.isValid ptr «k:with»
         «:fsharp-ui-operator-face:|» «k:false» -> []
         «:fsharp-ui-operator-face:|» _ -> NativePtr.toList size ptr
 
 «k:module» «t:SearchPath» =
-    «k:let» «v:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
+    «k:let» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
         «k:let» «k:mutable» «v:native» = NativePtr.read ptr
 
         {
             DirectoryInfo = Option.ofNativePtr DirectoryInfo.ofNativePtr native.directory
         }
 
-    «k:let» «v:convertFrom_fs_searchpaths» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
+    «k:let» «f:convertFrom_fs_searchpaths» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
         «k:let» «k:rec» «f:f» («v:searchPaths»: «t:SearchPath list») («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<searchpath_t>») =
             «k:match» NativePtr.isValid ptr «k:with»
             «:fsharp-ui-operator-face:|» «k:false» -> searchPaths

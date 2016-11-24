@@ -92,14 +92,14 @@ with initial value INITVALUE and optional DOCSTRING."
 
 (def-fsharp-compiled-var fsharp-function-def-regexp
   (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
-          fsharp-inline-rec-regexp-noncapturing
+          fsharp-inline-rec-regexp-noncapturing "?"
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
           ))
 
 (def-fsharp-compiled-var fsharp-pattern-function-regexp
   (concat "\\<\\(?:let\\|and\\)\\s-+"
-          fsharp-inline-rec-regexp-noncapturing
+          fsharp-inline-rec-regexp-noncapturing "?"
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\s-*=\\s-*function")
   "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
