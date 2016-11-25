@@ -133,7 +133,7 @@ with initial value INITVALUE and optional DOCSTRING."
 
 (def-fsharp-compiled-var fsharp-type-def-regexp
   (concat "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+"
-          fsharp-access-control-regexp "*" ;; match access control 0 or more times
+          fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
           "\\([A-Za-z0-9_'.]+\\)"))
 
 (def-fsharp-compiled-var fsharp-var-or-arg-regexp
@@ -141,7 +141,7 @@ with initial value INITVALUE and optional DOCSTRING."
 
 (def-fsharp-compiled-var fsharp-explicit-field-regexp
   (concat "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?"
-          fsharp-access-control-regexp "*" ;; match access control 0 or more times
+          fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
           "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
 
 (def-fsharp-compiled-var fsharp-attributes-regexp

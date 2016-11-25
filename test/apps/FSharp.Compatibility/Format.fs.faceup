@@ -23,12 +23,12 @@
 
  **************************************************************)»
 «m:// »«x:TODO : Recreate 'size' as a measure type on int
-»«k:type» size = int
+»«k:type» «t:size» = int
 «k:let» «k:inline» «f:size_of_int» («v:n» : «t:int») : «t:size» = n
 «k:let» «k:inline» «f:int_of_size» («v:s» : «t:size») : «t:int» = s
   
 «x:(* Tokens are one of the following : *)»
-«k:type» pp_token =
+«k:type» «t:pp_token» =
     «x:(* normal text *)»
     «:fsharp-ui-operator-face:|» Pp_text «k:of» string
     «x:(* complete break *)»
@@ -83,7 +83,7 @@
    elements are tuples (size, token, length), where
    size is set when the size of the block is known
    len is the declared length of the token. *)»
-«k:type» pp_queue_elem = {
+«k:type» «t:pp_queue_elem» = {
     «k:mutable» elem_size : «t:size»;
     token : «t:pp_token»;
     length : «t:int»;
@@ -92,18 +92,18 @@
 «x:(* Scan stack:
    each element is (left_total, queue element) where left_total
    is the value of pp_left_total when the element has been enqueued. *)»
-«k:type» pp_scan_elem =
+«k:type» «t:pp_scan_elem» =
     «:fsharp-ui-operator-face:|» Scan_elem «k:of» int * pp_queue_elem
 
 «x:(* Formatting stack:
    used to break the lines while printing tokens.
    The formatting stack contains the description of
    the currently active blocks. *)»
-«k:type» pp_format_elem =
+«k:type» «t:pp_format_elem» =
     «:fsharp-ui-operator-face:|» Format_elem «k:of» block_type * int
 
 «x:(* General purpose queues, used in the formatter. *)»
-«k:type» 'a queue_elem =
+«k:type» «t:'a» «v:queue_elem» =
   «:fsharp-ui-operator-face:|» Nil
   «:fsharp-ui-operator-face:|» Cons «k:of» 'a queue_cell
 
@@ -112,13 +112,13 @@
     «k:mutable» tail : 'a queue_elem;
 }
 
-«k:type» 'a queue = {
+«k:type» «t:'a» «v:queue» = {
     «k:mutable» insert : 'a queue_elem;
     «k:mutable» body : 'a queue_elem;
 }
 
 «x:(* The formatter specific tag handling functions. *)»
-«k:type» formatter_tag_functions = {
+«k:type» «t:formatter_tag_functions» = {
     mark_open_tag : «t:tag» -> string;
     mark_close_tag : «t:tag» -> string;
     print_open_tag : «t:tag» -> unit;
@@ -126,7 +126,7 @@
   }
 
 «x:(* A formatter with all its machinery. *)»
-«k:type» formatter = {
+«k:type» «t:formatter» = {
     «k:mutable» pp_scan_stack : «t:pp_scan_elem list»;
     «k:mutable» pp_format_stack : «t:pp_format_elem list»;
     «k:mutable» pp_tbox_stack : «t:tblock list»;
@@ -790,7 +790,7 @@
   
 «k:let» «f:pp_get_margin» «v:state» () = state.pp_margin
   
-«k:type» formatter_out_functions = {
+«k:type» «t:formatter_out_functions» = {
     out_string : «t:string» -> int -> int -> unit;
     out_flush : «t:unit» -> unit;
     out_newline : «t:unit» -> unit;
