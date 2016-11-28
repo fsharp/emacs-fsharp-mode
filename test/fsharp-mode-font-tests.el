@@ -120,10 +120,6 @@
     (should (not (string-match fsharp-constructor-regexp test-string-2)))))
 
 ;; Operators
-(ert-deftest fsharp-operator-active-pattern-regexp-test ()
-  (let ((test-string "(|Foo|Bar|)"))
-    (test-capture fsharp-operator-active-pattern-regexp test-string "(|" "|)")))
-
 (ert-deftest fsharp-operator-quote-regexp-test ()
   (let ((test-string "<@ SomeCode @>"))
     (test-capture fsharp-operator-quote-regexp test-string "<@" "@>")))
