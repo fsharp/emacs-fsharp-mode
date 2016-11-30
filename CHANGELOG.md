@@ -1,7 +1,8 @@
-## Upcoming
+## 1.9.4 (2016-11-30)
+
 Features
-- #116: Improve Active Pattern font locking, eval-when-compile the main font-lock-keywords form
-- #114: Clean up font-locking code
+  - #116: Improve Active Pattern font locking, eval-when-compile the main font-lock-keywords form
+  - #114: Clean up font-locking code
 
 ## 1.9.3 (2016-10-31)
 Features
