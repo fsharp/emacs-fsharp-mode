@@ -224,7 +224,6 @@
           company-backends
           company-auto-complete
           company-auto-complete-chars
-          company-idle-delay
           company-require-match
           company-tooltip-align-annotations))
 
@@ -255,7 +254,6 @@
   (add-to-list 'company-backends 'fsharp-ac/company-backend)
   (setq company-auto-complete 't)
   (setq company-auto-complete-chars ".")
-  (setq company-idle-delay 0.03)
   (setq company-require-match 'nil)
   (setq company-tooltip-align-annotations 't)
 
