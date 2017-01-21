@@ -1,3 +1,10 @@
+## 1.9.5 (2017-01-21)
+
+Bugfixes:
+  - #117: Fix `type` locking
+  - #118: Don't change company-idle-delay
+  - #120: Fix FSAC hanging issue
+
 ## 1.9.4 (2016-11-30)
 
 Features
