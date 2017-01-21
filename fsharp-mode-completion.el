@@ -146,7 +146,7 @@ since the last request."
         (fsharp-ac--log (format "Parsing \"%s\"\n" file))
         (process-send-string
          (fsharp-ac-completion-process (fsharp-ac--hostname file))
-         (format "parse \"%s\" %s\n%s<<EOF>>\n"
+         (format "parse \"%s\" %s\n%s\n<<EOF>>\n"
                  (fsharp-ac--localname file)
                  (if force-sync " sync" "")
                  (buffer-substring-no-properties (point-min) (point-max)))))
