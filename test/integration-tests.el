@@ -161,6 +161,27 @@
        (should= (flycheck-error-message ferror)
                 "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token.")))))
 
+
+(ert-deftest check-errors-without-newline ()
+  "Check error on buffers without trailing newline"
+  (fsharp-mode-wrapper '("Program.fs")
+   (lambda ()
+     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
+     ;; Remove trailing whitspace
+     ;; Flycheck should still respond: https://github.com/fsharp/emacs-fsharp-mode/issues/119
+     (replace-regexp "0
++\\'" "0" nil (point-max) (point-min))
+     (beginning-of-buffer)
+     (search-forward "X.func")
+     (delete-char -1)
+     (backward-char)
+     (flycheck-buffer)
+     (wait-for-condition (car-safe (flycheck-overlay-errors-at (point))))
+     (let ((ferror (car-safe (flycheck-overlay-errors-at (point)))))
+       (should= (flycheck-error-level ferror) 'error)
+       (should= (flycheck-error-message ferror)
+                "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token.")))))
+
 (ert-deftest check-script-tooltip ()
   "Check we can request a tooltip from a script"
   (fsharp-mode-wrapper '("Script.fsx")
