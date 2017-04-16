@@ -1,3 +1,8 @@
+## 1.9.6 (2017-04-16)
+
+Features:
+  - Update to FsAutoComplete 0.32.0 (.NET Core project support)
+
 ## 1.9.5 (2017-01-21)
 
 Bugfixes:
