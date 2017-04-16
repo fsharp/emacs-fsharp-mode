@@ -332,7 +332,7 @@ If HOST is nil, check process on local system."
     (if (file-exists-p fsac)
 	(let ((proc (apply 'start-file-process
 			   fsharp-ac--completion-procname
-			   (get-buffer-create (generate-new-buffer-name "*fsharp-complete*"))
+			   (get-buffer-create (generate-new-buffer-name " *fsharp-complete*"))
 			   fsharp-ac-complete-command)))
 	  (sleep-for 0.1)
 	  (if (process-live-p proc)
@@ -669,12 +669,13 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
                  (substring str 1)
                    str))))
   (let (msg)
-    (while (setq msg (fsharp-ac--get-msg proc))
+    (while (and (setq msg (fsharp-ac--get-msg proc))
+                (/= (hash-table-count msg) 0))
       (let ((kind (gethash "Kind" msg))
             (data (gethash "Data" msg)))
         (fsharp-ac--log (format "Received '%s' message of length %d\n"
                                 kind
-                                (hash-table-size msg)))
+                                (hash-table-count msg)))
         (pcase kind
          ("error" (fsharp-ac-handle-process-error data))
          ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
