@@ -1,7 +1,11 @@
 ## 1.9.6 (2017-04-16)
 
 Features:
-  - Update to FsAutoComplete 0.32.0 (.NET Core project support)
+  - #127: Update to FsAutoComplete 0.32.0 (.NET Core project support)
+
+Bugfixes:
+  - #125: Small fixes to try to prevent fsharp-mode to freeze all emacs 
+  - #122: Make fsharp-doc-mode hook buffer-local
 
 ## 1.9.5 (2017-01-21)
 
