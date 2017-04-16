@@ -52,10 +52,10 @@
   (fsharp-doc-reset-timer)
   (cond
    (fsharp-doc-mode
-    (add-hook 'post-command-hook 'fsharp-doc-request-info-soon 'local)
+    (add-hook 'post-command-hook 'fsharp-doc-request-info-soon nil t)
     (run-hooks 'fsharp-doc-mode-hook))
    (t
-    (remove-hook 'post-command-hook 'fsharp-doc-request-info-soon 'local)))
+    (remove-hook 'post-command-hook 'fsharp-doc-request-info-soon t)))
   fsharp-doc-mode)
 
 (defun turn-on-fsharp-doc-mode ()
