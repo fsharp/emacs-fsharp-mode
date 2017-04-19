@@ -752,7 +752,7 @@ has requested a popup tooltip, display a popup."
 
 (defun fsharp-ac/show-popup (str)
   (if (display-graphic-p)
-      (pos-tip-show str nil nil nil 300)
+      (pos-tip-show str)
     ;; Use unoptimized calculation for popup, making it less likely to
     ;; wrap lines.
     (let ((popup-use-optimized-column-computation nil))
