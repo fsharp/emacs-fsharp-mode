@@ -656,8 +656,8 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
               (delete-region (point-min) (1+ (point))))
           (error
            (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
-           (message "Error: F# completion process produced malformed JSON (%s)."
-                    (buffer-substring-no-properties (point-min) (point-max)))))))))
+	   (delete-region (point-min) eofloc)
+	   (fsharp-ac--get-msg proc)))))))
 
 (defun fsharp-ac-filter-output (proc str)
   "Filter STR from the completion process PROC and handle appropriately."
