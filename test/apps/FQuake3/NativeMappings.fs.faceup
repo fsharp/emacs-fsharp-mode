@@ -162,8 +162,8 @@ Copyright (C) 1999-2005 Id Software, Inc.
 «k:module» «t:Bounds» =
     «k:let» «k:inline» «f:ofNativePtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») =
         Bounds (
-            Vec3.ofNativePtr <«:fsharp-ui-operator-face:|» NativePtr.add ptr 0,
-            Vec3.ofNativePtr <«:fsharp-ui-operator-face:|» NativePtr.add ptr 1)
+            Vec3.ofNativePtr «:fsharp-ui-operator-face:<|» NativePtr.add ptr 0,
+            Vec3.ofNativePtr «:fsharp-ui-operator-face:<|» NativePtr.add ptr 1)
 
     «k:let» «k:inline» «f:toNativeByPtr» («v:ptr»: «t:nativeptr»«:fsharp-ui-generic-face:<vec3_t>») («v:bounds»: «t:Bounds») =
         «k:let» «k:mutable» «v:nativeX» = NativePtr.get ptr 0
