@@ -108,7 +108,7 @@ See URL `https://github.com/fsharp/FsAutoComplete'."
                                                                 it))))
                       (flycheck-error-new-at
                        line column level msg :checker checker :filename file))
-                    data))
+                    (gethash "Errors" data)))
             (funcall callback 'finished fsharp-ac-errors))
         (funcall callback 'errored (error-message-string err)))
     ;; XXX this should use (funcall callback 'suspicious "the message below"),

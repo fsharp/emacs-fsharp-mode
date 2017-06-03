@@ -1,7 +1,24 @@
-## Upcoming
+## 1.9.6 (2017-04-16)
+
+Features:
+  - #127: Update to FsAutoComplete 0.32.0 (.NET Core project support)
+
+Bugfixes:
+  - #125: Small fixes to try to prevent fsharp-mode to freeze all emacs 
+  - #122: Make fsharp-doc-mode hook buffer-local
+
+## 1.9.5 (2017-01-21)
+
+Bugfixes:
+  - #117: Fix `type` locking
+  - #118: Don't change company-idle-delay
+  - #120: Fix FSAC hanging issue
+
+## 1.9.4 (2016-11-30)
+
 Features
-- #116: Improve Active Pattern font locking, eval-when-compile the main font-lock-keywords form
-- #114: Clean up font-locking code
+  - #116: Improve Active Pattern font locking, eval-when-compile the main font-lock-keywords form
+  - #114: Clean up font-locking code
 
 ## 1.9.3 (2016-10-31)
 Features
