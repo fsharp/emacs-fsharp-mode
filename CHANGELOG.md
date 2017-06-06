@@ -1,3 +1,9 @@
+## 1.9.7 (2017-06-06)
+
+Bugfixes:
+  - #131: Don't panic on malformed JSON (debug messages)
+  - #133: Update faceup to capture font-locking <|
+
 ## 1.9.6 (2017-04-16)
 
 Features:
