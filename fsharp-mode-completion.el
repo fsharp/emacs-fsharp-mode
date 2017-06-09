@@ -115,15 +115,36 @@ If set to nil, display in a help buffer instead.")
 (defvar-local fsharp-ac-errors nil
   "The most recent flycheck errors for the buffer, if any.")
 
-(defun fsharp-ac--log (str)
+(defun fsharp-ac--log (fmt-string &rest arguments)
+  "Append message to debug buffer.
+Message is formatted with FMT-STRING as control string and the remaining
+ARGUMENTS to actually emit the message (if applicable)."
   (when fsharp-ac-debug
     (with-current-buffer (get-buffer-create fsharp-ac--log-buf)
-      (let ((pt (point))
-            (atend (eq (point-max) (point))))
+      (let* ((pt (point))
+             (now (current-time))
+             (tstr (concat (format-time-string "%T." now)
+                           (format "%06d" (nth 2 now))))
+             (mstr (apply #'format-message fmt-string arguments))
+             fn)
         (goto-char (point-max))
-        (insert-before-markers (format "%s: %s" (float-time) str))
-        (unless atend
-          (goto-char pt))))))
+        ;; always ensure newline (could be missing in format string)
+        (unless (bolp)
+          (insert "\n"))
+        ;; insert function name
+        (when (>= fsharp-ac-debug 3)
+          ;; Get function name from backtrace
+          ;; no high-order fun here because of effect on backtrace
+          (let ((btn 1) btf)
+            (while (not fn)
+              (setq btf (nth 1 (backtrace-frame btn)))
+              (if (not btf)
+                  (setq fn "")
+                (when (and (symbolp btf) (string-match "^fsharp-" (symbol-name btf))
+                           (not (string-match "^fsharp-ac--log$" (symbol-name btf))))
+                  (setq fn (symbol-name btf)))
+                (setq btn (1+ btn))))))
+        (insert (format "%s%s: %s" tstr (if (and fn (not (string-empty-p fn))) (concat " (" fn ")") "") mstr))))))
 
 (defun log-psendstr (proc str)
   (fsharp-ac--log str)
