@@ -147,7 +147,7 @@ ARGUMENTS to actually emit the message (if applicable)."
         (insert (format "%s%s: %s" tstr (if (and fn (not (string-empty-p fn))) (concat " (" fn ")") "") mstr))))))
 
 (defun log-psendstr (proc str)
-  (fsharp-ac--log str)
+  (fsharp-ac--log "%s" str)
   (process-send-string proc str))
 
 (defun fsharp-ac-parse-current-buffer (&optional force-sync)
@@ -164,7 +164,8 @@ since the last request."
     (save-restriction
       (let ((file (fsharp-ac--buffer-truename)))
         (widen)
-        (fsharp-ac--log (format "Parsing \"%s\"\n" file))
+        (
+         fsharp-ac--log "Parsing \"%s\"" file)
         (process-send-string
          (fsharp-ac-completion-process (fsharp-ac--hostname file))
          (format "parse \"%s\" %s\n%s\n<<EOF>>\n"
@@ -662,10 +663,10 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
       (when (numberp fsharp-ac-debug)
         (cond
          ((eq fsharp-ac-debug 1)
-          (fsharp-ac--log (format "%s ...\n" (buffer-substring (point-min) (min 100 eofloc)))))
+          (fsharp-ac--log "%s ..." (buffer-substring (point-min) (min 100 eofloc))))
 
          ((>= fsharp-ac-debug 2)
-          (fsharp-ac--log (format "%s\n" (buffer-substring (point-min) eofloc))))))
+          (fsharp-ac--log "%s" (buffer-substring (point-min) eofloc)))))
 
       (let ((json-array-type 'list)
             (json-object-type 'hash-table)
@@ -676,7 +677,7 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
                 (json-read)
               (delete-region (point-min) (1+ (point))))
           (error
-           (fsharp-ac--log (format "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max))))
+           (fsharp-ac--log "Malformed JSON: %s" (buffer-substring-no-properties (point-min) (point-max)))
 	   (delete-region (point-min) eofloc)
 	   (fsharp-ac--get-msg proc)))))))
 
@@ -694,9 +695,9 @@ prevent usage errors being displayed by FSHARP-DOC-MODE."
                 (/= (hash-table-count msg) 0))
       (let ((kind (gethash "Kind" msg))
             (data (gethash "Data" msg)))
-        (fsharp-ac--log (format "Received '%s' message of length %d\n"
-                                kind
-                                (hash-table-count msg)))
+        (fsharp-ac--log "Received '%s' message of length %d"
+                        kind
+                        (hash-table-count msg))
         (pcase kind
          ("error" (fsharp-ac-handle-process-error data))
          ("info" (when fsharp-ac-verbose (fsharp-ac-message-safely data)))
