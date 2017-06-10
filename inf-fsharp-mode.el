@@ -59,7 +59,7 @@ Emacs buffer. A history of input phrases is maintained. Phrases can
 be sent from another buffer in fsharp mode.
 
 \\{inferior-fsharp-mode-map}"
-  (setq comint-prompt-regexp "^# ?")
+  (setq comint-prompt-regexp "^> ?")
   (setq comint-prompt-read-only t)
 
   (make-local-variable 'paragraph-start)
