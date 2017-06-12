@@ -26,6 +26,7 @@
 (with-no-warnings (require 'cl))
 (require 'tramp)
 (require 's)
+(require 'subr-x)
 (require 'dash)
 (require 'company)
 (require 'json)
