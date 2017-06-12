@@ -45,10 +45,10 @@
 ;; End of User modifiable variables
 
 
-(defvar inferior-fsharp-mode-map nil)
-(if inferior-fsharp-mode-map nil
-  (setq inferior-fsharp-mode-map
-        (copy-keymap comint-mode-map)))
+(defvar inferior-fsharp-mode-map
+  (let ((map (copy-keymap comint-mode-map)))
+    (define-key map [M-return] 'fsharp-comint-send)
+    map))
 
 ;; Augment fsharp mode, so you can process fsharp code in the source files.
 
@@ -72,10 +72,7 @@ be sent from another buffer in fsharp mode.
   (set (make-local-variable 'comment-start-skip) "(\\*+ *")
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
   (set (make-local-variable 'comint-process-echoes) nil)
-  (use-local-map inferior-fsharp-mode-map)
   (run-hooks 'inferior-fsharp-mode-hooks)
-
-  (define-key inferior-fsharp-mode-map [M-return] 'fsharp-comint-send)
 
   ;; use compilation mode to parse errors, but RET and C-cC-c should still be from comint-mode
   (compilation-minor-mode)
