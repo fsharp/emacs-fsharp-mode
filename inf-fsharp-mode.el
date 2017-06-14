@@ -45,10 +45,10 @@
 ;; End of User modifiable variables
 
 
-(defvar inferior-fsharp-mode-map nil)
-(if inferior-fsharp-mode-map nil
-  (setq inferior-fsharp-mode-map
-        (copy-keymap comint-mode-map)))
+(defvar inferior-fsharp-mode-map
+  (let ((map (copy-keymap comint-mode-map)))
+    (define-key map [M-return] 'fsharp-comint-send)
+    map))
 
 ;; Augment fsharp mode, so you can process fsharp code in the source files.
 
@@ -59,33 +59,20 @@ Emacs buffer. A history of input phrases is maintained. Phrases can
 be sent from another buffer in fsharp mode.
 
 \\{inferior-fsharp-mode-map}"
-  (setq comint-prompt-regexp "^# ?")
+  (setq comint-prompt-regexp "^> ?")
   (setq comint-prompt-read-only t)
 
-  (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "^$\\|" page-delimiter))
-  (make-local-variable 'paragraph-separate)
-  (setq paragraph-separate paragraph-start)
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t)
-  (make-local-variable 'require-final-newline)
-  (setq require-final-newline t)
-  (make-local-variable 'comment-start)
-  (setq comment-start "(*")
-  (make-local-variable 'comment-end)
-  (setq comment-end "*)")
-  (make-local-variable 'comment-column)
-  (setq comment-column 40)
-  (make-local-variable 'comment-start-skip)
-  (setq comment-start-skip "(\\*+ *")
-  (make-local-variable 'parse-sexp-ignore-comments)
-  (setq parse-sexp-ignore-comments nil)
-  (make-local-variable 'comint-process-echoes)
-  (setq comint-process-echoes nil)
-  (use-local-map inferior-fsharp-mode-map)
+  (set (make-local-variable 'paragraph-start) (concat "^$\\|" page-delimiter))
+  (set (make-local-variable 'paragraph-separate) paragraph-start)
+  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (set (make-local-variable 'require-final-newline) t)
+  (set (make-local-variable 'comment-start) "(*")
+  (set (make-local-variable 'comment-end) "*)")
+  (set (make-local-variable 'comment-column) 40)
+  (set (make-local-variable 'comment-start-skip) "(\\*+ *")
+  (set (make-local-variable 'parse-sexp-ignore-comments) nil)
+  (set (make-local-variable 'comint-process-echoes) nil)
   (run-hooks 'inferior-fsharp-mode-hooks)
-
-  (define-key inferior-fsharp-mode-map [M-return] 'fsharp-comint-send)
 
   ;; use compilation mode to parse errors, but RET and C-cC-c should still be from comint-mode
   (compilation-minor-mode)
