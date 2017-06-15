@@ -87,8 +87,8 @@
   (define-key fsharp-mode-map (kbd "M-n") 'next-error)
   (define-key fsharp-mode-map (kbd "M-p") 'previous-error)
 
-  (define-key fsharp-mode-map "\C-cl" 'fsharp-shift-region-left)
-  (define-key fsharp-mode-map "\C-cr" 'fsharp-shift-region-right)
+  (define-key fsharp-mode-map "\C-c<" 'fsharp-shift-region-left)
+  (define-key fsharp-mode-map "\C-c>" 'fsharp-shift-region-right)
 
   (define-key fsharp-mode-map "\C-m"      'fsharp-newline-and-indent)
   (define-key fsharp-mode-map "\C-c:"     'fsharp-guess-indent-offset)
