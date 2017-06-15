@@ -1,14 +1,14 @@
 language: csharp
-sudo: false
+sudo: required
 
 before_install:
+  - sudo apt-get install -y fsharp
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
   - evm install $EVM_EMACS --use --skip
 
 env:
-  - EVM_EMACS=emacs-24.4-travis
-  - EVM_EMACS=emacs-24.5-travis
-  - EVM_EMACS=emacs-git-snapshot-travis
+  - EVM_EMACS=emacs-25.1-travis
+  - EVM_EMACS=emacs-25.2-travis
 
 matrix:
   fast_finish: true
