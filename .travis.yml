@@ -9,7 +9,6 @@ before_install:
 env:
   - EVM_EMACS=emacs-25.1-travis
   - EVM_EMACS=emacs-25.2-travis
-  - EVM_EMACS=emacs-git-snapshot-travis
 
 matrix:
   fast_finish: true
