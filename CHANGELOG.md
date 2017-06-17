@@ -1,3 +1,12 @@
+## 1.9.8 (2017-06-17)
+
+Features:
+  - #134: Improved logging
+  - #137: fsharp-shift-region-[left,right]: change bindings to 'C-c <' and 'C-c >'
+
+Bugfixes:
+  - #136: Use correct F# interactive prompt regex
+
 ## 1.9.7 (2017-06-06)
 
 Bugfixes:
