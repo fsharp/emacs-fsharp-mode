@@ -269,8 +269,10 @@
       (setq compile-command (fsharp-mode-choose-compile-command file))
       (fsharp-mode--load-with-binding file)))
 
-  (flycheck-mode 1)
-  (turn-on-fsharp-doc-mode)
+  (when fsharp-ac-intellisense-enabled
+    (flycheck-mode 1)
+    (turn-on-fsharp-doc-mode))
+
   (run-hooks 'fsharp-mode-hook))
 
 (defun fsharp-mode--load-with-binding (file)
