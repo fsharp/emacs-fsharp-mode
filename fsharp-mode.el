@@ -406,8 +406,15 @@ folders relative to DIR-OR-FILE."
                               (file-name-directory dir-or-file)))
 
 (defun fsharp-mode/find-fsproj (dir-or-file)
-  (fsharp-mode-search-upwards (rx (0+ nonl) ".fsproj" eol)
-                              (file-name-directory dir-or-file)))
+  (let ((dir-name (file-name-directory dir-or-file)))
+    (or (fsharp-mode/find-project-json dir-or-file)
+	(fsharp-mode-search-upwards (rx (0+ nonl) ".fsproj" eol) dir-name)
+	(fsharp-mode-search-upwards (rx (0+ nonl) "project.json" eol) dir-name)
+	)))
+
+(defun fsharp-mode/find-project-json (dir-or-file)
+  (fsharp-mode-search-upwards (rx (0+ nonl) "project.json" eol)
+			      (file-name-directory dir-or-file)))
 
 (defun fsharp-mode-search-upwards (regex dir)
   (when dir

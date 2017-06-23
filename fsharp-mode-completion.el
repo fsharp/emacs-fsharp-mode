@@ -221,9 +221,9 @@ For indirect buffers return the truename of the base buffer."
 	   (file-truename)))
 
 (defun fsharp-ac/load-project (file)
-  "Load the specified fsproj FILE as a project."
+  "Load the specified fsproj or project.json FILE as a project."
   (interactive
-  ;; Prompt user for an fsproj, searching for a default.
+  ;; Prompt user for an fsproj or project.json, searching for a default.
    (let* ((proj (fsharp-mode/find-fsproj buffer-file-name))
           (relproj (when proj (file-relative-name proj (file-name-directory buffer-file-name))))
           (prompt (if relproj (format "Path to project (default %s): " relproj)
@@ -259,7 +259,9 @@ For indirect buffers return the truename of the base buffer."
 (defun fsharp-ac--valid-project-p (file)
   (and file
        (file-exists-p file)
-       (string-match-p (rx "." "fsproj" eol) file)))
+       (or 
+	(string-match-p (rx "." "fsproj" eol) file)
+	(string-match-p (rx "project.json" eol) file))))
 
 (defun fsharp-ac--fs-file-p (file)
   (and file
