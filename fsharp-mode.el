@@ -294,10 +294,12 @@ Otherwise, treat as a stand-alone file."
          (dname    (file-name-directory file))
          (ext      (file-name-extension file))
          (proj     (fsharp-mode/find-sln-or-fsproj file))
+         (buildsh  (fsharp-mode/find-build-script file))
          (makefile (or (file-exists-p (concat dname "/Makefile"))
                        (file-exists-p (concat dname "/makefile")))))
     (cond
      (makefile          compile-command)
+     (buildsh           buildsh)
      (proj              (combine-and-quote-strings (list fsharp-build-command "/nologo" proj)))
      ((or (equal ext "fs") (equal ext "fsx"))  (combine-and-quote-strings (list fsharp-compile-command "--nologo" file)))
      ((equal ext "fsl") (combine-and-quote-strings (list "fslex" file)))
@@ -413,6 +415,10 @@ folders relative to DIR-OR-FILE."
   (when dir
     (or (car-safe (directory-files dir 'full regex))
         (fsharp-mode-search-upwards regex (fsharp-mode-parent-dir dir)))))
+
+(defun fsharp-mode/find-build-script (dir-or-file)
+  (fsharp-mode-search-upwards (rx "build.sh" eol)
+                              (file-name-directory dir-or-file)))
 
 (defun fsharp-mode-parent-dir (dir)
   (let ((p (file-name-directory (directory-file-name dir))))
