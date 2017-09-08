@@ -417,8 +417,12 @@ folders relative to DIR-OR-FILE."
         (fsharp-mode-search-upwards regex (fsharp-mode-parent-dir dir)))))
 
 (defun fsharp-mode/find-build-script (dir-or-file)
-  (fsharp-mode-search-upwards (rx "build.sh" eol)
-                              (file-name-directory dir-or-file)))
+  (-first
+   'identity
+   (mapcar (lambda (regex)
+             ( fsharp-mode-search-upwards regex
+                                          (file-name-directory dir-or-file)))
+           (list (rx "build.sh" eol) (rx "build.cmd" eol)))))
 
 (defun fsharp-mode-parent-dir (dir)
   (let ((p (file-name-directory (directory-file-name dir))))
