@@ -36,6 +36,13 @@
                                                     "proj/"
                                                     "test.fs"))))
 
+(check "Should use build script if present"
+       (should-match "CompileCommandData/build-script/build.sh"
+                     (fsharp-mode-choose-compile-command (concat test-dir
+                                                                 "CompileCommandData/"
+                                                                 "build-script/"
+                                                                 "test.fs"))))
+
 (check "Should use xbuild if fsproj present"
        (should-match "\\(x\\|ms\\)build.* /nologo .*Test1.fsproj"
         (fsharp-mode-choose-compile-command (concat test-dir
