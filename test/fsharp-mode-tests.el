@@ -1,7 +1,7 @@
 ;;; Test our ability to find SLN files and projects.
 ;;; This is tricky to test comprehensively because there is a sln at the
 ;;; root of this repo.
-
+(setq fsharp-mode/build-script-search-order (list (rx "build.fish" eol) (rx "build.cmd" eol)))
 (check "should not find fsharp project if none present"
   (should-not (fsharp-mode/find-sln-or-fsproj "/")))
 
@@ -37,7 +37,7 @@
                                                     "test.fs"))))
 
 (check "Should use build script if present"
-       (should-match "CompileCommandData/build-script/build.sh"
+       (should-match "CompileCommandData/build-script/build.fish"
                      (fsharp-mode-choose-compile-command (concat test-dir
                                                                  "CompileCommandData/"
                                                                  "build-script/"

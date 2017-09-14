@@ -416,13 +416,17 @@ folders relative to DIR-OR-FILE."
     (or (car-safe (directory-files dir 'full regex))
         (fsharp-mode-search-upwards regex (fsharp-mode-parent-dir dir)))))
 
+(defvar fsharp-mode/build-script-search-order
+  (list (rx "build.sh" eol) (rx "build.cmd" eol))
+  "Defines a list of build script names to search for when compiling")
+
 (defun fsharp-mode/find-build-script (dir-or-file)
   (-first
    'identity
    (mapcar (lambda (regex)
              ( fsharp-mode-search-upwards regex
                                           (file-name-directory dir-or-file)))
-           (list (rx "build.sh" eol) (rx "build.cmd" eol)))))
+           fsharp-mode/build-script-search-order)))
 
 (defun fsharp-mode-parent-dir (dir)
   (let ((p (file-name-directory (directory-file-name dir))))
