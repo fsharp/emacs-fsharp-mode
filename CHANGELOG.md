@@ -1,3 +1,11 @@
+## 1.9.9 (2017-09-15)
+
+Features
+  - #143: Update to FsAutoComplete 0.34.0
+
+Bugfixes:
+  - #139: Disable flycheck and fsharp-doc-mode when fsharp-ac-intellisense-enabled is nil
+
 ## 1.9.8 (2017-06-17)
 
 Features:
@@ -37,7 +45,7 @@ Features
 
 ## 1.9.3 (2016-10-31)
 Features
-  - #111: Update to FsAutoComplete 0.30.2
+  - #111: Update to FsAutoComplete 0.32.0
   - #109: Define inferior-fsharp-mode as variant of comint mode
 
 Bugfixes:
