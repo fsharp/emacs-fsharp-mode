@@ -816,7 +816,7 @@ has requested a popup tooltip, display a popup."
                (gethash "Logs" data)))))
 
 (defun fsharp-ac-handle-process-error (str)
-  (fsharp-ac-message-safely str)
+  (fsharp-ac-message-safely (gethash "Message" str))
   (when (not (eq fsharp-ac-status 'idle))
     (setq fsharp-ac-status 'idle
           fsharp-ac-current-candidate nil)))

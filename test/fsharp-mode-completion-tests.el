@@ -144,7 +144,7 @@ function bound to VAR in BODY. "
 
 (check-handler "prints message on error"
   (stub-fn message err
-    (fsharp-ac-filter-output nil "{\"Kind\": \"error\", \"Data\": \"foo\"}\n")
+    (fsharp-ac-filter-output nil "{\"Kind\": \"error\", \"Data\": {\"Code\":1,\"Message\":\"foo\",\"AdditionalData\":{}}}\n")
     (should-match "foo" err)))
 
 ;;; Tooltips and typesigs
