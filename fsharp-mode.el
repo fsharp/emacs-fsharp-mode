@@ -417,7 +417,9 @@ folders relative to DIR-OR-FILE."
         (fsharp-mode-search-upwards regex (fsharp-mode-parent-dir dir)))))
 
 (defvar fsharp-mode/build-script-search-order
-  (list (rx "build.sh" eol) (rx "build.cmd" eol))
+  (cond
+   ( (eq system-type 'windows-nt) (list (rx "build.cmd" eol) (rx "build.ps1" eol)) )
+   ( t (list (rx "build.sh" eol))))
   "Defines a list of build script names to search for when compiling")
 
 (defun fsharp-mode/find-build-script (dir-or-file)
