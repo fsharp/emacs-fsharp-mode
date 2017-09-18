@@ -1,3 +1,8 @@
+## 1.9.10 (2017-09-18)
+
+Bugfixes:
+  - #146: Understand FSAC 0.34 error msgs
+
 ## 1.9.9 (2017-09-15)
 
 Features
