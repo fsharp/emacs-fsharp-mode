@@ -299,7 +299,9 @@ Otherwise, treat as a stand-alone file."
                        (file-exists-p (concat dname "/makefile")))))
     (cond
      (makefile          compile-command)
-     (buildsh           buildsh)
+     (buildsh           (format "cd %s && %s"
+                                (concat "\"" (file-name-directory buildsh) "\"")
+                                (concat "\"" buildsh "\"")))
      (proj              (combine-and-quote-strings (list fsharp-build-command "/nologo" proj)))
      ((or (equal ext "fs") (equal ext "fsx"))  (combine-and-quote-strings (list fsharp-compile-command "--nologo" file)))
      ((equal ext "fsl") (combine-and-quote-strings (list "fslex" file)))
