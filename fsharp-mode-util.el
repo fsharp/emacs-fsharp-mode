@@ -41,6 +41,16 @@ for all *nix.")
                            (getenv "ProgramFiles")
                            "C:\\Program Files (x86)")))))
 
+(defun fsharp-mode--vs2017-msbuild-find (exe)
+  "Return EXE absolute path for Visual Studio 2017, if existent, else nil."
+  (->> (--map (concat (fsharp-mode--program-files-x86)
+		      "Microsoft Visual Studio/2017/"
+		      it
+		      "msbuild/15.0/bin/"
+		      exe)
+	      '("Enterprise/" "Professional/" "Community/" "BuildTools/"))
+       (--first (file-executable-p it))))
+
 (defun fsharp-mode--msbuild-find (exe)
   (if fsharp-ac-using-mono
       (executable-find exe)
@@ -48,7 +58,7 @@ for all *nix.")
                                       "MSBuild/" it "/Bin")
                               '("14.0" "13.0" "12.0")))
            (exec-path (append searchdirs exec-path)))
-      (executable-find exe))))
+      (or (fsharp-mode--vs2017-msbuild-find exe) (executable-find exe)))))
 
 (defun fsharp-mode--executable-find (exe)
   (if fsharp-ac-using-mono
