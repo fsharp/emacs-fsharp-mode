@@ -1,3 +1,11 @@
+## 1.9.11 (2017-10-21)
+
+Features:
+  - #151: Correctly find MSBuild from VS2017
+
+Bugfixes:
+  - #152: Handle failure to find build commands gracefully
+
 ## 1.9.10 (2017-09-18)
 
 Bugfixes:
