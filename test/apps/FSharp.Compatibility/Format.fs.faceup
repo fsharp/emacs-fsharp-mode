@@ -849,7 +849,7 @@
   
 «m:/// »«x:Re-implementation of OCaml's Pervasives.output, since the one in the
 »«m:/// »«x:F# compatibility library doesn't have the right type signature.
-»«k:let» «k:private» «v:output» «v:oc» («v:buf» : «t:string») («v:pos» : «t:int») («v:len» : «t:int») =
+»«k:let» «k:private» «f:output» «v:oc» («v:buf» : «t:string») («v:pos» : «t:int») («v:len» : «t:int») =
     output_string oc (buf.Substring (pos, len))
 
 «k:let» «f:pp_set_formatter_out_channel» «v:state» «v:os» =
