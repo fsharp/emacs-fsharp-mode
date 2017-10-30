@@ -93,6 +93,7 @@ with initial value INITVALUE and optional DOCSTRING."
 (def-fsharp-compiled-var fsharp-function-def-regexp
   (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
           fsharp-inline-rec-regexp-noncapturing "?"
+          fsharp-access-control-regexp-noncapturing "*"
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
           ))
@@ -100,6 +101,7 @@ with initial value INITVALUE and optional DOCSTRING."
 (def-fsharp-compiled-var fsharp-pattern-function-regexp
   (concat "\\<\\(?:let\\|and\\)\\s-+"
           fsharp-inline-rec-regexp-noncapturing "?"
+          fsharp-access-control-regexp-noncapturing "*"
           (format "\\(%s\\)" fsharp-valid-identifier-regexp)
           "\\s-*=\\s-*function")
   "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
@@ -107,7 +109,10 @@ with initial value INITVALUE and optional DOCSTRING."
 ;; Note that this regexp is used for iMenu. To font-lock active patterns, we
 ;; need to use an anchored match in fsharp-font-lock-keywords.
 (def-fsharp-compiled-var fsharp-active-pattern-regexp
-  "\\<\\(?:let\\|and\\)\\s-+\\(?:\\(?:inline\\|rec\\)\\s-+\\)?(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)")
+  (concat "\\<\\(?:let\\|and\\)\\s-+"
+          fsharp-inline-rec-regexp-noncapturing "?"
+          fsharp-access-control-regexp-noncapturing "*"
+          "(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)"))
 
 (def-fsharp-compiled-var fsharp-member-access-regexp
   "\\<\\(?:override\\|member\\|abstract\\)\\s-+"
@@ -115,20 +120,23 @@ with initial value INITVALUE and optional DOCSTRING."
 
 (def-fsharp-compiled-var fsharp-member-function-regexp
   (concat fsharp-member-access-regexp
-          "\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(?:"
-          fsharp-valid-identifier-regexp
-          "\\.\\)?\\("
-          fsharp-valid-identifier-regexp
-          "\\)")
+          fsharp-inline-rec-regexp-noncapturing "?"
+          fsharp-access-control-regexp-noncapturing "*"
+          "\\(?:" fsharp-valid-identifier-regexp "\\.\\)?"
+          "\\(" fsharp-valid-identifier-regexp "\\)")
   "Captures the final identifier in a member function declaration.")
 
 (def-fsharp-compiled-var fsharp-overload-operator-regexp
   (concat fsharp-member-access-regexp
-          "\\(?:\\(?:inline\\|rec\\)\\s-+\\)?\\(([!%&*+-./<=>?@^|~]+)\\)")
+          fsharp-inline-rec-regexp-noncapturing "?"
+          fsharp-access-control-regexp-noncapturing "*"
+          "\\(([!%&*+-./<=>?@^|~]+)\\)")
   "Match operators when overloaded by a type/class.")
 
 (def-fsharp-compiled-var fsharp-constructor-regexp
-  "^\\s-*\\<\\(new\\) *(.*)[^=]*="
+  (concat "^\\s-*"
+          fsharp-access-control-regexp-noncapturing "*"
+          "\\<\\(new\\) *(.*)[^=]*=")
   "Matches the `new' keyword in a constructor")
 
 (def-fsharp-compiled-var fsharp-type-def-regexp
