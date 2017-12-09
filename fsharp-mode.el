@@ -214,6 +214,7 @@
           comment-end
           comment-column
           comment-start-skip
+          comment-indent-function
           parse-sexp-ignore-comments
           indent-region-function
           indent-line-function
