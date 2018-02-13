@@ -1,4 +1,4 @@
-;;; fsharp-mode-completion.el --- Autocompletion support for F#
+;;; fsharp-mode-completion.el --- Autocompletion support for F#     -*- coding: utf-8; lexical-binding: t -*-
 
 ;; Copyright (C) 2012-2013 Robin Neatherway
 
@@ -29,6 +29,7 @@
 (require 'subr-x)
 (require 'dash)
 (require 'company)
+(require 'flycheck)
 (require 'json)
 (require 'etags)
 (require 'fsharp-mode-util)
@@ -813,7 +814,16 @@ has requested a popup tooltip, display a popup."
     (when (and (numberp fsharp-ac-debug)
                (>= fsharp-ac-debug 2))
       (maphash (lambda (file msg) (fsharp-ac-message-safely "%s:\n%s\n" file msg))
-               (gethash "Logs" data)))))
+               (gethash "Logs" data)))
+    (when oldprojdata
+      (mapc (lambda (b)
+	      (when (and  flycheck-mode	;users might disable flycheck
+			  (and (member (buffer-file-name b) (gethash "Files" oldprojdata))))
+		(with-current-buffer b
+		  (fsharp-ac-parse-current-buffer t)
+		  (run-with-timer 0.5 nil (lambda () (with-current-buffer b (flycheck-buffer)))))))
+	    (buffer-list)))))
+
 
 (defun fsharp-ac-handle-process-error (str)
   (fsharp-ac-message-safely (gethash "Message" str))
