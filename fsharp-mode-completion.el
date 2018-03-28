@@ -207,8 +207,7 @@ If FILENAME is not a Tramp filename return FILENAME"
 When completion process is not started on a remote location return FILE.
 This function should always be evaluated in the process-buffer!"
   (if (tramp-tramp-file-p default-directory)
-      (with-parsed-tramp-file-name default-directory nil
-	(tramp-make-tramp-file-name method user host file))
+      (concat (file-remote-p default-directory) file)
       file))
 
 ;;; ----------------------------------------------------------------------------
@@ -337,9 +336,7 @@ If HOST is nil, check process on local system."
 
 (defun fsharp-ac--configure-proc ()
   (let* ((fsac (if (tramp-tramp-file-p default-directory)
-		   (with-parsed-tramp-file-name default-directory nil
-		     (tramp-make-tramp-file-name
-		      method user host (car (last fsharp-ac-complete-command))))
+		   (concat (file-remote-p default-directory) (car (last fsharp-ac-complete-command)))
 		 (car (last fsharp-ac-complete-command))))
 	 (process-environment
 	  (if (null fsharp-ac-using-mono)
