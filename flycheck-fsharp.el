@@ -48,6 +48,7 @@ CALLBACK is the status callback passed by Flycheck."
   "A syntax checker for F# using FSharp.AutoComplete.
 See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-lint-start
+  :predicate (lambda () (fsharp-ac-can-make-request t))
   :modes '(fsharp-mode))
 
 (defvar flycheck-fsharp--error-callback-info nil)
@@ -63,6 +64,7 @@ CALLBACK is the status callback passed by Flycheck."
 See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-start
   :modes '(fsharp-mode)
+  :predicate (lambda () (fsharp-ac-can-make-request t))
   :next-checkers '((info . fsharp-fsautocomplete-lint)))
 
 (defun flycheck-fsharp-handle-lint (data)
