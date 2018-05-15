@@ -29,6 +29,7 @@
 (defmacro stubbing-process-functions (&rest body)
   `(noflet ((process-live-p (p) t)
             (fsharp-ac--process-live-p (host) t)
+	    (flycheck-fsharp--can-make-request-p () t)
             (start-process (&rest args))
             (set-process-filter (&rest args))
             (set-process-query-on-exit-flag (&rest args))

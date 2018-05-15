@@ -34,6 +34,9 @@
 
 (defvar flycheck-fsharp--lint-callback-info nil)
 
+(defun flycheck-fsharp--can-make-request-p ()
+  (fsharp-ac-can-make-request t))
+
 (defun flycheck-fsharp-fsautocomplete-lint-start (checker callback)
   "Start a F# syntax check with CHECKER.
 CALLBACK is the status callback passed by Flycheck."
@@ -48,6 +51,7 @@ CALLBACK is the status callback passed by Flycheck."
   "A syntax checker for F# using FSharp.AutoComplete.
 See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-lint-start
+  :predicate #'flycheck-fsharp--can-make-request-p
   :modes '(fsharp-mode))
 
 (defvar flycheck-fsharp--error-callback-info nil)
@@ -63,6 +67,7 @@ CALLBACK is the status callback passed by Flycheck."
 See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-start
   :modes '(fsharp-mode)
+  :predicate #'flycheck-fsharp--can-make-request-p
   :next-checkers '((info . fsharp-fsautocomplete-lint)))
 
 (defun flycheck-fsharp-handle-lint (data)
