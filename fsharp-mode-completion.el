@@ -84,7 +84,8 @@ If set to nil, display in a help buffer instead.")
   (push (cons host process) fsharp-ac-completion-process-alist))
 
 (defun fsharp-ac-completion-process-del (host)
-  (delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist))
+  (setq fsharp-ac-completion-process-alist
+	(delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist)))
 
 (defvar fsharp-ac--project-data (make-hash-table :test 'equal)
   "Data returned by fsautocomplete for loaded projects.")
