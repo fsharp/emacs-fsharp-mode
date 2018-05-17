@@ -34,6 +34,7 @@
             (set-process-filter (&rest args))
             (set-process-query-on-exit-flag (&rest args))
             (process-send-string (&rest args))
+	    (fsharp-ac/start-process ())
 	    (fsharp-ac-completion-process (host) nil)
 	    (process-buffer (p) (get-buffer-create "*fsharp-complete*"))
             (process-mark (proc) (point-max))
