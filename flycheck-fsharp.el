@@ -37,6 +37,21 @@
 (defun flycheck-fsharp--can-make-request-p ()
   (fsharp-ac-can-make-request t))
 
+(defun flycheck-verify-fsautocomlete (_checker)
+  "Verify the F# syntax checker."
+  (let* ((host (fsharp-ac--hostname (buffer-file-name)))
+	 (process (fsharp-ac-completion-process host))
+	 (status (when process (process-status process)))
+	 (command (when process (combine-and-quote-strings (process-command process)))))
+    (list
+     (flycheck-verification-result-new
+      :label "FSharp.AutoComplete process"
+      :message (cond
+		((eq status 'run) command)
+		(status (format "Invalid process status: %s (%s)" command status))
+		("not running"))
+      :face (if (eq status 'run) 'success '(bold error))))))
+
 (defun flycheck-fsharp-fsautocomplete-lint-start (checker callback)
   "Start a F# syntax check with CHECKER.
 CALLBACK is the status callback passed by Flycheck."
@@ -52,6 +67,7 @@ CALLBACK is the status callback passed by Flycheck."
 See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-lint-start
   :predicate #'flycheck-fsharp--can-make-request-p
+  :verify #'flycheck-verify-fsautocomlete
   :modes '(fsharp-mode))
 
 (defvar flycheck-fsharp--error-callback-info nil)
@@ -68,6 +84,7 @@ See URL `https://github.com/fsharp/FsAutoComplete'."
   :start #'flycheck-fsharp-fsautocomplete-start
   :modes '(fsharp-mode)
   :predicate #'flycheck-fsharp--can-make-request-p
+  :verify #'flycheck-verify-fsautocomlete
   :next-checkers '((info . fsharp-fsautocomplete-lint)))
 
 (defun flycheck-fsharp-handle-lint (data)
