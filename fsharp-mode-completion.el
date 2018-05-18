@@ -270,6 +270,9 @@ For indirect buffers return the truename of the base buffer."
                        (downcase (file-name-extension file)))))
 
 (defun fsharp-ac--in-project-p (file)
+  "Return F# project file for source FILE.
+
+Return nil if FILE is not part of a F# project."
   (gethash file fsharp-ac--project-files))
 
 (defun fsharp-ac--reset ()
