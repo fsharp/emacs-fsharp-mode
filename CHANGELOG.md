@@ -1,3 +1,17 @@
+## 1.9.12 (2018-05-18)
+
+Features:
+  - #170: Flycheck verify (Improved fsautocomplete diagnostics)
+
+Bugfixes:
+  - #167: Fix error when visiting a new F# script file and
+    fsautocomplete is not started
+  - #168: Add Flycheck predicate function to prevent error when
+    fsautocomplete is not running
+  - #162: Stop matching [ as part of normal residue
+  - #157: Don't change global value of `comment-indent-function'
+  - #153: Add access control keywords to declaration regexes
+
 ## 1.9.11 (2017-10-21)
 
 Features:
