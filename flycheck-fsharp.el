@@ -41,8 +41,9 @@
   "Verify the F# syntax checker."
   (let* ((host (fsharp-ac--hostname (buffer-file-name)))
 	 (process (fsharp-ac-completion-process host))
-	 (project-file (when process (fsharp-ac--in-project-p (buffer-file-name))))
 	 (status (when process (process-status process)))
+	 (project-file (when (eq status 'run) (fsharp-ac--in-project-p (buffer-file-name))))
+	 (projects (when (eq status 'run) (hash-table-keys  fsharp-ac--project-data)))
 	 (command (when process (combine-and-quote-strings (process-command process)))))
     (cons
      (flycheck-verification-result-new
@@ -56,7 +57,13 @@
        (list (flycheck-verification-result-new
 	      :label "F# Project"
 	      :message (or  project-file "None")
-	      :face (if project-file 'success '(bold warning))))))))
+	      :face (if project-file 'success '(bold warning)))
+	     (flycheck-verification-result-new
+	      :label "Loaded Projects"
+	      :message (if projects
+			   (mapconcat #'identity projects ", ")
+			 "No projects loaded")
+	      :face (if projects 'success '(bold warning))))))))
 
 (defun flycheck-fsharp-fsautocomplete-lint-start (checker callback)
   "Start a F# syntax check with CHECKER.
