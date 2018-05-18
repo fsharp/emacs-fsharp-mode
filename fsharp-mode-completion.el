@@ -84,7 +84,8 @@ If set to nil, display in a help buffer instead.")
   (push (cons host process) fsharp-ac-completion-process-alist))
 
 (defun fsharp-ac-completion-process-del (host)
-  (delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist))
+  (setq fsharp-ac-completion-process-alist
+	(delq (assoc host fsharp-ac-completion-process-alist) fsharp-ac-completion-process-alist)))
 
 (defvar fsharp-ac--project-data (make-hash-table :test 'equal)
   "Data returned by fsautocomplete for loaded projects.")
@@ -269,6 +270,9 @@ For indirect buffers return the truename of the base buffer."
                        (downcase (file-name-extension file)))))
 
 (defun fsharp-ac--in-project-p (file)
+  "Return F# project file for source FILE.
+
+Return nil if FILE is not part of a F# project."
   (gethash file fsharp-ac--project-files))
 
 (defun fsharp-ac--reset ()
