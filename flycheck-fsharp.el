@@ -41,16 +41,22 @@
   "Verify the F# syntax checker."
   (let* ((host (fsharp-ac--hostname (buffer-file-name)))
 	 (process (fsharp-ac-completion-process host))
+	 (project-file (when process (fsharp-ac--in-project-p (buffer-file-name))))
 	 (status (when process (process-status process)))
 	 (command (when process (combine-and-quote-strings (process-command process)))))
-    (list
+    (cons
      (flycheck-verification-result-new
       :label "FSharp.AutoComplete process"
       :message (cond
 		((eq status 'run) command)
 		(status (format "Invalid process status: %s (%s)" command status))
 		("not running"))
-      :face (if (eq status 'run) 'success '(bold error))))))
+      :face (if (eq status 'run) 'success '(bold error)))
+     (when (eq status 'run)
+       (list (flycheck-verification-result-new
+	      :label "F# Project"
+	      :message (or  project-file "None")
+	      :face (if project-file 'success '(bold warning))))))))
 
 (defun flycheck-fsharp-fsautocomplete-lint-start (checker callback)
   "Start a F# syntax check with CHECKER.
