@@ -1595,10 +1595,13 @@ This tells add-log.el how to find the current function/method/variable."
 (defun fsharp-beginning-of-block ()
   "Move point to the beginning of the current top-level block"
   (interactive)
-  (condition-case nil
-      (while (fsharp-goto-block-up 'no-mark))
-    (error (while (continuation-p)
-             (forward-line -1))))
+  (let ((prev (point)))
+    (condition-case nil
+	(while (progn (fsharp-goto-block-up 'no-mark)
+		      (< (point) prev))
+	  (setq prev (point)))
+      (error (while (continuation-p)
+	       (forward-line -1)))))
   (beginning-of-line))
 
 (defun fsharp-end-of-block ()
