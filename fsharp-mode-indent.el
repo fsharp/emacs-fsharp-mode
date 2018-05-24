@@ -913,11 +913,11 @@ NOMARK is not nil."
         (found nil)
         initial-indent)
     (fsharp-goto-initial-line)
-    ;; if on blank or non-indenting comment line, use the preceding stmt
-    (if (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
-        (progn
-          (fsharp-goto-statement-at-or-above)
-          (setq found (fsharp-statement-opens-block-p))))
+    ;; if on and (mutually recursive bindings), blank or non-indenting comment line, use the preceding stmt
+    (when (or (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
+	      (looking-at-p "[ \t]*and[ \t]+"))
+      (fsharp-goto-statement-at-or-above)
+      (setq found (fsharp-statement-opens-block-p)))
     ;; search back for colon line indented less
     (setq initial-indent (current-indentation))
     (if (zerop initial-indent)
@@ -1618,7 +1618,10 @@ This tells add-log.el how to find the current function/method/variable."
                    (forward-line -1))
           (error
            (progn (goto-char (point-max)))))
-        (end-of-line))
+        (end-of-line)
+	(when (looking-at-p "\n[ \t]*and[ \t]+")
+	  (forward-line 1)
+	  (fsharp-end-of-block)))
     (goto-char (point-max))))
 
 (provide 'fsharp-mode-indent)
