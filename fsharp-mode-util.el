@@ -65,7 +65,7 @@ for all *nix.")
       (executable-find exe)
     (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
                                       "Microsoft SDKs/F#/" it "/Framework/v4.0")
-                              '("4.0" "3.1" "3.0")))
+                              '("10.1" "4.0" "3.1" "3.0")))
            (exec-path (append searchdirs exec-path)))
       (executable-find exe))))
 
