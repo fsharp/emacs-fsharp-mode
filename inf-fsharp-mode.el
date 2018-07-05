@@ -39,7 +39,7 @@
 (defvar inferior-fsharp-program
   (if fsharp-ac-using-mono
       "fsharpi --readline-"
-    (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\""))
+    (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\" --fsi-server-input-codepage:65001"))
   "*Program name for invoking an inferior fsharp from Emacs.")
 
 ;; End of User modifiable variables
@@ -93,7 +93,11 @@ be sent from another buffer in fsharp mode.
           (process-connection-type nil))
       (with-current-buffer (apply (function make-comint)
                                   inferior-fsharp-buffer-subname
-                                  (car cmdlist) nil (cdr cmdlist))
+                                  (car cmdlist) nil
+				  (cdr cmdlist))
+	(when (eq system-type 'windows-nt)
+	  (set-process-coding-system (get-buffer-process (current-buffer))
+				     'utf-8 'utf-8))
         (inferior-fsharp-mode))
       (display-buffer inferior-fsharp-buffer-name))))
 
