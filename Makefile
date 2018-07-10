@@ -77,28 +77,25 @@ clean-elc :
 
 # Testing
 
-test unit-test :
-	HOME=$(tmp_d) ;\
+fake-home: export HOME=$(tmp_d)
+
+test unit-test fake-home:
 	$(emacs) $(load_files) --batch -f run-fsharp-unit-tests
 
-integration-test : $(ac_exe) packages
-	HOME=$(tmp_d) ;\
+integration-test : $(ac_exe) packages fake-home
 	$(emacs) $(load_files) --batch -f run-fsharp-integration-tests
 
 test-all : unit-test integration-test check-compile check-declares
 
-packages :
-	HOME=$(tmp_d) ;\
+packages : fake-home
 	$(emacs) $(load_files) --batch -f load-packages
 
-byte-compile : packages
-	HOME=$(tmp_d) ;\
+byte-compile : packages fake-home
 	$(emacs) -batch --eval "(package-initialize)"\
           --eval "(add-to-list 'load-path \"$(base_d)\")" \
           -f batch-byte-compile $(src_files)
 
-check-declares : packages
-	HOME=$(tmp_d) ;\
+check-declares : packages fake-home
 	$(emacs) -batch --eval "(package-initialize)"\
           --eval "(dolist (file '($(foreach var,$(src_files),\"$(var)\"))) (when (check-declare-file file) (kill-emacs 1)))"
 
@@ -106,13 +103,11 @@ check-compile : packages $(obj_files)
 
 faceup : $(faceup_outputs)
 
-%.faceup : % fsharp-mode-font.el
-	HOME=$(tmp_d) ;\
+%.faceup : % fsharp-mode-font.el fake-home
 	$(emacs) $(load_files) -batch \
           --eval "(regen-faceup-output \"$<\")"
 
-.el.elc:
-	HOME=$(tmp_d) ;\
+.el.elc: fake-home
 	$(emacs) -batch --eval "(package-initialize)"\
           --eval "(add-to-list 'load-path \"$(base_d)\")" \
           --eval '(setq byte-compile-error-on-warn t)'    \
@@ -122,8 +117,7 @@ faceup : $(faceup_outputs)
                         'find-tag-marker-ring))"          \
           -f batch-byte-compile $<
 
-run : $(ac_exe) packages
-	HOME=$(tmp_d) ;\
+run : $(ac_exe) packages fake-home
 	$(emacs) $(load_files) -f configure-fsharp-tests
 
 # Releasing
