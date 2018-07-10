@@ -7,7 +7,13 @@ matrix:
 install:
   - ps: Start-FileDownload "https://github.com/fsharp/FSharp.AutoComplete/releases/download/$env:FSACVERSION/fsautocomplete.zip"
   - ps: 7z x fsautocomplete.zip -oemacs-fsharp-mode\bin | select-string -notmatch "ing  "
-  - cinst emacs
+  - ps: iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
+  - ps: scoop install coreutils
+  - ps: scoop install make
+  - ps: scoop install grep
+  - ps: scoop install unzip
+  - ps: scoop bucket add extras
+  - ps: scoop install emacs
 build_script:
   - cmd: .\.appveyor\test.bat
 test: off
