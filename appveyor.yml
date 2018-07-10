@@ -1,5 +1,5 @@
 environment:
-  FSACVERSION: 0.18.0
+  FSACVERSION: 0.34.0
   FSharpBinding_BlockingTimeout: 1000
   FSharpBinding_MaxTimeout: 10000
 matrix:
