@@ -15,6 +15,6 @@ install:
   - ps: scoop bucket add extras
   - ps: scoop install emacs
 build_script:
-  - cmd: .\.appveyor\test.bat
+  - cmd: make test-all
 test: off
  
