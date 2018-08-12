@@ -218,6 +218,11 @@ In order to change tab size it is possile to put this in emacs profile:
 (setq-default fsharp-indent-offset 2)
 ```
 
+Because the F# language is sensitive to indentation, you might wan't to highlight indentation:
+
+```lisp
+(add-hook 'fsharp-mode-hook 'highlight-indentation-mode)
+```
 
 ## Troubleshooting
 
