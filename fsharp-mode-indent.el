@@ -1527,7 +1527,7 @@ This tells add-log.el how to find the current function/method/variable."
     (back-to-indentation)
     (while (and (or (looking-at fsharp-blank-or-comment-re)
                     (fsharp-in-literal-p))
-                (not (bobp)))
+                (not (eq (point-at-bol) (point-min))))
       (backward-to-indentation 1))
     (fsharp-goto-initial-line)
 
