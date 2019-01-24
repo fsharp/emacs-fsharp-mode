@@ -293,7 +293,8 @@ with initial value INITVALUE and optional DOCSTRING."
       (,fsharp-pattern-function-regexp 1 font-lock-function-name-face)
       ;; Active records
       ("(|" (0 'fsharp-ui-operator-face)
-       ("\\([A-Za-z'_]+\\)\\(|)\\)" nil nil
+       ("\\([A-Za-z'_]+\\)\\(|)?\\)"
+        nil nil
         (1 font-lock-function-name-face)
         (2 'fsharp-ui-operator-face)))
       (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
