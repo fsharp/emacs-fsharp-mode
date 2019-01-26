@@ -153,9 +153,8 @@ with initial value INITVALUE and optional DOCSTRING."
           "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
 
 (def-fsharp-compiled-var fsharp-attributes-regexp
-  "\\[<[A-Za-z0-9_]+>\\]"
-  "Match attributes like [<EntryPoint>]")
-
+  "\\(\\[<[A-Za-z0-9_]+(?\\)\\(\".*\"\\)?\\()?>\\]\\)"
+  "Match attributes like [<EntryPoint>]; separately groups contained strings in attributes like [<Attribute(\"property\")>]")
 
 ;; F# makes extensive use of operators, many of which have some kind of
 ;; structural significance.
@@ -286,7 +285,10 @@ with initial value INITVALUE and optional DOCSTRING."
        (1 font-lock-comment-face)
        (2 font-lock-keyword-face))
       ;; attributes
-      (,fsharp-attributes-regexp . font-lock-preprocessor-face)
+      (,fsharp-attributes-regexp
+       (1 font-lock-preprocessor-face)
+       (2 font-lock-string-face)
+       (3 font-lock-preprocessor-face))
       ;; ;; type defines
       (,fsharp-type-def-regexp 1 font-lock-type-face)
       (,fsharp-function-def-regexp 1 font-lock-function-name-face)
