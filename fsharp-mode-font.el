@@ -179,14 +179,15 @@ with initial value INITVALUE and optional DOCSTRING."
   "Match literal | in contexts like match and type declarations.")
 
 (defvar fsharp-imenu-generic-expression
-  `((nil ,(concat "^\\s-*" fsharp-function-def-regexp) 1)
-    (nil ,(concat "^\\s-*" fsharp-pattern-function-regexp) 1)
-    (nil ,(concat "^\\s-*" fsharp-active-pattern-regexp) 1)
-    (nil ,(concat "^\\s-*" fsharp-member-function-regexp) 1)
-    (nil ,(concat "^\\s-*" fsharp-overload-operator-regexp) 1)
-    (nil ,fsharp-constructor-regexp 1)
-    (nil ,fsharp-type-def-regexp 1)
-    )
+  `((nil                 ,(concat "^\\s-*" fsharp-function-def-regexp) 1)
+    (nil                 ,(concat "^\\s-*" fsharp-pattern-function-regexp) 1)
+    ("Active Pattern"    ,(concat "^\\s-*" fsharp-active-pattern-regexp) 1)
+    ("Member"            ,(concat "^\\s-*" fsharp-member-function-regexp) 1)
+    ("Overload Operator" ,(concat "^\\s-*" fsharp-overload-operator-regexp) 1)
+    ("Constructor"       ,fsharp-constructor-regexp 1)
+    ("Type"              ,fsharp-type-def-regexp 1)
+    ("Module"            ,(concat "\\s-*module " fsharp-var-or-arg-regexp) 1))
+
   "Provide iMenu support through font-locking regexen.")
 
 (defun fsharp-imenu-load-index ()
