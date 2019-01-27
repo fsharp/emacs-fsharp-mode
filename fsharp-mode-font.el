@@ -288,7 +288,7 @@ with initial value INITVALUE and optional DOCSTRING."
       ;; attributes
       (,fsharp-attributes-regexp
        (1 font-lock-preprocessor-face)
-       (2 font-lock-string-face)
+       (2 font-lock-string-face nil t)
        (3 font-lock-preprocessor-face))
       ;; ;; type defines
       (,fsharp-type-def-regexp 1 font-lock-type-face)
