@@ -153,7 +153,7 @@ with initial value INITVALUE and optional DOCSTRING."
           "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
 
 (def-fsharp-compiled-var fsharp-attributes-regexp
-  "\\(\\[<[A-Za-z0-9_]+(?\\)\\(\".*\"\\)?\\()?>\\]\\)"
+  "\\(\\[<[A-Za-z0-9_]+[( ]?\\)\\(\".*\"\\)?\\()?>\\]\\)"
   "Match attributes like [<EntryPoint>]; separately groups contained strings in attributes like [<Attribute(\"property\")>]")
 
 ;; F# makes extensive use of operators, many of which have some kind of
