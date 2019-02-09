@@ -25,8 +25,8 @@ before_install:
   # Add mono repo
   - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
   - echo "deb http://download.mono-project.com/repo/ubuntu stable-trusty main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-  - sudo apt-get -qq update
-  - sudo apt-get install -y mono-devel 
+  - travis_retry sudo  apt-get -qq update
+  - travis_retry sudo  apt-get install -y mono-devel 
   # Configure $PATH: Executables are installed to $HOME/bin
   - export PATH="$HOME/bin:$PATH"
   # Download the makefile to emacs-travis.mk
@@ -34,7 +34,7 @@ before_install:
   # Install Emacs (according to $EMACS_VERSION) and Cask
   - make -f emacs-travis.mk install_emacs
   - make -f emacs-travis.mk install_cask
-  - sudo apt-get install -y fsharp mono-xbuild
+  - travis_retry sudo apt-get install -y fsharp mono-xbuild
 
 script:
   - make test-all
