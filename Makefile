@@ -29,6 +29,14 @@ ac_version = 0.34.0
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
+# Autocomplete commit or branch to build from if not using the binary distribution.
+ac_commit = master
+ac_src_url = https://github.com/fsharp/FsAutoComplete/archive/$(ac_commit).zip
+ac_src_archive = $(ac_name)-$(ac_commit).zip
+ac_from_src = no
+
+ac_build_dir = $(tmp_d)/FsAutoComplete-$(ac_commit)
+
 # Installation paths.
 dest_root = $(HOME)/.emacs.d/fsharp-mode/
 dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
@@ -36,11 +44,20 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 # ----------------------------------------------------------------------------
 
 .PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run update-version release faceup
+.ONESHELL : $(ac_archive)
 
 # Building
 
 $(ac_archive): | $(bin_d)
+ifeq ($(ac_from_src), no)
 	curl -L "$(ac_url)" -o "$(ac_archive)"
+else
+	curl -L "$(ac_src_url)" -o "$(ac_src_archive)"
+	unzip "$(ac_src_archive)" -d "$(tmp_d)"
+	$(ac_build_dir)/build.sh releasearchive
+	mv $(ac_build_dir)/bin/pkgs/$(ac_name).zip $(ac_archive)
+endif
+
 
 $(ac_exe) : $(bin_d) $(ac_archive)
 	unzip "$(ac_archive)" -d "$(bin_d)"

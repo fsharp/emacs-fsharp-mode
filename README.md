@@ -280,6 +280,10 @@ There are some issues with the `pos-tip` library used to display the documentati
 
 If you installed by cloning the git repository and you are having problems, please sanity check by running `make test-all` in the `emacs` folder.
 
+### Using a different version of FsAutoComplete
+
+Installing with `make install ac_from_src=yes` will build FsAutoComplete from their lastest master commit instead of using their current binary distribution. Build from a specific commit by passing `ac_commit=$COMMIT_HASH`.
+
 ## Contributing
 
 This project is maintained by the
