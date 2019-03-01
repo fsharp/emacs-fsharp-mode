@@ -90,7 +90,14 @@ be sent from another buffer in fsharp mode.
 	  (or cmd (read-from-minibuffer "fsharp toplevel to run: "
 					inferior-fsharp-program)))
     (let ((cmdlist (inferior-fsharp-args-to-list inferior-fsharp-program))
-          (process-connection-type nil))
+          ;; fsi (correctly) disables any sort of console interaction if it
+          ;; thinks we're a dumb terminal, and `comint-term-environment'
+          ;; (correctly) defaults to setting TERM=dumb on systems using
+          ;; terminfo, which is basically every modern system.
+          ;;
+          ;; we want to make use of fsi's tab completion, so tell comint
+          ;; to set TERM=emacs for our inferior fsharp process.
+          (comint-terminfo-terminal "emacs"))
       (with-current-buffer (apply (function make-comint)
                                   inferior-fsharp-buffer-subname
                                   (car cmdlist) nil
