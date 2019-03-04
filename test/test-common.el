@@ -2,6 +2,10 @@
 (require 'package)
 (require 'cl)
 
+
+(defvar fsharp--test-selector t
+  "SELECTOR used in ert tests.")
+
 (defmacro check (desc &rest body)
   "Wrap ert-deftest with a simpler interface."
   (declare (indent 1))
@@ -99,8 +103,8 @@ glob emacs/test/*test.el."
   (let ((test-files (if files files fsharp-test-files)))
     (mapc 'load-file test-files)
     (if noninteractive
-        (ert-run-tests-batch-and-exit)
-      (ert-run-tests-interactively t))))
+        (ert-run-tests-batch-and-exit fsharp--test-selector)
+      (ert-run-tests-interactively fsharp--test-selector))))
 
 (defconst fsharp-test-files
   (directory-files

@@ -25,7 +25,7 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.34.0
+ac_version = 0.36.0
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
 
@@ -100,7 +100,11 @@ test unit-test fake-home:
 	$(emacs) $(load_files) --batch -f run-fsharp-unit-tests
 
 integration-test : $(ac_exe) packages fake-home
-	$(emacs) $(load_files) --batch -f run-fsharp-integration-tests
+ifdef test-selector
+	$(emacs) $(load_files) --batch --eval "(let ((fsharp--test-selector \"$(test-selector)\"))(run-fsharp-integration-tests))"
+else
+	$(emacs) $(load_files) --batch --eval "(run-fsharp-integration-tests)"
+endif
 
 test-all : unit-test integration-test check-compile check-declares
 

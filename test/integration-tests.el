@@ -143,7 +143,7 @@
          (fsharp-ac-parse-current-buffer t)
          (fsharp-ac/show-tooltip-at-point)
          (wait-for-condition tiptext)
-         (should-match "val func : x:int -> int\n\nFull name: Program.X.func"
+         (should-match "val func:[ \n]+x: int[ \n]+-> int"
                        tiptext))))))
 
 (ert-deftest check-errors ()
