@@ -1,6 +1,6 @@
 (define-package
   "fsharp-mode"
-  "1.9.12"
+  "1.9.13"
   "F# mode for Emacs"
   '((company           "0.8.0")
     (company-quickhelp "1.2.0")

@@ -1,3 +1,20 @@
+## 1.9.13 (2018)
+
+Features:
+  - #193: Update to FSAC 0.36
+	 - Fixes #183: Load .Net Core projects that reference other projects
+	 - Fixes #182: .fs files not parsed
+Bugfixes:
+  - #190: Fix attribute locking, improve imenu support
+  - #189: Fix bug in font locking for active patterns
+  - #187: Fix Infinite loop when file begins with a comment preceded
+    by whitespace
+  - #180: Use scoop instead of  Chocolatey package for Appveyor testing
+  - #179: Use portable (Windows support) Makefile
+  - #176: Add F# Tools 10.1 SDK directory to search dirs
+  - #175: Paths with characters outside ASCII gives error FS2302 (Windows)
+  - #171: Fix for phrase detection for if/then/else constructs
+
 ## 1.9.12 (2018-05-18)
 
 Features:
