@@ -100,7 +100,11 @@ test unit-test fake-home:
 	$(emacs) $(load_files) --batch -f run-fsharp-unit-tests
 
 integration-test : $(ac_exe) packages fake-home
-	$(emacs) $(load_files) --batch -f run-fsharp-integration-tests
+ifdef test-selector
+	$(emacs) $(load_files) --batch --eval "(let ((fsharp--test-selector \"$(test-selector)\"))(run-fsharp-integration-tests))"
+else
+	$(emacs) $(load_files) --batch --eval "(run-fsharp-integration-tests)"
+endif
 
 test-all : unit-test integration-test check-compile check-declares
 
