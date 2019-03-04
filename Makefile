@@ -54,6 +54,7 @@ ifeq ($(ac_from_src), no)
 else
 	curl -L "$(ac_src_url)" -o "$(ac_src_archive)"
 	unzip "$(ac_src_archive)" -d "$(tmp_d)"
+	sed -i -e 's/"version": ".*"/"version": "'$(dotnet --version)'"/g' $(ac_build_dir)/global.json
 	$(ac_build_dir)/build.sh releasearchive
 	mv $(ac_build_dir)/bin/pkgs/$(ac_name).zip $(ac_archive)
 endif
