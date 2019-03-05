@@ -296,7 +296,10 @@ test-all` before submitting a pull request.
 Maintainers
 -----------
 
-Tha maintainers of this repository appointed by the F# Core Engineering Group are:
+The maintainers of this repository appointed by the F# Core Engineering Group are:
 
- - [Robin Neatherway](https://github.com/rneatherway), [Steffen Forkmann](http://github.com/forki), [Karl Nilsson](http://github.com/kjnilsson), [Dave Thomas](http://github.com/7sharp9) and [Guillermo López-Anglada](http://github.com/guillermooo)
- - The primary maintainer for this repository is [Robin Neatherway](https://github.com/rneatherway)
+ - [Jürgen Hötzel](https://github.com/juergenhoetzel), [Steffen Forkmann](http://github.com/forki), [Karl Nilsson](http://github.com/kjnilsson) and [Guillermo López-Anglada](http://github.com/guillermooo)
+ - The primary maintainer for this repository is [Jürgen Hötzel](https://github.com/juergenhoetzel)
+
+Previous maintainers:
+ - [Robin Neatherway](https://github.com/rneatherway)
