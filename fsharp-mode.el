@@ -263,7 +263,7 @@
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
   (when (and (display-graphic-p)
              (boundp 'company-quickhelp-mode)) ; not supported on ttys
-    (company-quickhelp-mode 1))
+    (company-quickhelp-local-mode 1))
 
   (let ((file (buffer-file-name)))
     (when file
