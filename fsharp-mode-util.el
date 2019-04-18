@@ -26,13 +26,22 @@
 (with-no-warnings (require 'cl))
 (require 'dash)
 
-(defvar fsharp-ac-using-mono
-  (case system-type
-    ((windows-nt cygwin msdos) nil)
-    (otherwise t))
-  "Whether the .NET runtime in use is mono.
+(defvar fsharp-ac-use-dotnetcore
+  t
+  "Use .NET Core as the runtime for FSAutoComplete.
+
+If set to nil, fall back to either .NET or mono runtimes (depending on the system).")
+
+(defun fsharp-ac-runtime ()
+  "The .NET runtime for FSAutoComplete.
+If fsharp-ac-use-dotnetcore is set to t, this variable is set to dotnetcore
 Defaults to nil for Microsoft platforms (including Cygwin), t
-for all *nix.")
+for all *nix."
+  (if fsharp-ac-use-dotnetcore
+      'dotnetcore
+    (case system-type
+      ((windows-nt cygwin msdos) 'dotnet)
+      (otherwise 'mono))))
 
 (defun fsharp-mode--program-files-x86 ()
   (file-name-as-directory
@@ -40,6 +49,22 @@ for all *nix.")
                      (list (getenv "ProgramFiles(x86)")
                            (getenv "ProgramFiles")
                            "C:\\Program Files (x86)")))))
+
+(defun fsharp-mode--program-files-dotnetcore ()
+  (let* ((currentSdk (string-trim (shell-command-to-string "dotnet --version")))
+         ;; dotnet --list-sdks outputs a list of sdk versions, followed by the sdk path surrounded in square brackets
+         (sdkPaths (-map #'fsharp-mode--parse-dotnet-list-sdk
+                         (split-string (string-trim (shell-command-to-string "dotnet --list-sdks")) "\n")))
+         (sdkInfo (-first (lambda (sdk) (equal currentSdk (car sdk))) sdkPaths))
+         (sdkPath (concat (file-name-as-directory (substring (cdr sdkInfo) 1 -1)) (car sdkInfo))))
+    (concat (file-name-as-directory sdkPath) "FSharp/")))
+
+(defun fsharp-mode--parse-dotnet-list-sdk (sdk)
+  (let* ((splitSdk (split-string sdk))
+         (version (-first-item splitSdk))
+         (path (-second-item splitSdk)))
+    (cons version path)))
+    ;; (-second-item (split-string sdkPath))))
 
 (defun fsharp-mode--vs2017-msbuild-find (exe)
   "Return EXE absolute path for Visual Studio 2017, if existent, else nil."
@@ -51,23 +76,29 @@ for all *nix.")
 	      '("Enterprise/" "Professional/" "Community/" "BuildTools/"))
        (--first (file-executable-p it))))
 
-(defun fsharp-mode--msbuild-find (exe)
-  (if fsharp-ac-using-mono
-      (executable-find exe)
-    (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
+(defun fsharp-mode--build-find (exe)
+  "Find the build tool EXE based off fs-ac-runtime."
+  (case (fsharp-ac-runtime)
+    (dotnetcore (executable-find exe))
+    (dotnet (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
                                       "MSBuild/" it "/Bin")
                               '("14.0" "13.0" "12.0")))
-           (exec-path (append searchdirs exec-path)))
-      (or (fsharp-mode--vs2017-msbuild-find exe) (executable-find exe)))))
+                   (exec-path (append searchdirs exec-path)))
+              (or (fsharp-mode--vs2017-msbuild-find exe) (executable-find exe))))
+    (mono (executable-find exe))))
 
 (defun fsharp-mode--executable-find (exe)
-  (if fsharp-ac-using-mono
-      (executable-find exe)
-    (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
-                                      "Microsoft SDKs/F#/" it "/Framework/v4.0")
-                              '("10.1" "4.0" "3.1" "3.0")))
-           (exec-path (append searchdirs exec-path)))
-      (executable-find exe))))
+  (case (fsharp-ac-runtime)
+    (dotnetcore (let* ((exec-path (append (list (fsharp-mode--program-files-dotnetcore)) exec-path))
+                       (dotnet-exec (executable-find "dotnet"))
+                      (executable (locate-file exe exec-path)))
+                  (concat dotnet-exec " " executable)))
+    (dotnet (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
+                                              "Microsoft SDKs/F#/" it "/Framework/v4.0")
+                                      '("10.1" "4.0" "3.1" "3.0")))
+                   (exec-path (append searchdirs exec-path)))
+              (executable-find exe)))
+    (mono (executable-find exe))))
 
 (provide 'fsharp-mode-util)
 

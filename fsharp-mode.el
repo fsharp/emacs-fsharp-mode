@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(with-no-warnings (require 'cl))
 (require 'fsharp-mode-completion)
 (require 'flycheck-fsharp)
 (require 'fsharp-doc)
@@ -383,9 +384,10 @@ passed to `mono'."
          (default (if (and outputfile
                            (s-equals? "exe"
                                       (downcase (file-name-extension outputfile))))
-                      (if fsharp-ac-using-mono
-                          (s-concat "mono " outputfile)
-                        outputfile)
+                      (case (fsharp-ac-runtime)
+                        (dotnetcore (s-concat "dotnet " outputfile))
+                        (mono (s-concat "mono" outputfile))
+                        (dotnet outputfile))
                     ""))
          (cmd (read-from-minibuffer "Run: "
                                     default

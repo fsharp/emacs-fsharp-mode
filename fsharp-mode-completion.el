@@ -49,9 +49,10 @@
   (let ((exe (or (executable-find fsharp-ac-executable)
                  (concat (file-name-directory (or load-file-name buffer-file-name))
                          "bin/" fsharp-ac-executable))))
-    (if fsharp-ac-using-mono
-        (list "mono" exe)
-      (list exe)))
+    (case (fsharp-ac-runtime)
+      (dotnetcore (list "dotnet" exe))
+      (mono (list "mono" exe))
+      (dotnet (list exe))))
   "Command to start the completion process.
 If using Tramp this command must be also valid on remote the Host.")
 
@@ -342,7 +343,7 @@ If HOST is nil, check process on local system."
 		   (concat (file-remote-p default-directory) (car (last fsharp-ac-complete-command)))
 		 (car (last fsharp-ac-complete-command))))
 	 (process-environment
-	  (if (null fsharp-ac-using-mono)
+	  (if (not (eq 'mono fsharp-ac-using-mono))
 	      process-environment
 	    ;; workaround for Mono = 4.2.1 thread pool bug
 	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
