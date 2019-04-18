@@ -1,5 +1,6 @@
 *.elc
 bin
+bin_netcore
 tmp
 
 # Useful for doing releases

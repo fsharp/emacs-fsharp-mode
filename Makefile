@@ -4,6 +4,7 @@ base_d = $(abspath .)
 test_d = $(abspath test)
 tmp_d  = $(abspath tmp)
 bin_d  = $(abspath bin)
+bin_netcore_d  = $(abspath bin_netcore)
 
 # Elisp files required for tests.
 src_files         = $(wildcard ./*.el)
@@ -24,10 +25,13 @@ load_integration_tests = $(patsubst %,-l %, $(integration_tests))
 
 # Autocomplete binary distribution.
 ac_name    = fsautocomplete
+ac_version = 0.38.1
 ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.36.0
 ac_archive = $(ac_name)-$(ac_version).zip
 ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
+ac_netcore_exe     = $(bin_netcore_d)/$(ac_name).dll
+ac_netcore_archive = $(ac_name)-$(ac_version).netcore.zip
+ac_netcore_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).netcore.zip
 
 # Autocomplete commit or branch to build from if not using the binary distribution.
 ac_commit = master
@@ -51,12 +55,14 @@ dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
 $(ac_archive): | $(bin_d)
 ifeq ($(ac_from_src), no)
 	curl -L "$(ac_url)" -o "$(ac_archive)"
+	curl -L "$(ac_netcore_url)" -o "$(ac_netcore_archive)"
 else
 	curl -L "$(ac_src_url)" -o "$(ac_src_archive)"
 	unzip "$(ac_src_archive)" -d "$(tmp_d)"
 	sed -i -e 's/"version": ".*"/"version": "'$(dotnet --version)'"/g' $(ac_build_dir)/global.json
 	$(ac_build_dir)/build.sh releasearchive
 	mv $(ac_build_dir)/bin/pkgs/$(ac_name).zip $(ac_archive)
+	mv $(ac_build_dir)/bin/pkgs/$(ac_name).netcore.zip $(ac_netcore_archive)
 endif
 
 
@@ -64,10 +70,14 @@ $(ac_exe) : $(bin_d) $(ac_archive)
 	unzip "$(ac_archive)" -d "$(bin_d)"
 	touch "$(ac_exe)"
 
+$(ac_netcore_exe) : $(bin_netcore_d) $(ac_netcore_archive)
+	unzip "$(ac_netcore_archive)" -d "$(bin_netcore_d)"
+	touch "$(ac_netcore_exe)"
+
 ~/.config/.mono/certs:
 	mozroots --import --sync --quiet
 
-install : $(ac_exe) $(dest_root) $(dest_bin)
+install : $(ac_exe) $(ac_netcore_exe) $(dest_root) $(dest_bin)
 # Install elisp packages
 	$(emacs) $(load_files) --batch -f load-packages
 # Copy files
@@ -76,18 +86,22 @@ install : $(ac_exe) $(dest_root) $(dest_bin)
 	done
 # Copy bin folder.
 	cp -R $(bin_d) $(dest_root)
+	# cp -R $(bin_netcore_d) $(dest_root)
 
 
-$(dest_root) :; mkdir -p $(dest_root)
-$(dest_bin)  :; mkdir -p $(dest_bin)
-$(bin_d)     :; mkdir -p $(bin_d)
+$(dest_root)         :; mkdir -p $(dest_root)
+$(dest_bin)          :; mkdir -p $(dest_bin)
+$(bin_d)             :; mkdir -p $(bin_d)
+$(bin_netcore_d)     :; mkdir -p $(bin_netcore_d)
 
 # Cleaning
 
 clean : clean-elc
 	rm -rf $(bin_d)
+	rm -rf $(bin_netcore_d)
 	rm -rf $(tmp_d)
 	rm -f $(ac_archive)
+	rm -f $(ac_netcore_archive)
 
 clean-elc :
 	rm -f  *.elc
