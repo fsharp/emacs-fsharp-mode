@@ -76,7 +76,7 @@ for all *nix."
 	      '("Enterprise/" "Professional/" "Community/" "BuildTools/"))
        (--first (file-executable-p it))))
 
-(defun fsharp-mode--build-find (exe)
+(defun fsharp-mode--msbuild-find (exe)
   "Find the build tool EXE based off fs-ac-runtime."
   (case (fsharp-ac-runtime)
     (dotnetcore (executable-find exe))

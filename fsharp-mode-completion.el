@@ -44,15 +44,18 @@
 ;;; User-configurable variables
 
 (defvar fsharp-ac-executable "fsautocomplete.exe")
+(defvar fsharp-ac-dotnetcore-executable "fsautocomplete.dll")
+
+(defun fsharp-ac-find-executable (bin-dir exec)
+    (or (executable-find exec)
+        (concat (file-name-directory (or load-file-name buffer-file-name))
+                bin-dir exec)))
 
 (defvar fsharp-ac-complete-command
-  (let ((exe (or (executable-find fsharp-ac-executable)
-                 (concat (file-name-directory (or load-file-name buffer-file-name))
-                         "bin/" fsharp-ac-executable))))
     (case (fsharp-ac-runtime)
-      (dotnetcore (list "dotnet" exe))
-      (mono (list "mono" exe))
-      (dotnet (list exe))))
+      (dotnetcore (list "dotnet" (fsharp-ac-find-executable "bin_netcore/" fsharp-ac-dotnetcore-executable)))
+      (mono (list "mono" (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))
+      (dotnet (list (fsharp-ac-find-executable "bin/" fsharp-ac-executable))))
   "Command to start the completion process.
 If using Tramp this command must be also valid on remote the Host.")
 
@@ -343,7 +346,7 @@ If HOST is nil, check process on local system."
 		   (concat (file-remote-p default-directory) (car (last fsharp-ac-complete-command)))
 		 (car (last fsharp-ac-complete-command))))
 	 (process-environment
-	  (if (not (eq 'mono fsharp-ac-using-mono))
+	  (if (not (eq 'mono (fsharp-ac-runtime)))
 	      process-environment
 	    ;; workaround for Mono = 4.2.1 thread pool bug
 	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
