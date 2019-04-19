@@ -25,6 +25,7 @@
 
 (with-no-warnings (require 'cl))
 (require 'dash)
+(require 'subr-x)
 
 
 (defvar fsharp-ac-runtime
