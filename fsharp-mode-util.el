@@ -27,7 +27,7 @@
 (require 'dash)
 
 
-(defvar fsharp-ac-runtime ()
+(defvar fsharp-ac-runtime
   "The .NET runtime for FSAutoComplete.
 Possible options are dotnet, mono, and dotnetcore"
     (case system-type
