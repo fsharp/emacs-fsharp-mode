@@ -52,12 +52,16 @@
                 bin-dir exec)))
 
 (defvar fsharp-ac-complete-command
+  nil
+  "Command to start the completion process.
+If using Tramp this command must be also valid on remote the Host.")
+
+(setq fsharp-ac-complete-command
     (case (fsharp-ac-runtime)
       (dotnetcore (list "dotnet" (fsharp-ac-find-executable "bin_netcore/" fsharp-ac-dotnetcore-executable)))
       (mono (list "mono" (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))
-      (dotnet (list (fsharp-ac-find-executable "bin/" fsharp-ac-executable))))
-  "Command to start the completion process.
-If using Tramp this command must be also valid on remote the Host.")
+      (dotnet (list (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))))
+
 
 (defvar fsharp-ac-use-popup t
   "Display tooltips using a popup at point.
