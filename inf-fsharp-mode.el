@@ -37,7 +37,7 @@
   "*If true, display the inferior fsharp buffer when evaluating expressions.")
 
 (defvar inferior-fsharp-program
-  (case (fsharp-ac-runtime)
+  (case fsharp-ac-runtime
     (dotnetcore (fsharp-mode--executable-find "fsi.exe"))
     (mono "fsharpi --readline-")
     (dotnet (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\" --fsi-server-input-codepage:65001")))

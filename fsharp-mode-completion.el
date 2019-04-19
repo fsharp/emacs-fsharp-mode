@@ -51,16 +51,12 @@
         (concat (file-name-directory (or load-file-name buffer-file-name))
                 bin-dir exec)))
 
-(defvar fsharp-ac-complete-command
-  nil
-  "Command to start the completion process.
-If using Tramp this command must be also valid on remote the Host.")
-
-(setq fsharp-ac-complete-command
-    (case (fsharp-ac-runtime)
+(defun fsharp-ac-complete-command ()
+    (case fsharp-ac-runtime
       (dotnetcore (list "dotnet" (fsharp-ac-find-executable "bin_netcore/" fsharp-ac-dotnetcore-executable)))
       (mono (list "mono" (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))
       (dotnet (list (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))))
+
 
 
 (defvar fsharp-ac-use-popup t
@@ -347,10 +343,10 @@ If HOST is nil, check process on local system."
 
 (defun fsharp-ac--configure-proc ()
   (let* ((fsac (if (tramp-tramp-file-p default-directory)
-		   (concat (file-remote-p default-directory) (car (last fsharp-ac-complete-command)))
+		   (concat (file-remote-p default-directory) (car (last (fsharp-ac-complete-command))))
 		 (car (last fsharp-ac-complete-command))))
 	 (process-environment
-	  (if (not (eq 'mono (fsharp-ac-runtime)))
+	  (if (not (eq 'mono fsharp-ac-runtime))
 	      process-environment
 	    ;; workaround for Mono = 4.2.1 thread pool bug
 	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
@@ -364,7 +360,7 @@ If HOST is nil, check process on local system."
 	(let ((proc (apply 'start-file-process
 			   fsharp-ac--completion-procname
 			   (get-buffer-create (generate-new-buffer-name " *fsharp-complete*"))
-			   fsharp-ac-complete-command)))
+			   (fsharp-ac-complete-command))))
 	  (sleep-for 0.1)
 	  (if (process-live-p proc)
 	      (progn
@@ -375,7 +371,7 @@ If HOST is nil, check process on local system."
 		(with-current-buffer (process-buffer proc)
 		  (delete-region (point-min) (point-max)))
 		proc)
-	    (error "Failed to launch: '%s'" (s-join " " fsharp-ac-complete-command))
+	    (error "Failed to launch: '%s'" (s-join " " (fsharp-ac-complete-command)))
 	    nil))
       (error "%s not found" fsac))))
 

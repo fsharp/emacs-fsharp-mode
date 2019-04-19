@@ -26,22 +26,13 @@
 (with-no-warnings (require 'cl))
 (require 'dash)
 
-(defvar fsharp-ac-use-dotnetcore
-  t
-  "Use .NET Core as the runtime for FSAutoComplete.
 
-If set to nil, fall back to either .NET or mono runtimes (depending on the system).")
-
-(defun fsharp-ac-runtime ()
+(defvar fsharp-ac-runtime ()
   "The .NET runtime for FSAutoComplete.
-If fsharp-ac-use-dotnetcore is set to t, this variable is set to dotnetcore
-Defaults to nil for Microsoft platforms (including Cygwin), t
-for all *nix."
-  (if fsharp-ac-use-dotnetcore
-      'dotnetcore
+Possible options are dotnet, mono, and dotnetcore"
     (case system-type
       ((windows-nt cygwin msdos) 'dotnet)
-      (otherwise 'mono))))
+      (otherwise 'mono)))
 
 (defun fsharp-mode--program-files-x86 ()
   (file-name-as-directory
@@ -78,7 +69,7 @@ for all *nix."
 
 (defun fsharp-mode--msbuild-find (exe)
   "Find the build tool EXE based off fs-ac-runtime."
-  (case (fsharp-ac-runtime)
+  (case fsharp-ac-runtime
     (dotnetcore (executable-find exe))
     (dotnet (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
                                       "MSBuild/" it "/Bin")
@@ -88,7 +79,7 @@ for all *nix."
     (mono (executable-find exe))))
 
 (defun fsharp-mode--executable-find (exe)
-  (case (fsharp-ac-runtime)
+  (case fsharp-ac-runtime
     (dotnetcore (let* ((exec-path (append (list (fsharp-mode--program-files-dotnetcore)) exec-path))
                        (dotnet-exec (executable-find "dotnet"))
                       (executable (locate-file exe exec-path)))

@@ -384,7 +384,7 @@ passed to `mono'."
          (default (if (and outputfile
                            (s-equals? "exe"
                                       (downcase (file-name-extension outputfile))))
-                      (case (fsharp-ac-runtime)
+                      (case fsharp-ac-runtime
                         (dotnetcore (s-concat "dotnet " outputfile))
                         (mono (s-concat "mono" outputfile))
                         (dotnet outputfile))
