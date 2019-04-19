@@ -50,12 +50,14 @@
     (or (executable-find exec)
         (concat (file-name-directory (or load-file-name buffer-file-name))
                 bin-dir exec)))
+(defvar fsharp-ac--full-executable (fsharp-ac-find-executable "bin/" fsharp-ac-executable))
+(defvar fsharp-ac--full-dotnetcore-executable (fsharp-ac-find-executable "bin_netcore/" fsharp-ac-dotnetcore-executable))
 
 (defun fsharp-ac-complete-command ()
     (case fsharp-ac-runtime
-      (dotnetcore (list "dotnet" (fsharp-ac-find-executable "bin_netcore/" fsharp-ac-dotnetcore-executable)))
-      (mono (list "mono" (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))
-      (dotnet (list (fsharp-ac-find-executable "bin/" fsharp-ac-executable)))))
+      (dotnetcore (list "dotnet" fsharp-ac--full-dotnetcore-executable))
+      (mono (list "mono" fsharp-ac--full-executable))
+      (dotnet (list fsharp-ac--full-executable))))
 
 
 
