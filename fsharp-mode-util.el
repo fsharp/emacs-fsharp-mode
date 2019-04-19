@@ -44,6 +44,7 @@ Possible options are dotnet, mono, and dotnetcore"
                            "C:\\Program Files (x86)")))))
 
 (defun fsharp-mode--program-files-dotnetcore ()
+  "Get the appropriate program files folder based off of the dotnet sdk version of the project."
   (let* ((currentSdk (string-trim (shell-command-to-string "dotnet --version")))
          ;; dotnet --list-sdks outputs a list of sdk versions, followed by the sdk path surrounded in square brackets
          (sdkPaths (-map #'fsharp-mode--parse-dotnet-list-sdk
@@ -53,11 +54,11 @@ Possible options are dotnet, mono, and dotnetcore"
     (concat (file-name-as-directory sdkPath) "FSharp/")))
 
 (defun fsharp-mode--parse-dotnet-list-sdk (sdk)
+  "Parse a line SDK of dotnet --list-sdks into a pair of version and path."
   (let* ((splitSdk (split-string sdk))
          (version (-first-item splitSdk))
          (path (-second-item splitSdk)))
     (cons version path)))
-    ;; (-second-item (split-string sdkPath))))
 
 (defun fsharp-mode--vs2017-msbuild-find (exe)
   "Return EXE absolute path for Visual Studio 2017, if existent, else nil."
@@ -81,6 +82,7 @@ Possible options are dotnet, mono, and dotnetcore"
     (mono (executable-find exe))))
 
 (defun fsharp-mode--executable-find (exe)
+  "Find the executable EXE based off fs-ac-runtime."
   (case fsharp-ac-runtime
     (dotnetcore (let* ((exec-path (append (list (fsharp-mode--program-files-dotnetcore)) exec-path))
                        (dotnet-exec (executable-find "dotnet"))
