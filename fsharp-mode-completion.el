@@ -344,7 +344,7 @@ If HOST is nil, check process on local system."
 (defun fsharp-ac--configure-proc ()
   (let* ((fsac (if (tramp-tramp-file-p default-directory)
 		   (concat (file-remote-p default-directory) (car (last (fsharp-ac-complete-command))))
-		 (car (last fsharp-ac-complete-command))))
+		 (car (last (fsharp-ac-complete-command)))))
 	 (process-environment
 	  (if (not (eq 'mono fsharp-ac-runtime))
 	      process-environment
