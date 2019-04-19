@@ -28,11 +28,12 @@
 
 
 (defvar fsharp-ac-runtime
-  "The .NET runtime for FSAutoComplete.
-Possible options are dotnet, mono, and dotnetcore"
     (case system-type
       ((windows-nt cygwin msdos) 'dotnet)
-      (otherwise 'mono)))
+      (otherwise 'mono))
+  "The .NET runtime for FSAutoComplete.
+Possible options are dotnet, mono, and dotnetcore"
+    )
 
 (defun fsharp-mode--program-files-x86 ()
   (file-name-as-directory
