@@ -337,20 +337,25 @@ If HOST is nil, check process on local system."
 			      (fsharp-ac--clear-symbol-uses))))
     (fsharp-ac--reset)))
 
+(defun fsharp-ac--get-process-environment ()
+  (let ((proc-env process-environment))
+    (when fsharp-ac-using-mono
+      ;; workaround for Mono = 4.2.1 thread pool bug
+      ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
+      (let ((threads-per-cpu (getenv "MONO_THREADS_PER_CPU")))
+	(when (or (null threads-per-cpu)
+		  (< (string-to-number threads-per-cpu) 8))
+	  (push "MONO_THREADS_PER_CPU=8" proc-env)))
+      ;; Workaround for file system watcher issue in FSAC
+      (when (eq system-type 'darwin)
+	(push "MONO_MANAGED_WATCHER=disabled" proc-env)))
+    proc-env))
+
 (defun fsharp-ac--configure-proc ()
   (let* ((fsac (if (tramp-tramp-file-p default-directory)
 		   (concat (file-remote-p default-directory) (car (last fsharp-ac-complete-command)))
 		 (car (last fsharp-ac-complete-command))))
-	 (process-environment
-	  (if (null fsharp-ac-using-mono)
-	      process-environment
-	    ;; workaround for Mono = 4.2.1 thread pool bug
-	    ;; https://bugzilla.xamarin.com/show_bug.cgi?id=37288
-	    (let ((x (getenv "MONO_THREADS_PER_CPU")))
-	      (if (or (null x)
-		      (< (string-to-number x) 8))
-		  (cons "MONO_THREADS_PER_CPU=8" process-environment)
-		process-environment))))
+	 (process-environment (fsharp-ac--get-process-environment))
 	 process-connection-type)
     (if (file-exists-p fsac)
 	(let ((proc (apply 'start-file-process
