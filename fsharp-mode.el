@@ -49,7 +49,7 @@
   "The program used to compile F# source files.")
 
 (defvar fsharp-build-command
-  (-any #'fsharp-mode--msbuild-find '("xbuild" "msbuild"))
+  (-any #'fsharp-mode--msbuild-find '("msbuild" "xbuild"))
   "The command used to build F# projects and solutions.")
 
 ;;; ----------------------------------------------------------------------------
