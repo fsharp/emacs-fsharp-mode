@@ -7,7 +7,7 @@
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
 ;; Maintainer: Robin Neatherway
 ;; Keywords: languages
-;; Version: 1.9.13
+;; Version: 1.9.14
 
 ;; This file is not part of GNU Emacs.
 

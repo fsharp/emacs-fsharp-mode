@@ -1,3 +1,11 @@
+## 1.9.14 (2019-06-09)
+
+Features:
+  - #207: Update to FsAutoComplete 0.38.1
+  - #206: Set default build command to msbuild if found
+Bugfixes:
+  - #198: Use buffer-local version of company-quickhelp-mode
+
 ## 1.9.13 (2018)
 
 Features:
