@@ -156,7 +156,8 @@ as indentation hints, unless the comment character is in column zero."
                              "finally"
                              "end"
                              "done"
-                             "elif")
+                             "elif"
+                             "}")
                            "\\|")
           "\\)")
   "Regular expression matching statements to be dedented one level.")
