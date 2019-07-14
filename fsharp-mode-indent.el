@@ -53,6 +53,14 @@ statement are given this extra offset."
   :type 'integer
   :group 'fsharp)
 
+(defcustom fsharp-conservative-indentation-after-bracket nil
+  "Indent by fsharp-continuation-offset also after an opening bracket.
+The default indentation depth on a new line after an opening
+bracket is one column further from the opening bracket. Indenting much less is
+allowed, because brackets reset the current offside column."
+  :type 'boolean
+  :group 'fsharp)
+
 (defcustom fsharp-smart-indentation t
   "*Should `fsharp-mode' try to automagically set some indentation variables?
 When this variable is non-nil, two things happen when a buffer is set
@@ -485,7 +493,8 @@ dedenting."
                 (goto-char (1+ open-bracket-pos)) ; just beyond bracket
                 ;; is the first list item on the same line?
                 (skip-chars-forward " \t")
-                (if (null (memq (following-char) '(?\n ?# ?\\)))
+                (if (and (null (memq (following-char) '(?\n ?# ?\\)))
+                         (not fsharp-conservative-indentation-after-bracket))
                                         ; yes, so line up with it
                     (current-column)
                   ;; first list item on another line, or doesn't exist yet
