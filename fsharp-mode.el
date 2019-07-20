@@ -28,10 +28,7 @@
 
 ;;; Code:
 
-(require 'fsharp-mode-completion)
 (require 'fsharp-mode-structure)
-(require 'flycheck-fsharp)
-(require 'fsharp-doc)
 (require 'inf-fsharp-mode)
 (require 'fsharp-mode-util)
 (require 'compile)
@@ -114,24 +111,12 @@
 
   (define-key fsharp-mode-map (kbd "C-c <up>") 'fsharp-goto-block-up)
 
-  (define-key fsharp-mode-map (kbd "C-c C-p") 'fsharp-ac/load-project)
-  (define-key fsharp-mode-map (kbd "C-c C-t") 'fsharp-ac/show-tooltip-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-d") 'fsharp-ac/gotodefn-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-b") 'fsharp-ac/pop-gotodefn-stack)
-  (define-key fsharp-mode-map (kbd "M-.")     'fsharp-ac/gotodefn-at-point)
-  (define-key fsharp-mode-map (kbd "M-,")     'fsharp-ac/pop-gotodefn-stack)
-  (define-key fsharp-mode-map (kbd "C-c C-q") 'fsharp-ac/stop-process)
-  (define-key fsharp-mode-map (kbd "C-c C-.") 'fsharp-ac/complete-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-u") 'fsharp-ac/symboluse-at-point)
-
   (unless running-xemacs
     (let ((map (make-sparse-keymap "fsharp"))
           (forms (make-sparse-keymap "Forms")))
       (define-key fsharp-mode-map [menu-bar] (make-sparse-keymap))
       (define-key fsharp-mode-map [menu-bar fsharp] (cons "F#" map))
 
-      (define-key map [pop-goto-defn] '("Pop goto definition stack" . fsharp-ac/pop-gotodefn-stack))
-      (define-key map [goto-defn] '("Goto definition" . fsharp-ac/gotodefn-at-point))
       (define-key map [goto-block-up] '("Goto block up" . fsharp-goto-block-up))
       (define-key map [mark-phrase] '("Mark phrase" . fsharp-mark-phrase))
       (define-key map [shift-left] '("Shift region to right" . fsharp-shift-region-right))
@@ -214,10 +199,6 @@
 \\{fsharp-mode-map}"
 
   (require 'fsharp-mode-font)
-  (require 'fsharp-doc)
-  (require 'fsharp-mode-completion)
-
-  (require 'company)
 
   (fsharp-mode-indent-smie-setup)
 
@@ -270,12 +251,6 @@
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
                                         ; Some reasonable defaults for company mode
-  (add-to-list 'company-backends 'fsharp-ac/company-backend)
-  (setq company-auto-complete 't)
-  (setq company-auto-complete-chars ".")
-  (setq company-require-match 'nil)
-  (setq company-tooltip-align-annotations 't)
-
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
@@ -285,23 +260,9 @@
 
   (let ((file (buffer-file-name)))
     (when file
-      (setq compile-command (fsharp-mode-choose-compile-command file))
-      (fsharp-mode--load-with-binding file)))
-
-  (when fsharp-ac-intellisense-enabled
-    (flycheck-mode 1)
-    (turn-on-fsharp-doc-mode))
+      (setq compile-command (fsharp-mode-choose-compile-command file))))
 
   (run-hooks 'fsharp-mode-hook))
-
-(defun fsharp-mode--load-with-binding (file)
-  "Attempt to load FILE using the F# compiler binding.
-If FILE is part of an F# project, load the project.
-Otherwise, treat as a stand-alone file."
-  (when fsharp-ac-intellisense-enabled
-    (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
-        (fsharp-ac/load-file file))
-    (company-mode 1)))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:
