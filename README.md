@@ -24,7 +24,7 @@ See [.travis.yml](.travis.yml) for details.
 
 ### Package
 
-`fsharp-mode` is available on [MELPA](http://melpa.milkbox.net) and can
+`fsharp-mode` is available on [MELPA](https://melpa.org) and can
 be installed using the built-in package manager.
 
 If you're not already using MELPA, add the following to your init.el:
@@ -32,7 +32,7 @@ If you're not already using MELPA, add the following to your init.el:
 ```lisp
 ;;; Initialize MELPA
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
 (unless package-archive-contents (package-refresh-contents))
 (package-initialize)
 
@@ -98,7 +98,7 @@ Visual Studio and Xamarin Studio/Monodevelop. To create a new project file, it
 is recommended that you take an existing project file and modify the list of
 source files. One such project file can be found in the fsharp-mode repository
 [here](https://github.com/fsharp/emacs-fsharp-mode/blob/master/test/Test1/Test1.fsproj). Alternatively
-projects generated via [forge](https://github.com/fsprojects/forge) are setup
+projects generated via [forge](https://github.com/ionide/Forge) are setup
 with the needed files.
 
 If, on loading a new `.fs` file, a `.fsproj` file is found in the
