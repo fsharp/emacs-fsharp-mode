@@ -5,7 +5,8 @@
 ;; Author: 1993-1997 Xavier Leroy, Jacques Garrigue and Ian T Zimmerman
 ;;         2010-2011 Laurent Le Brun <laurent@le-brun.eu>
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
-;; Maintainer: Robin Neatherway
+;;         2017-2019 Jürgen Hötzel
+;; Maintainer: Jürgen Hötzel
 ;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0"))
 ;; Keywords: languages
 ;; Version: 1.9.15
