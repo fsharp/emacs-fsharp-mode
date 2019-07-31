@@ -6,8 +6,9 @@
 ;;         2010-2011 Laurent Le Brun <laurent@le-brun.eu>
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
 ;; Maintainer: Robin Neatherway
+;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0"))
 ;; Keywords: languages
-;; Version: 1.9.14
+;; Version: 1.9.15
 
 ;; This file is not part of GNU Emacs.
 
