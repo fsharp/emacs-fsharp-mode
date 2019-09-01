@@ -52,8 +52,8 @@
     'net-framework)
   "The .NET runtime to use."
   :group 'eglot-fsharp
-  :type '(choice (const :tag "Use .Net Core" 'net-core)
-                 (const :tag "Use .Net Framework" 'net-framework)))
+  :type '(choice (const :tag "Use .Net Core" net-core)
+                 (const :tag "Use .Net Framework" net-framework)))
 
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
@@ -86,15 +86,24 @@
 	  (error "Failed to unzip %s" zip))))))
 
 (defun eglot-fsharp (interactive)
-  "Ensure FsAutoComplete is installed when called INTERACTIVE.
-Return `eglot' contact when Emmy is installed."
+"Return `eglot' contact when FsAutoComplete is installed.
+Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (unless (or (file-exists-p (eglot-fsharp--path-to-server)) (not interactive))
     (eglot-fsharp--maybe-install))
   (when (file-exists-p (eglot-fsharp--path-to-server))
-    `(,(if (eq eglot-fsharp-server-runtime 'net-core)
-	   "dotnet"
-	 ;; FIXME: Windows
-	 "mono") ,(eglot-fsharp--path-to-server) "--mode" "lsp" "--background-service-enabled")))
+    (cons 'eglot-fsautocomplete
+	  `(,(if (eq eglot-fsharp-server-runtime 'net-core)
+		 "dotnet"
+	       ;; FIXME: Windows
+	       "mono") ,(eglot-fsharp--path-to-server) "--mode" "lsp" "--verbose" "--background-service-enabled"))))
+
+
+(defclass eglot-fsautocomplete (eglot-lsp-server) ()
+  :documentation "F# FsAutoComplete langserver.")
+
+(cl-defmethod eglot-initialization-options ((server eglot-fsautocomplete))
+  "Passes through required FsAutoComplete initialization options."
+  '(:automaticWorkspaceInit t))
 
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
