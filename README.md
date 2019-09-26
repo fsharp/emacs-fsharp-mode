@@ -51,7 +51,7 @@ If you are a user of [use-package](https://github.com/jwiegley/use-package) you 
   :ensure t)
 ```
 
-All the [Configuration](##Configuration) options listed below can be added as part of the `:config` section on the `use-package` entry. 
+All the [Configuration](#Configuration) options listed below can be added as part of the `:config` section on the `use-package` entry. 
 
 ### Manual installation
 
