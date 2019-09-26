@@ -81,7 +81,6 @@ Emacs 24 will not add it to your PATH. One option is:
 
 `alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'`
 
-
 ## Usage
 
 fsharp-mode should launch automatically whenever you open an F#
@@ -171,8 +170,6 @@ lists:
 (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
 ```
 
-
-
 ### Key Bindings
 
 If you are new to Emacs, you might want to use the menu (call
@@ -216,7 +213,6 @@ the following to your `init.el` may be a good start:
    (define-key fsharp-mode-map (kbd "M-RET") 'fsharp-eval-region)
    (define-key fsharp-mode-map (kbd "C-SPC") 'fsharp-ac/complete-at-point)))
 ```
-
 
 ## Editor
 
