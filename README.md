@@ -43,7 +43,15 @@ If you're not already using MELPA, add the following to your init.el:
 (require 'fsharp-mode)
 ```
 
+If you are a user of [use-package](https://github.com/jwiegley/use-package) you can instead do
 
+```lisp
+(use-package fsharp-mode
+  :defer t
+  :ensure t)
+```
+
+All the [Configuration](#Configuration) options listed below can be added as part of the `:config` section on the `use-package` entry. 
 
 ### Manual installation
 
@@ -72,7 +80,6 @@ Note that OSX comes with Emacs 22 by default and installing a .app of
 Emacs 24 will not add it to your PATH. One option is:
 
 `alias emacs='/Applications/Emacs.app/Contents/MacOS/Emacs'`
-
 
 ## Usage
 
@@ -163,8 +170,6 @@ lists:
 (add-to-list 'company-transformers 'company-sort-prefer-same-case-prefix)
 ```
 
-
-
 ### Key Bindings
 
 If you are new to Emacs, you might want to use the menu (call
@@ -208,7 +213,6 @@ the following to your `init.el` may be a good start:
    (define-key fsharp-mode-map (kbd "M-RET") 'fsharp-eval-region)
    (define-key fsharp-mode-map (kbd "C-SPC") 'fsharp-ac/complete-at-point)))
 ```
-
 
 ## Editor
 
