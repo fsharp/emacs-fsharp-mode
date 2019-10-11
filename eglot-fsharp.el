@@ -85,6 +85,7 @@
 	(unless (zerop (call-process "unzip" nil nil nil "-x" zip))
 	  (error "Failed to unzip %s" zip))))))
 
+ ;;;###autoload
 (defun eglot-fsharp (interactive)
 "Return `eglot' contact when FsAutoComplete is installed.
 Ensure FsAutoComplete is installed (when called INTERACTIVE)."
@@ -101,7 +102,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
   :documentation "F# FsAutoComplete langserver.")
 
-(cl-defmethod eglot-initialization-options ((server eglot-fsautocomplete))
+(cl-defmethod eglot-initialization-options ((server eglot-fsharp))
   "Passes through required FsAutoComplete initialization options."
   '(:automaticWorkspaceInit t))
 
