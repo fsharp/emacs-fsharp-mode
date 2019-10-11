@@ -102,7 +102,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
   :documentation "F# FsAutoComplete langserver.")
 
-(cl-defmethod eglot-initialization-options ((server eglot-fsharp))
+(cl-defmethod eglot-initialization-options ((server eglot-fsautocomplete))
   "Passes through required FsAutoComplete initialization options."
   '(:automaticWorkspaceInit t))
 

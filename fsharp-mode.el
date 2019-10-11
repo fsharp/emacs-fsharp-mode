@@ -32,6 +32,7 @@
 
 (require 'fsharp-mode-structure)
 (require 'inf-fsharp-mode)
+(require 'eglot-fsharp)
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'dash)
