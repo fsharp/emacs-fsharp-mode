@@ -35,6 +35,7 @@
 (require 'eglot-fsharp)
 (require 'fsharp-mode-util)
 (require 'compile)
+(require 'project)
 (require 'dash)
 
 (defgroup fsharp nil
@@ -409,6 +410,16 @@ folders relative to DIR-OR-FILE."
   (let ((p (file-name-directory (directory-file-name dir))))
     (unless (equal p dir)
       p)))
+
+;; Make project.el aware of fsharp projects
+(defun fsharp-mode-project-root (dir)
+  (-when-let (project-file (fsharp-mode/find-sln-or-fsproj dir))
+    (cons 'fsharp (file-name-directory project-file))))
+
+(cl-defmethod project-roots ((project (head fsharp)))
+  (list (cdr project)))
+
+(add-hook 'project-find-functions #'fsharp-mode-project-root)
 
 (provide 'fsharp-mode)
 
