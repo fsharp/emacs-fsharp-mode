@@ -257,9 +257,6 @@
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
-  (when (and (display-graphic-p)
-             (boundp 'company-quickhelp-mode)) ; not supported on ttys
-    (company-quickhelp-local-mode 1))
 
   (let ((file (buffer-file-name)))
     (when file
