@@ -7,7 +7,7 @@
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
 ;;         2017-2019 Jürgen Hötzel
 ;; Maintainer: Jürgen Hötzel
-;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0"))
+;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0") (eglot))
 ;; Keywords: languages
 ;; Version: 1.9.15
 
@@ -32,7 +32,6 @@
 
 (require 'fsharp-mode-structure)
 (require 'inf-fsharp-mode)
-(require 'eglot-fsharp)
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'project)
