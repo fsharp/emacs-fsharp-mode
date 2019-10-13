@@ -64,28 +64,6 @@
 (defvar fsharp-mode-map nil
   "Keymap used in fsharp mode.")
 
-(defvar fsharp-run-executable-file-history nil
-  "History of executable commands run.")
-
-;; define a mode-specific abbrev table for those who use such things
-(defvar fsharp-mode-abbrev-table nil
-  "Abbrev table in use in `fsharp-mode' buffers.")
-(define-abbrev-table 'fsharp-mode-abbrev-table nil)
-
-
-(require 'info-look)
-;; The info-look package does not always provide this function (it
-;; appears this is the case with XEmacs 21.1)
-(when (fboundp 'info-lookup-maybe-add-help)
-  (info-lookup-maybe-add-help
-   :mode 'fsharp-mode
-   :regexp "[a-zA-Z0-9_]+"
-   :doc-spec '(("(fsharp-lib)Module Index")
-               ("(fsharp-lib)Class-Exception-Object Index")
-               ("(fsharp-lib)Function-Method-Variable Index")
-               ("(fsharp-lib)Miscellaneous Index"))))
-
-
 (unless fsharp-mode-map
   (setq fsharp-mode-map (make-sparse-keymap))
   (if running-xemacs
@@ -95,7 +73,6 @@
   ;; F# bindings
   (define-key fsharp-mode-map "\C-c\C-a" 'fsharp-find-alternate-file)
   (define-key fsharp-mode-map "\C-c\C-c" 'compile)
-  (define-key fsharp-mode-map "\C-cx" 'fsharp-run-executable-file)
   (define-key fsharp-mode-map "\M-\C-x" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-c\C-e" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-x\C-e" 'fsharp-eval-phrase)
@@ -128,7 +105,6 @@
       (define-key map [separator-2] '("---"))
 
       ;; others
-      (define-key map [run] '("Run..." . fsharp-run-executable-file))
       (define-key map [compile] '("Compile..." . compile))
       (define-key map [switch-view] '("Switch view" . fsharp-find-alternate-file))
       (define-key map [separator-1] '("--"))
@@ -360,30 +336,6 @@ whole string."
          (end (nth (1+ (* 2 num)) data)))
     (if string (substring string begin end)
       (buffer-substring-no-properties begin end))))
-
-(defun fsharp-run-executable-file ()
-  "Execute a file with specified arguments. If a project is
-currently loaded and the output is a .exe file (stored in
-FSHARP-AC--OUTPUT-FILE), then this will be used as a default. If
-the current system is not Windows then the command string will be
-passed to `mono'."
-  (interactive)
-  (let* ((project (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files))
-         (projdata (when project (gethash project fsharp-ac--project-data)))
-         (outputfile (when projdata (gethash "Output" projdata)))
-         (default (if (and outputfile
-                           (s-equals? "exe"
-                                      (downcase (file-name-extension outputfile))))
-                      (if fsharp-ac-using-mono
-                          (s-concat "mono " outputfile)
-                        outputfile)
-                    ""))
-         (cmd (read-from-minibuffer "Run: "
-                                    default
-                                    nil
-                                    nil
-                                    'fsharp-run-executable-file-history)))
-    (start-process-shell-command cmd nil cmd)))
 
 ;;; Project
 
