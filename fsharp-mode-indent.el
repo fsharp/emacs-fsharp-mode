@@ -45,6 +45,12 @@ you're editing someone else's Fsharp code."
   :type 'integer
   :group 'fsharp)
 
+(defalias 'fsharp-indent-level 'fsharp-indent-offset
+  "Backwards-compatibility alias. `fsharp-indent-level' was
+  configuring the same thing as `fsharp-indent-offset', but less
+  clearly and in a different file, and free from update by
+  functions like offset-guessing.")
+
 (defcustom fsharp-continuation-offset 4
   "*Additional amount of offset to give for some continuation lines.
 Continuation lines are those that immediately follow a backslash
