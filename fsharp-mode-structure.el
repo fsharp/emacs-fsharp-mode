@@ -26,7 +26,9 @@
 ;;; Commentary:
 ;; This module defines variables and functions related to the structure of F#
 ;; code, and motion around and through that code. SMIE is used to set certain
-;; default configurations.
+;; default configurations. In particular, `smie' expects to set
+;; `forward-sexp-function' and `indent-line-function', the latter of which we
+;; currently override.
 ;;
 ;; SMIE configs by m00nlight Wang <dot.wangyushi@gmail.com>, 2015
 ;; Last major update by Ross Donaldson <@gastove>, 2019
@@ -39,7 +41,6 @@
 (require 'smie)
 
 ;;-------------------------- Customization Variables --------------------------;;
-
 
 (defcustom fsharp-tab-always-indent t
   "*Non-nil means TAB in Fsharp mode should always reindent the current line,
@@ -180,8 +181,8 @@ as indentation hints, unless the comment character is in column zero."
           "\\)")
   "Regular expression matching statements to be dedented one level.")
 
+
 (defconst fsharp-block-closing-keywords-re
-                                        ;  "\\(return\\|raise\\|break\\|continue\\|pass\\)"
   "\\(end\\|done\\|raise\\|failwith\\|failwithf\\|rethrow\\|exit\\)"
   "Regular expression matching keywords which typically close a block.")
 
