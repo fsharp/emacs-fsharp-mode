@@ -26,9 +26,9 @@
 (require 'comint)
 (require 'custom)
 (require 'compile)
-(require 'fsharp-mode)
+(require 'smie)
 
-
+
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
@@ -448,11 +448,11 @@ This function is normally bound to `indent-line-function' so
                 move-to-indentation-p)
             (progn (if (/= ci need)
                        (save-excursion
-                       (beginning-of-line)
-                       (delete-horizontal-space)
-                       (indent-to need)))
+                         (beginning-of-line)
+                         (delete-horizontal-space)
+                         (indent-to need)))
                    (if move-to-indentation-p (back-to-indentation)))
-            (insert-tab))))))
+          (insert-tab))))))
 
 (defun fsharp-newline-and-indent ()
   "Strives to act like the Emacs `newline-and-indent'.
@@ -925,7 +925,7 @@ NOMARK is not nil."
     (fsharp-goto-initial-line)
     ;; if on and (mutually recursive bindings), blank or non-indenting comment line, use the preceding stmt
     (when (or (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
-	      (looking-at-p "[ \t]*and[ \t]+"))
+              (looking-at-p "[ \t]*and[ \t]+"))
       (fsharp-goto-statement-at-or-above)
       (setq found (fsharp-statement-opens-block-p)))
     ;; search back for colon line indented less
@@ -1573,8 +1573,7 @@ This tells add-log.el how to find the current function/method/variable."
           nil
         scopes))))
 
-
-;;; fsharp-mode.el ends here
+
 (defun fsharp-eval-phrase ()
   "Send current phrase to the interactive mode"
   (interactive)
@@ -1607,11 +1606,11 @@ This tells add-log.el how to find the current function/method/variable."
   (interactive)
   (let ((prev (point)))
     (condition-case nil
-	(while (progn (fsharp-goto-block-up 'no-mark)
-		      (< (point) prev))
-	  (setq prev (point)))
+        (while (progn (fsharp-goto-block-up 'no-mark)
+                      (< (point) prev))
+          (setq prev (point)))
       (error (while (continuation-p)
-	       (forward-line -1)))))
+               (forward-line -1)))))
   (beginning-of-line))
 
 (defun fsharp-end-of-block ()
@@ -1629,10 +1628,89 @@ This tells add-log.el how to find the current function/method/variable."
           (error
            (progn (goto-char (point-max)))))
         (end-of-line)
-	(when (looking-at-p "\n[ \t]*and[ \t]+")
-	  (forward-line 1)
-	  (fsharp-end-of-block)))
+        (when (looking-at-p "\n[ \t]*and[ \t]+")
+          (forward-line 1)
+          (fsharp-end-of-block)))
     (goto-char (point-max))))
+
+(defconst fsharp-smie-grammar
+  ;; SMIE grammar follow the refernce of SML-mode.
+  (smie-prec2->grammar
+   (smie-merge-prec2s
+    (smie-bnf->prec2
+     '((id)
+       (expr ("while" expr "do" expr)
+             ("if" expr "then" expr "else" expr)
+             ("for" expr "in" expr "do" expr)
+             ("for" expr "to" expr "do" expr)
+             ("try" expr "with" branches)
+             ("try" expr "finally" expr)
+             ("match" expr "with" branches)
+             ("type" expr "=" branches)
+             ("begin" exprs "end")
+             ("[" exprs "]")
+             ("[|" exprs "|]")
+             ("{" exprs "}")
+             ("<@" exprs "@>")
+             ("<@@" exprs "@@>")
+             ("let" sexp "=" expr)
+             ("fun" expr "->" expr))
+       (sexp ("rec")
+             (sexp ":" type)
+             (sexp "||" sexp)
+             (sexp "&&" sexp)
+             ("(" exprs ")"))
+       (exprs (exprs ";" exprs)
+              (exprs "," exprs)
+              (expr))
+       (type (type "->" type)
+             (type "*" type))
+       (branches (branches "|" branches))
+       (decls (sexp "=" expr))
+       (toplevel (decls)
+                 (expr)
+                 (toplevel ";;" toplevel)))
+     '((assoc "|"))
+     '((assoc "->") (assoc "*"))
+     '((assoc "let" "fun" "type" "open" "->"))
+     '((assoc "let") (assoc "="))
+     '((assoc "[" "]" "[|" "|]" "{" "}"))
+     '((assoc "<@" "@>"))
+     '((assoc "<@@" "@@>"))
+     '((assoc "&&") (assoc "||") (noassoc ":"))
+     '((assoc ";") (assoc ","))
+     '((assoc ";;")))
+    (smie-precs->prec2
+     '((nonassoc (">" ">=" "<>" "<" "<=" "="))
+       (assoc "::")
+       (assoc "+" "-" "^")
+       (assoc "/" "*" "%")))))
+  )
+
+(defun fsharp-smie-rules (kind token)
+  (pcase (cons kind token)
+    (`(:elem . basic) fsharp-indent-offset)
+    (`(:after . "do") fsharp-indent-offset)
+    (`(:after . "then") fsharp-indent-offset)
+    (`(:after . "else") fsharp-indent-offset)
+    (`(:after . "try") fsharp-indent-offset)
+    (`(:after . "with") fsharp-indent-offset)
+    (`(:after . "finally") fsharp-indent-offset)
+    (`(:after . "in") 0)
+    (`(:after . ,(or `"[" `"]" `"[|" `"|]")) fsharp-indent-offset)
+    (`(,_ . ,(or `";" `",")) (if (smie-rule-parent-p "begin")
+                                 0
+                               (smie-rule-separator kind)))
+    (`(:after . "=") fsharp-indent-offset)
+    (`(:after . ";;") (smie-rule-separator kind))
+    (`(:before . ";;") (if (smie-rule-bolp)
+                           0))
+    ))
+
+
+(defun fsharp-mode-indent-smie-setup ()
+  (smie-setup fsharp-smie-grammar #'fsharp-smie-rules))
+
 
 (provide 'fsharp-mode-indent)
 
