@@ -233,23 +233,21 @@ POSITION can be one of the following symbols:
   boi  -- back to indentation
   bos  -- beginning of statement
 
-This function does not modify point or mark."
-  (let ((here (point)))
+This function preserves point and mark."
+  (save-mark-and-excursion
     (cond
      ((eq position 'bol) (beginning-of-line))
      ((eq position 'eol) (end-of-line))
      ((eq position 'bod) (fsharp-beginning-of-def-or-class 'either))
      ((eq position 'eod) (fsharp-end-of-def-or-class 'either))
-     ;; Kind of funny, I know, but useful for fsharp-up-exception.
      ((eq position 'bob) (point-min))
      ((eq position 'eob) (point-max))
      ((eq position 'boi) (back-to-indentation))
      ((eq position 'bos) (fsharp-goto-initial-line))
-     (t (error "Unknown buffer position requested: %s" position))
-     )
-    (prog1
-        (point)
-      (goto-char here))))
+     (t (error "Unknown buffer position requested: %s" position)))
+
+    (point)))
+
 
 (defun fsharp-in-literal-p (&optional lim)
   "Return non-nil if point is in a Fsharp literal (a comment or string).
