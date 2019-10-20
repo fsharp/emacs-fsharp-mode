@@ -29,13 +29,13 @@
 ;;; Code:
 
 (require 'fsharp-mode-completion)
+(require 'fsharp-mode-structure)
 (require 'flycheck-fsharp)
 (require 'fsharp-doc)
 (require 'inf-fsharp-mode)
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'dash)
-(require 'fsharp-mode-indent-smie)
 
 (defgroup fsharp nil
   "Support for the Fsharp programming language, <http://www.fsharp.net/>"
@@ -194,7 +194,6 @@
 
 \\{fsharp-mode-map}"
 
-  (require 'fsharp-mode-indent)
   (require 'fsharp-mode-font)
   (require 'fsharp-doc)
   (require 'fsharp-mode-completion)
@@ -321,6 +320,17 @@ Otherwise, treat as a stand-alone file."
   (interactive"r")
   (require 'inf-fsharp-mode)
   (inferior-fsharp-eval-region start end))
+
+(defun fsharp-eval-phrase ()
+  "Send current phrase to the interactive mode"
+  (interactive)
+  (save-excursion
+    (let ((p1) (p2))
+      (fsharp-beginning-of-block)
+      (setq p1 (point))
+      (fsharp-end-of-block)
+      (setq p2 (point))
+      (fsharp-eval-region p1 p2))))
 
 (defun fsharp-load-buffer-file ()
   "Load the filename corresponding to the present buffer in F# with #load"

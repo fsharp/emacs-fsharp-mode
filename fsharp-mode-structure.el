@@ -1,4 +1,4 @@
-;;; fsharp-mode-indent.el --- Indentation for F#
+;;; fsharp-mode-indent.el --- Stucture Definition, Mark, and Motion for F#
 
 ;; Copyright (C) 2010 Laurent Le Brun
 
@@ -1579,18 +1579,6 @@ This tells add-log.el how to find the current function/method/variable."
           nil
         scopes))))
 
-
-(defun fsharp-eval-phrase ()
-  "Send current phrase to the interactive mode"
-  (interactive)
-  (save-excursion
-    (let ((p1) (p2))
-      (fsharp-beginning-of-block)
-      (setq p1 (point))
-      (fsharp-end-of-block)
-      (setq p2 (point))
-      (fsharp-eval-region p1 p2))))
-
 (defun fsharp-mark-phrase ()
   "Mark current phrase"
   (interactive)
@@ -1718,6 +1706,5 @@ This tells add-log.el how to find the current function/method/variable."
   (smie-setup fsharp-smie-grammar #'fsharp-smie-rules))
 
 
-(provide 'fsharp-mode-indent)
-
-;;; fsharp-mode-indent.el ends here
+(provide 'fsharp-mode-structure)
+;;; fsharp-mode-structure.el ends here
