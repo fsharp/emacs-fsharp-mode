@@ -23,14 +23,23 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+;;; Commentary:
+;; This module defines variables and functions related to the structure of F#
+;; code, and motion around and through that code. SMIE is used to set certain
+;; default configurations.
+;;
+;; SMIE configs by m00nlight Wang <dot.wangyushi@gmail.com>, 2015
+;; Last major update by Ross Donaldson <@gastove>, 2019
+
+;;; Code:
+
 (require 'comint)
 (require 'custom)
 (require 'compile)
 (require 'smie)
 
+;;-------------------------- Customization Variables --------------------------;;
 
-;; user definable variables
-;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 (defcustom fsharp-tab-always-indent t
   "*Non-nil means TAB in Fsharp mode should always reindent the current line,
