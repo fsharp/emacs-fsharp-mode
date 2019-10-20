@@ -66,6 +66,11 @@
 (defvar fsharp-run-executable-file-history nil
   "History of executable commands run.")
 
+;; define a mode-specific abbrev table for those who use such things
+(defvar fsharp-mode-abbrev-table nil
+  "Abbrev table in use in `fsharp-mode' buffers.")
+(define-abbrev-table 'fsharp-mode-abbrev-table nil)
+
 (unless fsharp-mode-map
   (setq fsharp-mode-map (make-sparse-keymap))
   (if running-xemacs

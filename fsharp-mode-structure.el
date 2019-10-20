@@ -223,31 +223,6 @@ as indentation hints, unless the comment character is in column zero."
           "\\)")
   "Regular expression matching expressions which begin a block")
 
-
-;; Major mode boilerplate
-
-;; define a mode-specific abbrev table for those who use such things
-(defvar fsharp-mode-abbrev-table nil
-  "Abbrev table in use in `fsharp-mode' buffers.")
-(define-abbrev-table 'fsharp-mode-abbrev-table nil)
-
-
-
-;; Utilities
-(defmacro fsharp-safe (&rest body)
-  "Safely execute BODY, return nil if an error occurred."
-  `(condition-case nil
-       (progn ,@ body)
-     (error nil)))
-
-
-(defsubst fsharp-keep-region-active ()
-  "Keep the region active in XEmacs."
-  ;; Ignore byte-compiler warnings you might see.  Also note that
-  ;; FSF's Emacs 19 does it differently; its policy doesn't require us
-  ;; to take explicit action.
-  (and (boundp 'zmacs-region-stays)
-       (setq zmacs-region-stays t)))
 
 (defsubst fsharp-point (position)
   "Returns the value of point at certain commonly referenced POSITIONs.
@@ -784,8 +759,8 @@ You cannot dedent the region if any line is already at column zero."
           (error "Region is at left edge"))
       (forward-line 1)))
   (fsharp-shift-region start end (- (prefix-numeric-value
-                                     (or count fsharp-indent-offset))))
-  (fsharp-keep-region-active))
+                                     (or count fsharp-indent-offset)))))
+
 
 (defun fsharp-shift-region-right (start end &optional count)
   "Shift region of Fsharp code to the right.
@@ -803,8 +778,8 @@ many columns.  With no active region, indent only the current line."
          (list (min p m) (max p m) arg)
        (list p (save-excursion (forward-line 1) (point)) arg))))
   (fsharp-shift-region start end (prefix-numeric-value
-                                  (or count fsharp-indent-offset)))
-  (fsharp-keep-region-active))
+                                  (or count fsharp-indent-offset))))
+
 
 (defun fsharp-indent-region (start end &optional indent-offset)
   "Reindent a region of Fsharp code.
@@ -1261,10 +1236,8 @@ pleasant."
                      (forward-line 1))
                   ;; no comment, so go back
                   (goto-char start)))))))
-  (exchange-point-and-mark)
-  (fsharp-keep-region-active))
+  (exchange-point-and-mark))
 
-
 
 (require 'info-look)
 ;; The info-look package does not always provide this function (it
@@ -1356,14 +1329,14 @@ for."
     (when skip
       (save-excursion
         (while continue
-          (fsharp-safe (search-backward skip))
+          (search-backward skip nil t)
           (setq continue (and (not (bobp))
                               (= (char-before) ?\\))))
         (if (and (= (char-before) delim)
                  (= (char-before (1- (point))) delim))
             (setq skip (make-string 3 delim))))
       ;; we're looking at a triple-quoted string
-      (fsharp-safe (search-backward skip)))))
+      (search-backward skip nil t))))
 
 (defun fsharp-goto-initial-line ()
   "Go to the initial line of the current statement.
@@ -1588,14 +1561,15 @@ This tells add-log.el how to find the current function/method/variable."
           nil
         scopes))))
 
+
 (defun fsharp-mark-phrase ()
   "Mark current phrase"
   (interactive)
   (fsharp-beginning-of-block)
   (push-mark (point))
   (fsharp-end-of-block)
-  (exchange-point-and-mark)
-  (fsharp-keep-region-active))
+  (exchange-point-and-mark))
+
 
 (defun continuation-p ()
   "Return t iff preceding line is not a finished expression (ends with an operator)"
