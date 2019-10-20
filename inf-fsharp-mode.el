@@ -87,17 +87,17 @@ be sent from another buffer in fsharp mode.
   "Launch fsi if needed, using CMD if supplied."
   (unless (comint-check-proc inferior-fsharp-buffer-name)
     (setq inferior-fsharp-program
-	  (or cmd (read-from-minibuffer "fsharp toplevel to run: "
-					inferior-fsharp-program)))
+          (or cmd (read-from-minibuffer "fsharp toplevel to run: "
+                                        inferior-fsharp-program)))
     (let ((cmdlist (inferior-fsharp-args-to-list inferior-fsharp-program))
           (process-connection-type nil))
       (with-current-buffer (apply (function make-comint)
                                   inferior-fsharp-buffer-subname
                                   (car cmdlist) nil
-				  (cdr cmdlist))
-	(when (eq system-type 'windows-nt)
-	  (set-process-coding-system (get-buffer-process (current-buffer))
-				     'utf-8 'utf-8))
+                                  (cdr cmdlist))
+        (when (eq system-type 'windows-nt)
+          (set-process-coding-system (get-buffer-process (current-buffer))
+                                     'utf-8 'utf-8))
         (inferior-fsharp-mode))
       (display-buffer inferior-fsharp-buffer-name))))
 
@@ -139,13 +139,13 @@ Input and output via buffer `*inferior-fsharp*'."
       (previous-multiframe-window)
       (setq count (- count 1)))
     )
-)
+  )
 
 (defun inferior-fsharp-eval-region (start end)
   "Send the current region to the inferior fsharp process."
   (interactive "r")
   (fsharp-run-process-if-needed)
-    ;; send location to fsi
+  ;; send location to fsi
   (let* ((name (file-truename (buffer-file-name (current-buffer))))
          (dir (fsharp-ac--localname (file-name-directory name)))
          (line (number-to-string (line-number-at-pos start)))
@@ -174,8 +174,8 @@ output can be retreived later, asynchronously.")
   "Insert the result of the evaluation of previous phrase"
   (interactive)
   (let ((pos (process-mark (get-buffer-process inferior-fsharp-buffer-name))))
-  (insert-buffer-substring inferior-fsharp-buffer-name
-                           fsharp-previous-output (- pos 2))))
+    (insert-buffer-substring inferior-fsharp-buffer-name
+                             fsharp-previous-output (- pos 2))))
 
 
 (defun fsharp-simple-send (proc string)
