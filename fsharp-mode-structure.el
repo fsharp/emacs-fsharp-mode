@@ -388,7 +388,7 @@ number of characters to delete (default is 1)."
   (funcall fsharp-delete-function arg))
 
 
-;; required for pending-del and delsel modes
+;; required for pending-del/delsel/delete-selection minor modes
 (put 'fsharp-electric-colon 'delete-selection t) ;delsel
 (put 'fsharp-electric-colon 'pending-delete   t) ;pending-del
 (put 'fsharp-electric-backspace 'delete-selection 'supersede) ;delsel
@@ -418,10 +418,12 @@ This function is normally bound to `indent-line-function' so
           (beginning-of-line)
           (delete-horizontal-space)
           (indent-to (* (/ (- cc 1) fsharp-indent-offset) fsharp-indent-offset)))
+
       (progn
         ;; see if we need to dedent
         (if (fsharp-outdent-p)
             (setq need (- need fsharp-indent-offset)))
+
         (if (or fsharp-tab-always-indent
                 move-to-indentation-p)
             (progn (if (/= ci need)
@@ -430,7 +432,9 @@ This function is normally bound to `indent-line-function' so
                          (delete-horizontal-space)
                          (indent-to need)))
                    (if move-to-indentation-p (back-to-indentation)))
-          (insert-tab))))))
+          (insert-tab)))
+      )))
+
 
 (defun fsharp-newline-and-indent ()
   "Strives to act like the Emacs `newline-and-indent'.
@@ -446,6 +450,7 @@ the new line indented."
       (beginning-of-line)
       (insert-char ?\n 1)
       (move-to-column ci))))
+
 
 (defun fsharp-compute-indentation (honor-block-close-p)
   "Compute Fsharp indentation.
