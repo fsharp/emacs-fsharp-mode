@@ -131,8 +131,8 @@ as indentation hints, unless the comment character is in column zero."
   :type 'function
   :group 'fsharp)
 
-
-;; Constants
+
+;;--------------------------------- Constants ---------------------------------;;
 
 (defconst fsharp-stringlit-re
   (concat
@@ -157,10 +157,6 @@ as indentation hints, unless the comment character is in column zero."
 (defconst fsharp-continued-re
   ;; This is tricky because a trailing backslash does not mean
   ;; continuation if it's in a comment
-  ;;   (concat
-  ;;    "\\(" "[^#'\"\n\\]" "\\|" fsharp-stringlit-re "\\)*"
-  ;;    "\\\\$")
-  ;;   "Regular expression matching Fsharp backslash continuation lines.")
   (concat ".*\\(" (mapconcat 'identity
                              '("+" "-" "*" "/")
                              "\\|")
@@ -168,7 +164,6 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching unterminated expressions.")
 
 
-                                        ;(defconst fsharp-blank-or-comment-re "[ \t]*\\($\\|#\\)"
 (defconst fsharp-blank-or-comment-re "[ \t]*\\(//.*\\)?"
   "Regular expression matching a blank or comment line.")
 
@@ -270,13 +265,16 @@ i.e. the limit on how far back to scan."
      ((nth 4 state) 'comment)
      (t nil))))
 
-;; electric characters
+
 (defun fsharp-outdent-p ()
   "Returns non-nil if the current line should dedent one level."
   (save-excursion
     (progn (back-to-indentation)
            (looking-at fsharp-outdent-re))
     ))
+
+
+;;---------------------------- Electric Keystrokes ----------------------------;;
 
 (defun fsharp-electric-colon (arg)
   "Insert a colon.
@@ -317,7 +315,6 @@ comment."
             (indent-to (- indent outdent))
             )))))
 
-
 
 ;; Electric deletion
 (defun fsharp-electric-backspace (arg)
@@ -347,10 +344,8 @@ above."
   (interactive "*p")
   (if (or (/= (current-indentation) (current-column))
           (bolp)
-          (fsharp-continuation-line-p)
-                                        ;         (not fsharp-honor-comment-indentation)
-                                        ;         (looking-at "#[^ \t\n]")      ; non-indenting #
-          )
+          (fsharp-continuation-line-p))
+
       (funcall fsharp-backspace-function arg)
     ;; else indent the same as the colon line that opened the block
     ;; force non-blank so fsharp-goto-block-up doesn't ignore it
@@ -392,12 +387,7 @@ function in `fsharp-delete-function'.
 number of characters to delete (default is 1)."
   (interactive "*p")
   (funcall fsharp-delete-function arg))
-;;   (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
-;;             (delete-forward-p))
-;;        (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
-;;             delete-key-deletes-forward))
-;;       (funcall fsharp-delete-function arg)
-;;     (fsharp-electric-backspace arg)))
+
 
 ;; required for pending-del and delsel modes
 (put 'fsharp-electric-colon 'delete-selection t) ;delsel
@@ -408,7 +398,6 @@ number of characters to delete (default is 1)."
 (put 'fsharp-electric-delete    'pending-delete   'supersede) ;pending-del
 
 
-
 (defun fsharp-indent-line (&optional arg)
   "Fix the indentation of the current line according to Fsharp rules.
 With \\[universal-argument] (programmatically, the optional argument
@@ -857,7 +846,7 @@ initial line; and comment lines beginning in column 1 are ignored."
         (forward-line 1))))
   (set-marker end nil))
 
-
+
 ;; Functions for moving point
 (defun fsharp-previous-statement (count)
   "Go to the start of the COUNTth preceding Fsharp statement.
@@ -937,6 +926,9 @@ NOMARK is not nil."
       (goto-char start)
       (error "Enclosing block not found"))))
 
+;; The FIXME comment here is antique, and unexplained. My suspicion is that this
+;; function was lifted from a Python mode (F# doesn't have the `def' keyword).
+;; -- RMD 2019-10-20
 ;;FIXME
 (defun fsharp-beginning-of-def-or-class (&optional class count)
   "Move point to start of `def' or `class'.
