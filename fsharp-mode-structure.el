@@ -435,6 +435,117 @@ This function is normally bound to `indent-line-function' so
           (insert-tab)))
       )))
 
+;;---------------------------- Compute Indentation ----------------------------;;
+
+(defun fsharp--indenting-comment-p ()
+  "Returns non-nil if point is in an indenting comment line, otherwise nil.
+
+Definition: Indenting comment line. A line containing only a
+comment, but which is treated like a statement for indentation
+calculation purposes. Such lines are only treated specially by
+the mode; they are not treated specially by the Fsharp
+interpreter.
+
+The first non-blank line following an indenting comment line is
+given the same amount of indentation as the indenting comment
+line.
+
+All other comment-only lines are ignored for indentation
+purposes.
+
+Are we looking at a comment-only line which is *not* an indenting
+comment line? If so, we assume that it's been placed at the
+desired indentation, so leave it alone. Indenting comment lines
+are aligned as statements."
+  (and (looking-at "[ \t]*//[^ \t\n]")
+       (fboundp 'forward-comment)
+       (<= (current-indentation)
+           (save-excursion
+             (forward-comment (- (point-max)))
+             (current-indentation)))))
+
+
+(defun fsharp--compute-indentation-open-bracket (open-bracket-pos)
+  "Computes indentation for a line within an open bracket expression."
+  (let ((startpos (point))
+        placeholder)
+    ;; align with first item in list; else a normal
+    ;; indent beyond the line with the open bracket
+    (goto-char (1+ open-bracket-pos)) ; just beyond bracket
+    ;; is the first list item on the same line?
+    (skip-chars-forward " \t")
+    (if (and (null (memq (following-char) '(?\n ?# ?\\)))
+             (not fsharp-conservative-indentation-after-bracket))
+                                        ; yes, so line up with it
+        (current-column)
+      ;; first list item on another line, or doesn't exist yet
+      (forward-line 1)
+      (while (and (< (point) startpos)
+                  (looking-at "[ \t]*\\(//\\|[\n\\\\]\\)")) ; skip noise
+        (forward-line 1))
+      (if (and (< (point) startpos)
+               (/= startpos
+                   (save-excursion
+                     (goto-char (1+ open-bracket-pos))
+                     (forward-comment (point-max))
+                     (point))))
+          ;; again mimic the first list item
+          (current-indentation)
+        ;; else they're about to enter the first item
+        (goto-char open-bracket-pos)
+        (setq placeholder (point))
+        (fsharp-goto-initial-line)
+        (fsharp-goto-beginning-of-tqs
+         (save-excursion (nth 3 (parse-partial-sexp
+                                 placeholder (point)))))
+        (+ (current-indentation) fsharp-indent-offset)))))
+
+
+(defun fsharp--compute-indentation-continuation-line ()
+  "Computes the indentation for a line which continues the line
+above, but only when the previous line is not itself a continuation line."
+  (let ((startpos (point))
+        (open-bracket-pos (fsharp-nesting-level))
+        endpos searching found state placeholder)
+
+    ;; Started on 2nd line in block, so indent more. if base line is an
+    ;; assignment with a start on a RHS, indent to 2 beyond the leftmost "=";
+    ;; else skip first chunk of non-whitespace characters on base line, + 1 more
+    ;; column
+    (end-of-line)
+    (setq endpos (point)
+          searching t)
+    (back-to-indentation)
+    (setq startpos (point))
+    ;; look at all "=" from left to right, stopping at first one not nested in a
+    ;; list or string
+    (while searching
+      (skip-chars-forward "^=" endpos)
+      (if (= (point) endpos)
+          (setq searching nil)
+        (forward-char 1)
+        (setq state (parse-partial-sexp startpos (point)))
+        (if (and (zerop (car state)) ; not in a bracket
+                 (null (nth 3 state))) ; & not in a string
+            (progn
+              (setq searching nil) ; done searching in any case
+              (setq found
+                    (not (or
+                          (eq (following-char) ?=)
+                          (memq (char-after (- (point) 2))
+                                '(?< ?> ?!)))))))))
+    (if (or (not found)       ; not an assignment
+            (looking-at "[ \t]*\\\\")) ; <=><spaces><backslash>
+        (progn
+          (goto-char startpos)
+          (skip-chars-forward "^ \t\n")))
+    ;; if this is a continuation for a block opening
+    ;; statement, add some extra offset.
+    (+ (current-column) (if (fsharp-statement-opens-block-p)
+                            fsharp-continuation-offset 0)
+       1)
+    ))
+
 
 (defun fsharp-newline-and-indent ()
   "Strives to act like the Emacs `newline-and-indent'.
@@ -462,118 +573,25 @@ dedenting."
     (let* ((bod (fsharp-point 'bod))
            (pps (parse-partial-sexp bod (point)))
            (boipps (parse-partial-sexp bod (fsharp-point 'boi)))
+           (open-bracket-pos (fsharp-nesting-level))
            placeholder)
+
       (cond
-       ;; are we on a continuation line?
-       ((fsharp-continuation-line-p)
-        (let ((startpos (point))
-              (open-bracket-pos (fsharp-nesting-level))
-              endpos searching found state)
-          (if open-bracket-pos
-              (progn
-                ;; align with first item in list; else a normal
-                ;; indent beyond the line with the open bracket
-                (goto-char (1+ open-bracket-pos)) ; just beyond bracket
-                ;; is the first list item on the same line?
-                (skip-chars-forward " \t")
-                (if (and (null (memq (following-char) '(?\n ?# ?\\)))
-                         (not fsharp-conservative-indentation-after-bracket))
-                                        ; yes, so line up with it
-                    (current-column)
-                  ;; first list item on another line, or doesn't exist yet
-                  (forward-line 1)
-                  (while (and (< (point) startpos)
-                              (looking-at "[ \t]*\\(//\\|[\n\\\\]\\)")) ; skip noise
-                    (forward-line 1))
-                  (if (and (< (point) startpos)
-                           (/= startpos
-                               (save-excursion
-                                 (goto-char (1+ open-bracket-pos))
-                                 (forward-comment (point-max))
-                                 (point))))
-                      ;; again mimic the first list item
-                      (current-indentation)
-                    ;; else they're about to enter the first item
-                    (goto-char open-bracket-pos)
-                    (setq placeholder (point))
-                    (fsharp-goto-initial-line)
-                    (fsharp-goto-beginning-of-tqs
-                     (save-excursion (nth 3 (parse-partial-sexp
-                                             placeholder (point)))))
-                    (+ (current-indentation) fsharp-indent-offset))))
 
-            ;; else on backslash continuation line
-            (forward-line -1)
-            (if (fsharp-continuation-line-p) ; on at least 3rd line in block
-                (current-indentation)   ; so just continue the pattern
-              ;; else started on 2nd line in block, so indent more.
-              ;; if base line is an assignment with a start on a RHS,
-              ;; indent to 2 beyond the leftmost "="; else skip first
-              ;; chunk of non-whitespace characters on base line, + 1 more
-              ;; column
-              (end-of-line)
-              (setq endpos (point)
-                    searching t)
-              (back-to-indentation)
-              (setq startpos (point))
-              ;; look at all "=" from left to right, stopping at first
-              ;; one not nested in a list or string
-              (while searching
-                (skip-chars-forward "^=" endpos)
-                (if (= (point) endpos)
-                    (setq searching nil)
-                  (forward-char 1)
-                  (setq state (parse-partial-sexp startpos (point)))
-                  (if (and (zerop (car state)) ; not in a bracket
-                           (null (nth 3 state))) ; & not in a string
-                      (progn
-                        (setq searching nil) ; done searching in any case
-                        (setq found
-                              (not (or
-                                    (eq (following-char) ?=)
-                                    (memq (char-after (- (point) 2))
-                                          '(?< ?> ?!)))))))))
-              (if (or (not found)       ; not an assignment
-                      (looking-at "[ \t]*\\\\")) ; <=><spaces><backslash>
-                  (progn
-                    (goto-char startpos)
-                    (skip-chars-forward "^ \t\n")))
-              ;; if this is a continuation for a block opening
-              ;; statement, add some extra offset.
-              (+ (current-column) (if (fsharp-statement-opens-block-p)
-                                      fsharp-continuation-offset 0)
-                 1)
-              ))))
+       ;; Continuation Lines with specific handling
+       ((and (fsharp-continuation-line-p)
+             (not (fsharp--previous-line-continuation-line-p)))
+        (if open-bracket-pos
+            (fsharp--compute-indentation-open-bracket open-bracket-pos)
+          (fsharp--compute-indentation-continuation-line)))
 
-       ;; not on a continuation line
-       ((bobp) (current-indentation))
-
-       ;; Dfn: "Indenting comment line".  A line containing only a
-       ;; comment, but which is treated like a statement for
-       ;; indentation calculation purposes.  Such lines are only
-       ;; treated specially by the mode; they are not treated
-       ;; specially by the Fsharp interpreter.
-
-       ;; The first non-blank line following an indenting comment
-       ;; line is given the same amount of indentation as the
-       ;; indenting comment line.
-
-       ;; All other comment-only lines are ignored for indentation
-       ;; purposes.
-
-       ;; Are we looking at a comment-only line which is *not* an
-       ;; indenting comment line?  If so, we assume that it's been
-       ;; placed at the desired indentation, so leave it alone.
-       ;; Indenting comment lines are aligned as statements down
-       ;; below.
-       ((and (looking-at "[ \t]*//[^ \t\n]")
-             ;; NOTE: this test will not be performed in older Emacsen
-             (fboundp 'forward-comment)
-             (<= (current-indentation)
-                 (save-excursion
-                   (forward-comment (- (point-max)))
-                   (current-indentation))))
-        (current-indentation))
+       ((or
+         ;; Beginning of Buffer; not on a continuation line
+         (bobp)
+         ;; "Indenting Comment"
+         (fsharp--indenting-comment-p)
+         ;; Previous line is a continuation line
+         (fsharp--previous-line-continuation-line-p)) (current-indentation))
 
        ;; else indentation based on that of the statement that
        ;; precedes us; use the first line of that statement to
@@ -1250,12 +1268,17 @@ pleasant."
 
 
 ;; Helper functions
+;; TODO: this regexp looks transparently like a python regexp. That means it's almost certainly wrong.
 (defvar fsharp-parse-state-re
   (concat
    "^[ \t]*\\(elif\\|else\\|while\\|def\\|class\\)\\>"
    "\\|"
    "^[^ /\t\n]"))
 
+;; TODO: we only return the parse state if we are *not* inside a string. This
+;; doesn't make a lot of sense; checking for being inside a triple-quoted string
+;; is a thing we frequently need to do. Need to figure out a reason and/or
+;; abstract over the top of this.
 (defun fsharp-parse-state ()
   "Return the parse state at point (see `parse-partial-sexp' docs)."
   (save-excursion
@@ -1275,6 +1298,9 @@ pleasant."
         ;; have this built-in function, which is its loss because
         ;; without scanning from the beginning of the buffer, there's
         ;; no accurate way to determine this otherwise.
+        ;;
+        ;; NOTE[@gastove|2019-10-21]: it is not at *all* clear what this comment is on
+        ;; about. Emacs has all the functions used in this function.
         (save-excursion (setq pps (parse-partial-sexp (point) here)))
         ;; make sure we don't land inside a triple-quoted string
         (setq done (or (not (nth 3 pps))
@@ -1288,8 +1314,11 @@ pleasant."
       pps)))
 
 (defun fsharp-nesting-level ()
-  "Return the buffer position of the last unclosed enclosing list.
-If nesting level is zero, return nil."
+  "Return the buffer position of the opening character of the
+current enclosing pair. If nesting level is zero, return nil.
+
+At time of writing, enclosing pair can be [] or {}, but not
+quotes (single or triple) or ()."
   (let ((status (fsharp-parse-state)))
     (if (zerop (car status))
         nil                             ; not in a nest
@@ -1303,18 +1332,22 @@ If nesting level is zero, return nil."
      ;; use a cheap test first to avoid the regexp if possible
      ;; use 'eq' because char-after may return nil
      (not (eq (char-after (- (point) 2)) nil))
-
-                                        ;     (eq (char-after (- (point) 2)) ?\\ )
      ;; make sure; since eq test passed, there is a preceding line
      (forward-line -1)                  ; always true -- side effect
      (looking-at fsharp-continued-re))))
 
 (defun fsharp-continuation-line-p ()
-  "Return t iff current line is a continuation line."
+  "Return t if current line is a continuation line."
   (save-excursion
     (beginning-of-line)
     (or (fsharp-backslash-continuation-line-p)
         (fsharp-nesting-level))))
+
+(defun fsharp--previous-line-continuation-line-p ()
+  "Returns true if previous line is a continuation line"
+  (save-excursion
+    (forward-line -1)
+    (fsharp-continuation-line-p)))
 
 (defun fsharp-goto-beginning-of-tqs (delim)
   "Go to the beginning of the triple quoted string we find ourselves in.
