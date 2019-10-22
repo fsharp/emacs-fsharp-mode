@@ -1317,8 +1317,9 @@ pleasant."
   "Return the buffer position of the opening character of the
 current enclosing pair. If nesting level is zero, return nil.
 
-At time of writing, enclosing pair can be [] or {}, but not
-quotes (single or triple) or ()."
+At time of writing, enclosing pair can be [], {} or (), but not
+quotes (single or triple) or <>. Note that registering []
+implicitly also registers [||], though the pipes are ignored."
   (let ((status (fsharp-parse-state)))
     (if (zerop (car status))
         nil                             ; not in a nest
