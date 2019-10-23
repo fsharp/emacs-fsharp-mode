@@ -22,26 +22,47 @@ position of the opening pair closest to point?"
   ;; The character positions use here reference characters noted in comments in Nesting.fs
   (let ((nesting-file (file-truename (concat fsharp-struct-test-files-dir "Nesting.fs"))))
     ;; Test a normal list
-    (assert-against-file nesting-file 645 #'fsharp-nesting-level 640)
+    (using-file nesting-file
+      (goto-char 645)
+      (should (eq (fsharp-nesting-level) 640)))
+
     ;; Get the opening bracket of an inner list from a single-line nested list
-    (assert-against-file nesting-file 717 #'fsharp-nesting-level 706)
+    (using-file nesting-file
+      (goto-char 717)
+      (should (eq (fsharp-nesting-level) 706)))
 
     ;; Opening bracket for a multi-line non-nested list
-    (assert-against-file nesting-file 795 #'fsharp-nesting-level 777)
+    (using-file nesting-file
+      (goto-char 795)
+      (should (eq (fsharp-nesting-level) 777)))
 
     ;; Inner most opening bracket for a multi-line multi-nested list
-    (assert-against-file nesting-file 960 #'fsharp-nesting-level 955)
+    (using-file nesting-file
+      (goto-char 960)
+      (should (eq (fsharp-nesting-level) 955)))
     ;; Middle opening bracket for same list as previous
-    (assert-against-file nesting-file 954 #'fsharp-nesting-level 953)
-    (assert-against-file nesting-file 974 #'fsharp-nesting-level 953)
+    (using-file nesting-file
+      (goto-char 954)
+      (should (eq (fsharp-nesting-level) 953)))
+    (using-file nesting-file
+      (goto-char 974)
+      (should (eq (fsharp-nesting-level) 953)))
     ;; Outermost opening bracket for same list
-    (assert-against-file nesting-file 977 #'fsharp-nesting-level 947)
+    (using-file nesting-file
+      (goto-char 977)
+      (should (eq (fsharp-nesting-level) 947)))
 
     ;; Basic Async form, should return the opening {
-    (assert-against-file nesting-file 1088 #'fsharp-nesting-level 1060)
+    (using-file nesting-file
+      (goto-char 1088)
+      (should (eq (fsharp-nesting-level) 1060)))
     ;; Same async form, inner async call
-    (assert-against-file nesting-file 1129 #'fsharp-nesting-level 1121)
+    (using-file nesting-file
+      (goto-char 1129)
+      (should (eq (fsharp-nesting-level) 1121)))
 
     ;; Lambda, wrapped in parens, should return the opening (
-    (assert-against-file nesting-file 1238 #'fsharp-nesting-level 1208)
-    )))
+    (using-file nesting-file
+      (goto-char 1238)
+      (should (eq (fsharp-nesting-level) 1208)))
+    ))
