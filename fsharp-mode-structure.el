@@ -155,16 +155,21 @@ as indentation hints, unless the comment character is in column zero."
    )
   "Regular expression matching a Fsharp string literal.")
 
+
 (defconst fsharp-continued-re
   ;; This is tricky because a trailing backslash does not mean
   ;; continuation if it's in a comment
+  ;;
+  ;; NOTE[gastove|2019-10-22] even trickier because F# doesn't have backslash
+  ;; continuations *and* backslash isn't matched by this regexp at all.
   (concat ".*\\(" (mapconcat 'identity
                              '("+" "-" "*" "/")
                              "\\|")
           "\\)$")
-  "Regular expression matching unterminated expressions.")
+  "Regular expression matching unterminated algebra expressions.")
 
 
+;; TODO[gastove|2019-10-22] This doesn't match (* long comments *)
 (defconst fsharp-blank-or-comment-re "[ \t]*\\(//.*\\)?"
   "Regular expression matching a blank or comment line.")
 
@@ -457,6 +462,9 @@ Are we looking at a comment-only line which is *not* an indenting
 comment line? If so, we assume that it's been placed at the
 desired indentation, so leave it alone. Indenting comment lines
 are aligned as statements."
+  ;; TODO[gastove|2019-10-22] this is a bug. The regular expression here matches
+  ;; comments only if there is *no whites space* between the // and the first
+  ;; characters in the comment.
   (and (looking-at "[ \t]*//[^ \t\n]")
        (fboundp 'forward-comment)
        (<= (current-indentation)
@@ -1325,17 +1333,30 @@ implicitly also registers [||], though the pipes are ignored."
         nil                             ; not in a nest
       (car (cdr status)))))             ; char of open bracket
 
+;; TODO[gastove|2019-10-22] This function will return false in most cases; it
+;; only returns true if there's a hanging arithmetic operator at the end of a
+;; line, and that's very, very uncommon.
 (defun fsharp-backslash-continuation-line-p ()
-  "Return t iff preceding line ends with backslash that is not in a comment."
+  "Return t if point is on at least the *second* line of the
+buffer, and the previous line matches `fsharp-continued-re' --
+which is to say, it end in +, -, /, or *."
   (save-excursion
     (beginning-of-line)
     (and
      ;; use a cheap test first to avoid the regexp if possible
      ;; use 'eq' because char-after may return nil
+     ;;
+     ;; NOTE[gastove|2019-10-22] This check simply looks to see if the character
+     ;; two before point is *absent* - which only happens when the character is
+     ;; out of range.
+     ;; TODO: replace this with `bobp' at some point.
      (not (eq (char-after (- (point) 2)) nil))
      ;; make sure; since eq test passed, there is a preceding line
      (forward-line -1)                  ; always true -- side effect
+     ;; NOTE:[gastove|2019-10-22] `fsharp-continued-re' matches any line, so
+     ;; long as it contains one of +, -, *, or /
      (looking-at fsharp-continued-re))))
+
 
 (defun fsharp-continuation-line-p ()
   "Return t if current line is a continuation line."
@@ -1344,11 +1365,13 @@ implicitly also registers [||], though the pipes are ignored."
     (or (fsharp-backslash-continuation-line-p)
         (fsharp-nesting-level))))
 
+
 (defun fsharp--previous-line-continuation-line-p ()
   "Returns true if previous line is a continuation line"
   (save-excursion
     (forward-line -1)
     (fsharp-continuation-line-p)))
+
 
 (defun fsharp-goto-beginning-of-tqs (delim)
   "Go to the beginning of the triple quoted string we find ourselves in.
@@ -1367,6 +1390,7 @@ for."
             (setq skip (make-string 3 delim))))
       ;; we're looking at a triple-quoted string
       (search-backward skip nil t))))
+
 
 (defun fsharp-goto-initial-line ()
   "Go to the initial line of the current statement.
@@ -1419,6 +1443,7 @@ multi-line statement we need to skip over the continuation lines."
             (parse-partial-sexp (point) (point-max) 0 nil state)
             (forward-line 1))))))
 
+;; NOTE[gastove|2019-10-22] this is utter nonsense. Blocks in F# don't use colons.
 (defun fsharp-statement-opens-block-p ()
   "Return t iff the current statement opens a block.
 I.e., iff it ends with a colon that is not in a comment.  Point should
@@ -1449,6 +1474,9 @@ be at the start of a statement."
           (setq searching nil)))
       answer)))
 
+
+;; TODO[@gastove|2019-10-22]: the list of keywords this function claims to catch
+;; does not at all match the keywords in the regexp it wraps.
 (defun fsharp-statement-closes-block-p ()
   "Return t iff the current statement closes a block.
 I.e., if the line starts with `return', `raise', `break', `continue',
@@ -1460,6 +1488,7 @@ and `pass'.  This doesn't catch embedded statements."
         (looking-at (concat fsharp-block-closing-keywords-re "\\>"))
       (goto-char here))))
 
+
 (defun fsharp-goto-beyond-block ()
   "Go to point just beyond the final line of block begun by the current line.
 This is the same as where `fsharp-goto-beyond-final-line' goes unless
@@ -1468,6 +1497,7 @@ Assumes point is at the beginning of the line."
   (if (fsharp-statement-opens-block-p)
       (fsharp-mark-block nil 'just-move)
     (fsharp-goto-beyond-final-line)))
+
 
 (defun fsharp-goto-statement-at-or-above ()
   "Go to the start of the first statement at or preceding point.
@@ -1526,6 +1556,7 @@ return t.  Otherwise, leave point at an undefined place and return nil."
     (beginning-of-line)
     found))
 
+
 (defun fsharp-suck-up-leading-text ()
   "Return string in buffer from start of indentation to end of line.
 Prefix with \"...\" if leading whitespace was skipped."
@@ -1534,6 +1565,7 @@ Prefix with \"...\" if leading whitespace was skipped."
     (concat
      (if (bolp) "" "...")
      (buffer-substring (point) (progn (end-of-line) (point))))))
+
 
 (defun fsharp-suck-up-first-keyword ()
   "Return first keyword on the line as a Lisp symbol.
@@ -1613,6 +1645,7 @@ This tells add-log.el how to find the current function/method/variable."
                (forward-line -1)))))
   (beginning-of-line))
 
+
 (defun fsharp-end-of-block ()
   "Move point to the end of the current top-level block"
   (interactive)
@@ -1632,6 +1665,7 @@ This tells add-log.el how to find the current function/method/variable."
           (forward-line 1)
           (fsharp-end-of-block)))
     (goto-char (point-max))))
+
 
 (defconst fsharp-smie-grammar
   ;; SMIE grammar follow the refernce of SML-mode.
