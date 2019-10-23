@@ -66,3 +66,18 @@ position of the opening pair closest to point?"
       (goto-char 1238)
       (should (eq (fsharp-nesting-level) 1208)))
     ))
+
+;; "Return t if point is on at least the *second* line of the
+;; buffer, and the previous line matches `fsharp-continued-re'."
+
+(ert-deftest fsharp-backslash-continuation-line-p--should-true ()
+  "Does `fsharp-backslash-continuation-line-p' return true when we expect it to?"
+  (let ((continuation-file (file-truename (concat fsharp-struct-test-files-dir "ContinuationLines.fs"))))
+    (using-file continuation-file
+      (beginning-of-buffer)
+      (should (eq (fsharp-backslash-continuation-line-p) nil))
+      (forward-line 1)
+      (should (eq (fsharp-backslash-continuation-line-p) nil))
+      (forward-line 5)
+      (should (eq (fsharp-backslash-continuation-line-p) t))
+      )))
