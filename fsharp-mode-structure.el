@@ -1601,13 +1601,6 @@ This tells add-log.el how to find the current function/method/variable."
   (exchange-point-and-mark))
 
 
-(defun continuation-p ()
-  "Return t iff preceding line is not a finished expression (ends with an operator)"
-  (save-excursion
-    (beginning-of-line)
-    (forward-line -1)
-    (looking-at fsharp-continued-re)))
-
 (defun fsharp-beginning-of-block ()
   "Move point to the beginning of the current top-level block"
   (interactive)
@@ -1616,7 +1609,7 @@ This tells add-log.el how to find the current function/method/variable."
         (while (progn (fsharp-goto-block-up 'no-mark)
                       (< (point) prev))
           (setq prev (point)))
-      (error (while (continuation-p)
+      (error (while (fsharp-continuation-line-p)
                (forward-line -1)))))
   (beginning-of-line))
 
@@ -1629,7 +1622,7 @@ This tells add-log.el how to find the current function/method/variable."
         (beginning-of-line)
         (condition-case nil
             (progn (re-search-forward "^[a-zA-Z#0-9([]")
-                   (while (continuation-p)
+                   (while (fsharp-continuation-line-p)
                      (forward-line 1))
                    (forward-line -1))
           (error
