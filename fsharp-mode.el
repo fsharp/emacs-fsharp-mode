@@ -71,6 +71,20 @@
   "Abbrev table in use in `fsharp-mode' buffers.")
 (define-abbrev-table 'fsharp-mode-abbrev-table nil)
 
+
+(require 'info-look)
+;; The info-look package does not always provide this function (it
+;; appears this is the case with XEmacs 21.1)
+(when (fboundp 'info-lookup-maybe-add-help)
+  (info-lookup-maybe-add-help
+   :mode 'fsharp-mode
+   :regexp "[a-zA-Z0-9_]+"
+   :doc-spec '(("(fsharp-lib)Module Index")
+               ("(fsharp-lib)Class-Exception-Object Index")
+               ("(fsharp-lib)Function-Method-Variable Index")
+               ("(fsharp-lib)Miscellaneous Index"))))
+
+
 (unless fsharp-mode-map
   (setq fsharp-mode-map (make-sparse-keymap))
   (if running-xemacs

@@ -225,6 +225,14 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching expressions which begin a block")
 
 
+;; TODO: this regexp looks transparently like a python regexp. That means it's almost certainly wrong.
+(defvar fsharp-parse-state-re
+  (concat
+   "^[ \t]*\\(elif\\|else\\|while\\|def\\|class\\)\\>"
+   "\\|"
+   "^[^ /\t\n]"))
+
+
 (defsubst fsharp-point (position)
   "Returns the value of point at certain commonly referenced POSITIONs.
 POSITION can be one of the following symbols:
@@ -254,6 +262,8 @@ This function preserves point and mark."
     (point)))
 
 
+;;-------------------------------- Predicates --------------------------------;;
+
 (defun fsharp-in-literal-p (&optional lim)
   "Return non-nil if point is in a Fsharp literal (a comment or string).
 Optional argument LIM indicates the beginning of the containing form,
@@ -276,6 +286,123 @@ i.e. the limit on how far back to scan."
     (progn (back-to-indentation)
            (looking-at fsharp-outdent-re))
     ))
+
+
+(defun fsharp--indenting-comment-p ()
+  "Returns non-nil if point is in an indenting comment line, otherwise nil.
+
+Definition: Indenting comment line. A line containing only a
+comment, but which is treated like a statement for indentation
+calculation purposes. Such lines are only treated specially by
+the mode; they are not treated specially by the Fsharp
+interpreter.
+
+The first non-blank line following an indenting comment line is
+given the same amount of indentation as the indenting comment
+line.
+
+All other comment-only lines are ignored for indentation
+purposes.
+
+Are we looking at a comment-only line which is *not* an indenting
+comment line? If so, we assume that it's been placed at the
+desired indentation, so leave it alone. Indenting comment lines
+are aligned as statements."
+  ;; TODO[gastove|2019-10-22] this is a bug. The regular expression here matches
+  ;; comments only if there is *no whites space* between the // and the first
+  ;; characters in the comment.
+  (and (looking-at "[ \t]*//[^ \t\n]")
+       (fboundp 'forward-comment)
+       (<= (current-indentation)
+           (save-excursion
+             (forward-comment (- (point-max)))
+             (current-indentation)))))
+
+
+;; TODO[gastove|2019-10-22] This function will return false in most cases; it
+;; only returns true if there's a hanging arithmetic operator at the end of a
+;; line, and that's very, very uncommon.
+(defun fsharp-backslash-continuation-line-p ()
+  "Return t if point is on at least the *second* line of the
+buffer, and the previous line matches `fsharp-continued-re' --
+which is to say, it end in +, -, /, or *."
+  (save-excursion
+    (beginning-of-line)
+    (and
+     ;; use a cheap test first to avoid the regexp if possible
+     ;; use 'eq' because char-after may return nil
+     ;;
+     ;; NOTE[gastove|2019-10-22] This check simply looks to see if the character
+     ;; two before point is *absent* - which only happens when the character is
+     ;; out of range.
+     ;; TODO: replace this with `bobp' at some point.
+     (not (eq (char-after (- (point) 2)) nil))
+     ;; make sure; since eq test passed, there is a preceding line
+     (forward-line -1)                  ; always true -- side effect
+     ;; NOTE:[gastove|2019-10-22] `fsharp-continued-re' matches any line, so
+     ;; long as it contains one of +, -, *, or /
+     (looking-at fsharp-continued-re))))
+
+
+(defun fsharp-continuation-line-p ()
+  "Return t if current line is a continuation line."
+  (save-excursion
+    (beginning-of-line)
+    (or (fsharp-backslash-continuation-line-p)
+        (fsharp-nesting-level))))
+
+
+(defun fsharp--previous-line-continuation-line-p ()
+  "Returns true if previous line is a continuation line"
+  (save-excursion
+    (forward-line -1)
+    (fsharp-continuation-line-p)))
+
+
+;; NOTE[gastove|2019-10-22] this is utter nonsense. Blocks in F# don't use colons.
+(defun fsharp-statement-opens-block-p ()
+  "Return t iff the current statement opens a block.
+I.e., iff it ends with a colon that is not in a comment.  Point should
+be at the start of a statement."
+  (save-excursion
+    (let ((start (point))
+          (finish (progn (fsharp-goto-beyond-final-line) (1- (point))))
+          (searching t)
+          (answer nil)
+          state)
+      (goto-char start)
+      (while searching
+        ;; look for a colon with nothing after it except whitespace, and
+        ;; maybe a comment
+
+        (if (re-search-forward fsharp-block-opening-re finish t)
+            (if (eq (point) finish)     ; note: no `else' clause; just
+                                        ; keep searching if we're not at
+                                        ; the end yet
+                ;; sure looks like it opens a block -- but it might
+                ;; be in a comment
+                (progn
+                  (setq searching nil)  ; search is done either way
+                  (setq state (parse-partial-sexp start
+                                                  (match-beginning 0)))
+                  (setq answer (not (nth 4 state)))))
+          ;; search failed: couldn't find another interesting colon
+          (setq searching nil)))
+      answer)))
+
+
+;; TODO[@gastove|2019-10-22]: the list of keywords this function claims to catch
+;; does not at all match the keywords in the regexp it wraps.
+(defun fsharp-statement-closes-block-p ()
+  "Return t iff the current statement closes a block.
+I.e., if the line starts with `return', `raise', `break', `continue',
+and `pass'.  This doesn't catch embedded statements."
+  (let ((here (point)))
+    (fsharp-goto-initial-line)
+    (back-to-indentation)
+    (prog1
+        (looking-at (concat fsharp-block-closing-keywords-re "\\>"))
+      (goto-char here))))
 
 
 ;;---------------------------- Electric Keystrokes ----------------------------;;
@@ -402,6 +529,8 @@ number of characters to delete (default is 1)."
 (put 'fsharp-electric-delete    'pending-delete   'supersede) ;pending-del
 
 
+;;-------------------------------- Indentation --------------------------------;;
+
 (defun fsharp-indent-line (&optional arg)
   "Fix the indentation of the current line according to Fsharp rules.
 With \\[universal-argument] (programmatically, the optional argument
@@ -439,38 +568,6 @@ This function is normally bound to `indent-line-function' so
                    (if move-to-indentation-p (back-to-indentation)))
           (insert-tab)))
       )))
-
-;;---------------------------- Compute Indentation ----------------------------;;
-
-(defun fsharp--indenting-comment-p ()
-  "Returns non-nil if point is in an indenting comment line, otherwise nil.
-
-Definition: Indenting comment line. A line containing only a
-comment, but which is treated like a statement for indentation
-calculation purposes. Such lines are only treated specially by
-the mode; they are not treated specially by the Fsharp
-interpreter.
-
-The first non-blank line following an indenting comment line is
-given the same amount of indentation as the indenting comment
-line.
-
-All other comment-only lines are ignored for indentation
-purposes.
-
-Are we looking at a comment-only line which is *not* an indenting
-comment line? If so, we assume that it's been placed at the
-desired indentation, so leave it alone. Indenting comment lines
-are aligned as statements."
-  ;; TODO[gastove|2019-10-22] this is a bug. The regular expression here matches
-  ;; comments only if there is *no whites space* between the // and the first
-  ;; characters in the comment.
-  (and (looking-at "[ \t]*//[^ \t\n]")
-       (fboundp 'forward-comment)
-       (<= (current-indentation)
-           (save-excursion
-             (forward-comment (- (point-max)))
-             (current-indentation)))))
 
 
 (defun fsharp--compute-indentation-open-bracket (open-bracket-pos)
@@ -877,7 +974,8 @@ initial line; and comment lines beginning in column 1 are ignored."
   (set-marker end nil))
 
 
-;; Functions for moving point
+;;------------------------------ Motion and Mark ------------------------------;;
+
 (defun fsharp-previous-statement (count)
   "Go to the start of the COUNTth preceding Fsharp statement.
 By default, goes to the previous statement.  If there is no such
@@ -1067,8 +1165,310 @@ To mark the current `def', see `\\[fsharp-mark-def-or-class]'."
      ((eq state 'not-found) nil)
      (t (error "Internal error in `fsharp-end-of-def-or-class'")))))
 
-
-;; Functions for marking regions
+
+;; Helper functions
+
+
+;; TODO: we only return the parse state if we are *not* inside a string. This
+;; doesn't make a lot of sense; checking for being inside a triple-quoted string
+;; is a thing we frequently need to do. Need to figure out a reason and/or
+;; abstract over the top of this.
+(defun fsharp-parse-state ()
+  "Return the parse state at point (see `parse-partial-sexp' docs)."
+  (save-excursion
+    (let ((here (point))
+          pps done)
+      (while (not done)
+        ;; back up to the first preceding line (if any; else start of
+        ;; buffer) that begins with a popular Fsharp keyword, or a
+        ;; non- whitespace and non-comment character.  These are good
+        ;; places to start parsing to see whether where we started is
+        ;; at a non-zero nesting level.  It may be slow for people who
+        ;; write huge code blocks or huge lists ... tough beans.
+        (re-search-backward fsharp-parse-state-re nil 'move)
+        (beginning-of-line)
+        ;; In XEmacs, we have a much better way to test for whether
+        ;; we're in a triple-quoted string or not.  Emacs does not
+        ;; have this built-in function, which is its loss because
+        ;; without scanning from the beginning of the buffer, there's
+        ;; no accurate way to determine this otherwise.
+        ;;
+        ;; NOTE[@gastove|2019-10-21]: it is not at *all* clear what this comment is on
+        ;; about. Emacs has all the functions used in this function.
+        (save-excursion (setq pps (parse-partial-sexp (point) here)))
+        ;; make sure we don't land inside a triple-quoted string
+        (setq done (or (not (nth 3 pps))
+                       (bobp)))
+        ;; Just go ahead and short circuit the test back to the
+        ;; beginning of the buffer.  This will be slow, but not
+        ;; nearly as slow as looping through many
+        ;; re-search-backwards.
+        (if (not done)
+            (goto-char (point-min))))
+      pps)))
+
+(defun fsharp-nesting-level ()
+  "Return the buffer position of the opening character of the
+current enclosing pair. If nesting level is zero, return nil.
+
+At time of writing, enclosing pair can be [], {} or (), but not
+quotes (single or triple) or <>. Note that registering []
+implicitly also registers [||], though the pipes are ignored."
+  (let ((status (fsharp-parse-state)))
+    (if (zerop (car status))
+        nil                             ; not in a nest
+      (car (cdr status)))))             ; char of open bracket
+
+
+(defun fsharp-goto-beginning-of-tqs (delim)
+  "Go to the beginning of the triple quoted string we find ourselves in.
+DELIM is the TQS string delimiter character we're searching backwards
+for."
+  (let ((skip (and delim (make-string 1 delim)))
+        (continue t))
+    (when skip
+      (save-excursion
+        (while continue
+          (search-backward skip nil t)
+          (setq continue (and (not (bobp))
+                              (= (char-before) ?\\))))
+        (if (and (= (char-before) delim)
+                 (= (char-before (1- (point))) delim))
+            (setq skip (make-string 3 delim))))
+      ;; we're looking at a triple-quoted string
+      (search-backward skip nil t))))
+
+
+(defun fsharp-goto-initial-line ()
+  "Go to the initial line of the current statement.
+Usually this is the line we're on, but if we're on the 2nd or
+following lines of a continuation block, we need to go up to the first
+line of the block."
+  ;; Tricky: We want to avoid quadratic-time behavior for long
+  ;; continued blocks, whether of the backslash or open-bracket
+  ;; varieties, or a mix of the two.  The following manages to do that
+  ;; in the usual cases.
+  ;;
+  ;; Also, if we're sitting inside a triple quoted string, this will
+  ;; drop us at the line that begins the string.
+  (let (open-bracket-pos)
+    (while (fsharp-continuation-line-p)
+      (beginning-of-line)
+      (if (fsharp-backslash-continuation-line-p)
+          (while (fsharp-backslash-continuation-line-p)
+            (forward-line -1))
+        ;; else zip out of nested brackets/braces/parens
+        (while (setq open-bracket-pos (fsharp-nesting-level))
+          (goto-char open-bracket-pos)))))
+  (beginning-of-line))
+
+(defun fsharp-goto-beyond-final-line ()
+  "Go to the point just beyond the fine line of the current statement.
+Usually this is the start of the next line, but if this is a
+multi-line statement we need to skip over the continuation lines."
+  ;; Tricky: Again we need to be clever to avoid quadratic time
+  ;; behavior.
+  ;;
+  ;; XXX: Not quite the right solution, but deals with multi-line doc
+  ;; strings
+  (if (looking-at (concat "[ \t]*\\(" fsharp-stringlit-re "\\)"))
+      (goto-char (match-end 0)))
+  ;;
+  (forward-line 1)
+  (let (state)
+    (while (and (fsharp-continuation-line-p)
+                (not (eobp)))
+      ;; skip over the backslash flavor
+      (while (and (fsharp-backslash-continuation-line-p)
+                  (not (eobp)))
+        (forward-line 1))
+      ;; if in nest, zip to the end of the nest
+      (setq state (fsharp-parse-state))
+      (if (and (not (zerop (car state)))
+               (not (eobp)))
+          (progn
+            (parse-partial-sexp (point) (point-max) 0 nil state)
+            (forward-line 1))))))
+
+
+(defun fsharp-goto-beyond-block ()
+  "Go to point just beyond the final line of block begun by the current line.
+This is the same as where `fsharp-goto-beyond-final-line' goes unless
+we're on colon line, in which case we go to the end of the block.
+Assumes point is at the beginning of the line."
+  (if (fsharp-statement-opens-block-p)
+      (fsharp-mark-block nil 'just-move)
+    (fsharp-goto-beyond-final-line)))
+
+
+(defun fsharp-goto-statement-at-or-above ()
+  "Go to the start of the first statement at or preceding point.
+Return t if there is such a statement, otherwise nil.  `Statement'
+does not include blank lines, comments, or continuation lines."
+  (fsharp-goto-initial-line)
+  (if (looking-at fsharp-blank-or-comment-re)
+      ;; skip back over blank & comment lines
+      ;; note:  will skip a blank or comment line that happens to be
+      ;; a continuation line too
+      (if (re-search-backward "^[ \t]*\\([^ \t\n]\\|//\\)" nil t)
+          (progn (fsharp-goto-initial-line) t)
+        nil)
+    t))
+
+(defun fsharp-goto-statement-below ()
+  "Go to start of the first statement following the statement containing point.
+Return t if there is such a statement, otherwise nil.  `Statement'
+does not include blank lines, comments, or continuation lines."
+  (beginning-of-line)
+  (let ((start (point)))
+    (fsharp-goto-beyond-final-line)
+    (while (and
+            (or (looking-at fsharp-blank-or-comment-re)
+                (fsharp-in-literal-p))
+            (not (eobp)))
+      (forward-line 1))
+    (if (eobp)
+        (progn (goto-char start) nil)
+      t)))
+
+(defun fsharp-go-up-tree-to-keyword (key)
+  "Go to begining of statement starting with KEY, at or preceding point.
+
+KEY is a regular expression describing a Fsharp keyword.  Skip blank
+lines and non-indenting comments.  If the statement found starts with
+KEY, then stop, otherwise go back to first enclosing block starting
+with KEY.  If successful, leave point at the start of the KEY line and
+return t.  Otherwise, leave point at an undefined place and return nil."
+  ;; skip blanks and non-indenting //
+  (fsharp-goto-initial-line)
+  (while (and
+          (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
+          (zerop (forward-line -1)))    ; go back
+    nil)
+  (fsharp-goto-initial-line)
+  (let* ((re (concat "[ \t]*" key "\\>"))
+         (case-fold-search nil)                 ; let* so looking-at sees this
+         (found (looking-at re))
+         (dead nil))
+    (while (not (or found dead))
+      (condition-case nil               ; in case no enclosing block
+          (fsharp-goto-block-up 'no-mark)
+        (error (setq dead t)))
+      (or dead (setq found (looking-at re))))
+    (beginning-of-line)
+    found))
+
+
+(defun fsharp-suck-up-leading-text ()
+  "Return string in buffer from start of indentation to end of line.
+Prefix with \"...\" if leading whitespace was skipped."
+  (save-excursion
+    (back-to-indentation)
+    (concat
+     (if (bolp) "" "...")
+     (buffer-substring (point) (progn (end-of-line) (point))))))
+
+
+(defun fsharp-suck-up-first-keyword ()
+  "Return first keyword on the line as a Lisp symbol.
+`Keyword' is defined (essentially) as the regular expression
+([a-z]+).  Returns nil if none was found."
+  (let ((case-fold-search nil))
+    (if (looking-at "[ \t]*\\([a-z]+\\)\\>")
+        (intern (buffer-substring (match-beginning 1) (match-end 1)))
+      nil)))
+
+(defun fsharp-current-defun ()
+  "Fsharp value for `add-log-current-defun-function'.
+This tells add-log.el how to find the current function/method/variable."
+  (save-excursion
+
+    ;; Move back to start of the current statement.
+
+    (fsharp-goto-initial-line)
+    (back-to-indentation)
+    (while (and (or (looking-at fsharp-blank-or-comment-re)
+                    (fsharp-in-literal-p))
+                (not (eq (point-at-bol) (point-min))))
+      (backward-to-indentation 1))
+    (fsharp-goto-initial-line)
+
+    (let ((scopes "")
+          (sep "")
+          dead assignment)
+
+      ;; Check for an assignment.  If this assignment exists inside a
+      ;; def, it will be overwritten inside the while loop.  If it
+      ;; exists at top lever or inside a class, it will be preserved.
+
+      (when (looking-at "[ \t]*\\([a-zA-Z0-9_]+\\)[ \t]*=")
+        (setq scopes (buffer-substring (match-beginning 1) (match-end 1)))
+        (setq assignment t)
+        (setq sep "."))
+
+      ;; Prepend the name of each outer socpe (def or class).
+
+      (while (not dead)
+        (if (and (fsharp-go-up-tree-to-keyword "\\(class\\|def\\)")
+                 (looking-at
+                  "[ \t]*\\(class\\|def\\)[ \t]*\\([a-zA-Z0-9_]+\\)[ \t]*"))
+            (let ((name (buffer-substring (match-beginning 2) (match-end 2))))
+              (if (and assignment (looking-at "[ \t]*def"))
+                  (setq scopes name)
+                (setq scopes (concat name sep scopes))
+                (setq sep "."))))
+        (setq assignment nil)
+        (condition-case nil             ; Terminate nicely at top level.
+            (fsharp-goto-block-up 'no-mark)
+          (error (setq dead t))))
+      (if (string= scopes "")
+          nil
+        scopes))))
+
+
+(defun fsharp-beginning-of-block ()
+  "Move point to the beginning of the current top-level block"
+  (interactive)
+  (let ((prev (point)))
+    (condition-case nil
+        (while (progn (fsharp-goto-block-up 'no-mark)
+                      (< (point) prev))
+          (setq prev (point)))
+      (error (while (fsharp-continuation-line-p)
+               (forward-line -1)))))
+  (beginning-of-line))
+
+
+(defun fsharp-end-of-block ()
+  "Move point to the end of the current top-level block"
+  (interactive)
+  (forward-line 1)
+  (if (not (eobp))
+      (progn
+        (beginning-of-line)
+        (condition-case nil
+            (progn (re-search-forward "^[a-zA-Z#0-9([]")
+                   (while (fsharp-continuation-line-p)
+                     (forward-line 1))
+                   (forward-line -1))
+          (error
+           (progn (goto-char (point-max)))))
+        (end-of-line)
+        (when (looking-at-p "\n[ \t]*and[ \t]+")
+          (forward-line 1)
+          (fsharp-end-of-block)))
+    (goto-char (point-max))))
+
+
+(defun fsharp-mark-phrase ()
+  "Mark current phrase"
+  (interactive)
+  (fsharp-beginning-of-block)
+  (push-mark (point))
+  (fsharp-end-of-block)
+  (exchange-point-and-mark))
+
+
 (defun fsharp-mark-block (&optional extend just-move)
   "Mark following block of lines.  With prefix arg, mark structure.
 Easier to use than explain.  It sets the region to an `interesting'
@@ -1261,411 +1661,7 @@ pleasant."
   (exchange-point-and-mark))
 
 
-(require 'info-look)
-;; The info-look package does not always provide this function (it
-;; appears this is the case with XEmacs 21.1)
-(when (fboundp 'info-lookup-maybe-add-help)
-  (info-lookup-maybe-add-help
-   :mode 'fsharp-mode
-   :regexp "[a-zA-Z0-9_]+"
-   :doc-spec '(("(fsharp-lib)Module Index")
-               ("(fsharp-lib)Class-Exception-Object Index")
-               ("(fsharp-lib)Function-Method-Variable Index")
-               ("(fsharp-lib)Miscellaneous Index")))
-  )
-
-
-;; Helper functions
-;; TODO: this regexp looks transparently like a python regexp. That means it's almost certainly wrong.
-(defvar fsharp-parse-state-re
-  (concat
-   "^[ \t]*\\(elif\\|else\\|while\\|def\\|class\\)\\>"
-   "\\|"
-   "^[^ /\t\n]"))
-
-;; TODO: we only return the parse state if we are *not* inside a string. This
-;; doesn't make a lot of sense; checking for being inside a triple-quoted string
-;; is a thing we frequently need to do. Need to figure out a reason and/or
-;; abstract over the top of this.
-(defun fsharp-parse-state ()
-  "Return the parse state at point (see `parse-partial-sexp' docs)."
-  (save-excursion
-    (let ((here (point))
-          pps done)
-      (while (not done)
-        ;; back up to the first preceding line (if any; else start of
-        ;; buffer) that begins with a popular Fsharp keyword, or a
-        ;; non- whitespace and non-comment character.  These are good
-        ;; places to start parsing to see whether where we started is
-        ;; at a non-zero nesting level.  It may be slow for people who
-        ;; write huge code blocks or huge lists ... tough beans.
-        (re-search-backward fsharp-parse-state-re nil 'move)
-        (beginning-of-line)
-        ;; In XEmacs, we have a much better way to test for whether
-        ;; we're in a triple-quoted string or not.  Emacs does not
-        ;; have this built-in function, which is its loss because
-        ;; without scanning from the beginning of the buffer, there's
-        ;; no accurate way to determine this otherwise.
-        ;;
-        ;; NOTE[@gastove|2019-10-21]: it is not at *all* clear what this comment is on
-        ;; about. Emacs has all the functions used in this function.
-        (save-excursion (setq pps (parse-partial-sexp (point) here)))
-        ;; make sure we don't land inside a triple-quoted string
-        (setq done (or (not (nth 3 pps))
-                       (bobp)))
-        ;; Just go ahead and short circuit the test back to the
-        ;; beginning of the buffer.  This will be slow, but not
-        ;; nearly as slow as looping through many
-        ;; re-search-backwards.
-        (if (not done)
-            (goto-char (point-min))))
-      pps)))
-
-(defun fsharp-nesting-level ()
-  "Return the buffer position of the opening character of the
-current enclosing pair. If nesting level is zero, return nil.
-
-At time of writing, enclosing pair can be [], {} or (), but not
-quotes (single or triple) or <>. Note that registering []
-implicitly also registers [||], though the pipes are ignored."
-  (let ((status (fsharp-parse-state)))
-    (if (zerop (car status))
-        nil                             ; not in a nest
-      (car (cdr status)))))             ; char of open bracket
-
-;; TODO[gastove|2019-10-22] This function will return false in most cases; it
-;; only returns true if there's a hanging arithmetic operator at the end of a
-;; line, and that's very, very uncommon.
-(defun fsharp-backslash-continuation-line-p ()
-  "Return t if point is on at least the *second* line of the
-buffer, and the previous line matches `fsharp-continued-re' --
-which is to say, it end in +, -, /, or *."
-  (save-excursion
-    (beginning-of-line)
-    (and
-     ;; use a cheap test first to avoid the regexp if possible
-     ;; use 'eq' because char-after may return nil
-     ;;
-     ;; NOTE[gastove|2019-10-22] This check simply looks to see if the character
-     ;; two before point is *absent* - which only happens when the character is
-     ;; out of range.
-     ;; TODO: replace this with `bobp' at some point.
-     (not (eq (char-after (- (point) 2)) nil))
-     ;; make sure; since eq test passed, there is a preceding line
-     (forward-line -1)                  ; always true -- side effect
-     ;; NOTE:[gastove|2019-10-22] `fsharp-continued-re' matches any line, so
-     ;; long as it contains one of +, -, *, or /
-     (looking-at fsharp-continued-re))))
-
-
-(defun fsharp-continuation-line-p ()
-  "Return t if current line is a continuation line."
-  (save-excursion
-    (beginning-of-line)
-    (or (fsharp-backslash-continuation-line-p)
-        (fsharp-nesting-level))))
-
-
-(defun fsharp--previous-line-continuation-line-p ()
-  "Returns true if previous line is a continuation line"
-  (save-excursion
-    (forward-line -1)
-    (fsharp-continuation-line-p)))
-
-
-(defun fsharp-goto-beginning-of-tqs (delim)
-  "Go to the beginning of the triple quoted string we find ourselves in.
-DELIM is the TQS string delimiter character we're searching backwards
-for."
-  (let ((skip (and delim (make-string 1 delim)))
-        (continue t))
-    (when skip
-      (save-excursion
-        (while continue
-          (search-backward skip nil t)
-          (setq continue (and (not (bobp))
-                              (= (char-before) ?\\))))
-        (if (and (= (char-before) delim)
-                 (= (char-before (1- (point))) delim))
-            (setq skip (make-string 3 delim))))
-      ;; we're looking at a triple-quoted string
-      (search-backward skip nil t))))
-
-
-(defun fsharp-goto-initial-line ()
-  "Go to the initial line of the current statement.
-Usually this is the line we're on, but if we're on the 2nd or
-following lines of a continuation block, we need to go up to the first
-line of the block."
-  ;; Tricky: We want to avoid quadratic-time behavior for long
-  ;; continued blocks, whether of the backslash or open-bracket
-  ;; varieties, or a mix of the two.  The following manages to do that
-  ;; in the usual cases.
-  ;;
-  ;; Also, if we're sitting inside a triple quoted string, this will
-  ;; drop us at the line that begins the string.
-  (let (open-bracket-pos)
-    (while (fsharp-continuation-line-p)
-      (beginning-of-line)
-      (if (fsharp-backslash-continuation-line-p)
-          (while (fsharp-backslash-continuation-line-p)
-            (forward-line -1))
-        ;; else zip out of nested brackets/braces/parens
-        (while (setq open-bracket-pos (fsharp-nesting-level))
-          (goto-char open-bracket-pos)))))
-  (beginning-of-line))
-
-(defun fsharp-goto-beyond-final-line ()
-  "Go to the point just beyond the fine line of the current statement.
-Usually this is the start of the next line, but if this is a
-multi-line statement we need to skip over the continuation lines."
-  ;; Tricky: Again we need to be clever to avoid quadratic time
-  ;; behavior.
-  ;;
-  ;; XXX: Not quite the right solution, but deals with multi-line doc
-  ;; strings
-  (if (looking-at (concat "[ \t]*\\(" fsharp-stringlit-re "\\)"))
-      (goto-char (match-end 0)))
-  ;;
-  (forward-line 1)
-  (let (state)
-    (while (and (fsharp-continuation-line-p)
-                (not (eobp)))
-      ;; skip over the backslash flavor
-      (while (and (fsharp-backslash-continuation-line-p)
-                  (not (eobp)))
-        (forward-line 1))
-      ;; if in nest, zip to the end of the nest
-      (setq state (fsharp-parse-state))
-      (if (and (not (zerop (car state)))
-               (not (eobp)))
-          (progn
-            (parse-partial-sexp (point) (point-max) 0 nil state)
-            (forward-line 1))))))
-
-;; NOTE[gastove|2019-10-22] this is utter nonsense. Blocks in F# don't use colons.
-(defun fsharp-statement-opens-block-p ()
-  "Return t iff the current statement opens a block.
-I.e., iff it ends with a colon that is not in a comment.  Point should
-be at the start of a statement."
-  (save-excursion
-    (let ((start (point))
-          (finish (progn (fsharp-goto-beyond-final-line) (1- (point))))
-          (searching t)
-          (answer nil)
-          state)
-      (goto-char start)
-      (while searching
-        ;; look for a colon with nothing after it except whitespace, and
-        ;; maybe a comment
-
-        (if (re-search-forward fsharp-block-opening-re finish t)
-            (if (eq (point) finish)     ; note: no `else' clause; just
-                                        ; keep searching if we're not at
-                                        ; the end yet
-                ;; sure looks like it opens a block -- but it might
-                ;; be in a comment
-                (progn
-                  (setq searching nil)  ; search is done either way
-                  (setq state (parse-partial-sexp start
-                                                  (match-beginning 0)))
-                  (setq answer (not (nth 4 state)))))
-          ;; search failed: couldn't find another interesting colon
-          (setq searching nil)))
-      answer)))
-
-
-;; TODO[@gastove|2019-10-22]: the list of keywords this function claims to catch
-;; does not at all match the keywords in the regexp it wraps.
-(defun fsharp-statement-closes-block-p ()
-  "Return t iff the current statement closes a block.
-I.e., if the line starts with `return', `raise', `break', `continue',
-and `pass'.  This doesn't catch embedded statements."
-  (let ((here (point)))
-    (fsharp-goto-initial-line)
-    (back-to-indentation)
-    (prog1
-        (looking-at (concat fsharp-block-closing-keywords-re "\\>"))
-      (goto-char here))))
-
-
-(defun fsharp-goto-beyond-block ()
-  "Go to point just beyond the final line of block begun by the current line.
-This is the same as where `fsharp-goto-beyond-final-line' goes unless
-we're on colon line, in which case we go to the end of the block.
-Assumes point is at the beginning of the line."
-  (if (fsharp-statement-opens-block-p)
-      (fsharp-mark-block nil 'just-move)
-    (fsharp-goto-beyond-final-line)))
-
-
-(defun fsharp-goto-statement-at-or-above ()
-  "Go to the start of the first statement at or preceding point.
-Return t if there is such a statement, otherwise nil.  `Statement'
-does not include blank lines, comments, or continuation lines."
-  (fsharp-goto-initial-line)
-  (if (looking-at fsharp-blank-or-comment-re)
-      ;; skip back over blank & comment lines
-      ;; note:  will skip a blank or comment line that happens to be
-      ;; a continuation line too
-      (if (re-search-backward "^[ \t]*\\([^ \t\n]\\|//\\)" nil t)
-          (progn (fsharp-goto-initial-line) t)
-        nil)
-    t))
-
-(defun fsharp-goto-statement-below ()
-  "Go to start of the first statement following the statement containing point.
-Return t if there is such a statement, otherwise nil.  `Statement'
-does not include blank lines, comments, or continuation lines."
-  (beginning-of-line)
-  (let ((start (point)))
-    (fsharp-goto-beyond-final-line)
-    (while (and
-            (or (looking-at fsharp-blank-or-comment-re)
-                (fsharp-in-literal-p))
-            (not (eobp)))
-      (forward-line 1))
-    (if (eobp)
-        (progn (goto-char start) nil)
-      t)))
-
-(defun fsharp-go-up-tree-to-keyword (key)
-  "Go to begining of statement starting with KEY, at or preceding point.
-
-KEY is a regular expression describing a Fsharp keyword.  Skip blank
-lines and non-indenting comments.  If the statement found starts with
-KEY, then stop, otherwise go back to first enclosing block starting
-with KEY.  If successful, leave point at the start of the KEY line and
-return t.  Otherwise, leave point at an undefined place and return nil."
-  ;; skip blanks and non-indenting //
-  (fsharp-goto-initial-line)
-  (while (and
-          (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
-          (zerop (forward-line -1)))    ; go back
-    nil)
-  (fsharp-goto-initial-line)
-  (let* ((re (concat "[ \t]*" key "\\>"))
-         (case-fold-search nil)                 ; let* so looking-at sees this
-         (found (looking-at re))
-         (dead nil))
-    (while (not (or found dead))
-      (condition-case nil               ; in case no enclosing block
-          (fsharp-goto-block-up 'no-mark)
-        (error (setq dead t)))
-      (or dead (setq found (looking-at re))))
-    (beginning-of-line)
-    found))
-
-
-(defun fsharp-suck-up-leading-text ()
-  "Return string in buffer from start of indentation to end of line.
-Prefix with \"...\" if leading whitespace was skipped."
-  (save-excursion
-    (back-to-indentation)
-    (concat
-     (if (bolp) "" "...")
-     (buffer-substring (point) (progn (end-of-line) (point))))))
-
-
-(defun fsharp-suck-up-first-keyword ()
-  "Return first keyword on the line as a Lisp symbol.
-`Keyword' is defined (essentially) as the regular expression
-([a-z]+).  Returns nil if none was found."
-  (let ((case-fold-search nil))
-    (if (looking-at "[ \t]*\\([a-z]+\\)\\>")
-        (intern (buffer-substring (match-beginning 1) (match-end 1)))
-      nil)))
-
-(defun fsharp-current-defun ()
-  "Fsharp value for `add-log-current-defun-function'.
-This tells add-log.el how to find the current function/method/variable."
-  (save-excursion
-
-    ;; Move back to start of the current statement.
-
-    (fsharp-goto-initial-line)
-    (back-to-indentation)
-    (while (and (or (looking-at fsharp-blank-or-comment-re)
-                    (fsharp-in-literal-p))
-                (not (eq (point-at-bol) (point-min))))
-      (backward-to-indentation 1))
-    (fsharp-goto-initial-line)
-
-    (let ((scopes "")
-          (sep "")
-          dead assignment)
-
-      ;; Check for an assignment.  If this assignment exists inside a
-      ;; def, it will be overwritten inside the while loop.  If it
-      ;; exists at top lever or inside a class, it will be preserved.
-
-      (when (looking-at "[ \t]*\\([a-zA-Z0-9_]+\\)[ \t]*=")
-        (setq scopes (buffer-substring (match-beginning 1) (match-end 1)))
-        (setq assignment t)
-        (setq sep "."))
-
-      ;; Prepend the name of each outer socpe (def or class).
-
-      (while (not dead)
-        (if (and (fsharp-go-up-tree-to-keyword "\\(class\\|def\\)")
-                 (looking-at
-                  "[ \t]*\\(class\\|def\\)[ \t]*\\([a-zA-Z0-9_]+\\)[ \t]*"))
-            (let ((name (buffer-substring (match-beginning 2) (match-end 2))))
-              (if (and assignment (looking-at "[ \t]*def"))
-                  (setq scopes name)
-                (setq scopes (concat name sep scopes))
-                (setq sep "."))))
-        (setq assignment nil)
-        (condition-case nil             ; Terminate nicely at top level.
-            (fsharp-goto-block-up 'no-mark)
-          (error (setq dead t))))
-      (if (string= scopes "")
-          nil
-        scopes))))
-
-
-(defun fsharp-mark-phrase ()
-  "Mark current phrase"
-  (interactive)
-  (fsharp-beginning-of-block)
-  (push-mark (point))
-  (fsharp-end-of-block)
-  (exchange-point-and-mark))
-
-
-(defun fsharp-beginning-of-block ()
-  "Move point to the beginning of the current top-level block"
-  (interactive)
-  (let ((prev (point)))
-    (condition-case nil
-        (while (progn (fsharp-goto-block-up 'no-mark)
-                      (< (point) prev))
-          (setq prev (point)))
-      (error (while (fsharp-continuation-line-p)
-               (forward-line -1)))))
-  (beginning-of-line))
-
-
-(defun fsharp-end-of-block ()
-  "Move point to the end of the current top-level block"
-  (interactive)
-  (forward-line 1)
-  (if (not (eobp))
-      (progn
-        (beginning-of-line)
-        (condition-case nil
-            (progn (re-search-forward "^[a-zA-Z#0-9([]")
-                   (while (fsharp-continuation-line-p)
-                     (forward-line 1))
-                   (forward-line -1))
-          (error
-           (progn (goto-char (point-max)))))
-        (end-of-line)
-        (when (looking-at-p "\n[ \t]*and[ \t]+")
-          (forward-line 1)
-          (fsharp-end-of-block)))
-    (goto-char (point-max))))
-
+;;------------------------------- SMIE Configs -------------------------------;;
 
 (defconst fsharp-smie-grammar
   ;; SMIE grammar follow the refernce of SML-mode.
