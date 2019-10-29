@@ -629,47 +629,50 @@ This function is normally bound to `indent-line-function' so
 (defun fsharp--compute-indentation-continuation-line ()
   "Computes the indentation for a line which continues the line
 above, but only when the previous line is not itself a continuation line."
-  (let ((startpos (point))
-        (open-bracket-pos (fsharp-nesting-level))
-        endpos searching found state placeholder)
+  (save-excursion
+    (forward-line -11)
+    (let ((startpos (point))
+          (open-bracket-pos (fsharp-nesting-level))
+          endpos searching found state placeholder)
 
-    ;; Started on 2nd line in block, so indent more. if base line is an
-    ;; assignment with a start on a RHS, indent to 2 beyond the leftmost "=";
-    ;; else skip first chunk of non-whitespace characters on base line, + 1 more
-    ;; column
-    (end-of-line)
-    (setq endpos (point)
-          searching t)
-    (back-to-indentation)
-    (setq startpos (point))
-    ;; look at all "=" from left to right, stopping at first one not nested in a
-    ;; list or string
-    (while searching
-      (skip-chars-forward "^=" endpos)
-      (if (= (point) endpos)
-          (setq searching nil)
-        (forward-char 1)
-        (setq state (parse-partial-sexp startpos (point)))
-        (if (and (zerop (car state)) ; not in a bracket
-                 (null (nth 3 state))) ; & not in a string
-            (progn
-              (setq searching nil) ; done searching in any case
-              (setq found
-                    (not (or
-                          (eq (following-char) ?=)
-                          (memq (char-after (- (point) 2))
-                                '(?< ?> ?!)))))))))
-    (if (or (not found)       ; not an assignment
-            (looking-at "[ \t]*\\\\")) ; <=><spaces><backslash>
-        (progn
-          (goto-char startpos)
-          (skip-chars-forward "^ \t\n")))
-    ;; if this is a continuation for a block opening
-    ;; statement, add some extra offset.
-    (+ (current-column) (if (fsharp-statement-opens-block-p)
-                            fsharp-continuation-offset 0)
-       1)
-    ))
+      ;; Started on 2nd line in block, so indent more. if base line is an
+      ;; assignment with a start on a RHS, indent to 2 beyond the leftmost "=";
+      ;; else skip first chunk of non-whitespace characters on base line, + 1 more
+      ;; column
+      (end-of-line)
+      (setq endpos (point)
+            searching t)
+      (back-to-indentation)
+      (setq startpos (point))
+      ;; look at all "=" from left to right, stopping at first one not nested in a
+      ;; list or string
+      (while searching
+        (skip-chars-forward "^=" endpos)
+        (if (= (point) endpos)
+            (setq searching nil)
+          (forward-char 1)
+          (setq state (parse-partial-sexp startpos (point)))
+          (if (and (zerop (car state)) ; not in a bracket
+                   (null (nth 3 state))) ; & not in a string
+              (progn
+                (setq searching nil) ; done searching in any case
+                (setq found
+                      (not (or
+                            (eq (following-char) ?=)
+                            (memq (char-after (- (point) 2))
+                                  '(?< ?> ?!)))))))))
+      (if (or (not found)       ; not an assignment
+              (looking-at "[ \t]*\\\\")) ; <=><spaces><backslash>
+          (progn
+            (goto-char startpos)
+            (skip-chars-forward "^ \t\n")))
+      ;; if this is a continuation for a block opening
+      ;; statement, add some extra offset.
+      (+ (current-column) (if (fsharp-statement-opens-block-p)
+                              fsharp-continuation-offset 0)
+         1)
+      )))
+
 
 
 (defun fsharp-newline-and-indent ()
