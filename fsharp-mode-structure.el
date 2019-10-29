@@ -1255,6 +1255,10 @@ implicitly also registers [||], though the pipes are ignored."
       (car (cdr status)))))             ; char of open bracket
 
 
+;; NOTE[gastove|2019-10-25] this function baffles me. A triple-quoted string is,
+;; definitionally, always delimited by *triple quotes*. I suspect this function
+;; of being something more akin to, "go to beginning of opening of pair", or
+;; just "go to delimiter."
 (defun fsharp-goto-beginning-of-tqs (delim)
   "Go to the beginning of the triple quoted string we find ourselves in.
 DELIM is the TQS string delimiter character we're searching backwards
