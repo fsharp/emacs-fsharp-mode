@@ -674,6 +674,61 @@ above, but only when the previous line is not itself a continuation line."
       )))
 
 
+(defun fsharp--compute-indentation-relative-to-previous (honor-block-close-p)
+  "Indentation based on that of the statement that precedes us;
+use the first line of that statement to establish the base, in
+case the user forced a non-std indentation for the continuation
+lines (if any)"
+  ;; skip back over blank & non-indenting comment lines note:
+  ;; will skip a blank or non-indenting comment line that
+  ;; happens to be a continuation line too.  use fast Emacs 19
+  ;; function if it's there.
+  (save-excursion
+    (let ((bod (fsharp-point 'bod))
+          placeholder)
+      (if (and (eq fsharp-honor-comment-indentation nil)
+               (fboundp 'forward-comment))
+          (forward-comment (- (point-max)))
+        (let ((prefix-re "//[ \t]*")
+              done)
+          (while (not done)
+            (re-search-backward "^[ \t]*\\([^ \t\n]\\|//\\)" nil 'move)
+            (setq done (or (bobp)
+                           (and (eq fsharp-honor-comment-indentation t)
+                                (save-excursion
+                                  (back-to-indentation)
+                                  (not (looking-at prefix-re))
+                                  ))
+                           (and (not (eq fsharp-honor-comment-indentation t))
+                                (save-excursion
+                                  (back-to-indentation)
+                                  (and (not (looking-at prefix-re))
+                                       (or (looking-at "[^/]")
+                                           (not (zerop (current-column)))
+                                           ))
+                                  ))
+                           ))
+            )))
+      ;; if we landed inside a string, go to the beginning of that
+      ;; string. this handles triple quoted, multi-line spanning
+      ;; strings.
+      (fsharp-goto-beginning-of-tqs (nth 3 (parse-partial-sexp bod (point))))
+      ;; now skip backward over continued lines
+      (setq placeholder (point))
+      (fsharp-goto-initial-line)
+      ;; we may *now* have landed in a TQS, so find the beginning of
+      ;; this string.
+      (fsharp-goto-beginning-of-tqs
+       (save-excursion (nth 3 (parse-partial-sexp
+                               placeholder (point)))))
+      (+ (current-indentation)
+         (if (fsharp-statement-opens-block-p)
+             fsharp-indent-offset
+           (if (and honor-block-close-p (fsharp-statement-closes-block-p))
+               (- fsharp-indent-offset)
+             0)))))
+  )
+
 
 (defun fsharp-newline-and-indent ()
   "Strives to act like the Emacs `newline-and-indent'.
@@ -725,53 +780,7 @@ dedenting."
        ;; precedes us; use the first line of that statement to
        ;; establish the base, in case the user forced a non-std
        ;; indentation for the continuation lines (if any)
-       (t
-        ;; skip back over blank & non-indenting comment lines note:
-        ;; will skip a blank or non-indenting comment line that
-        ;; happens to be a continuation line too.  use fast Emacs 19
-        ;; function if it's there.
-        (if (and (eq fsharp-honor-comment-indentation nil)
-                 (fboundp 'forward-comment))
-            (forward-comment (- (point-max)))
-          (let ((prefix-re "//[ \t]*")
-                done)
-            (while (not done)
-              (re-search-backward "^[ \t]*\\([^ \t\n]\\|//\\)" nil 'move)
-              (setq done (or (bobp)
-                             (and (eq fsharp-honor-comment-indentation t)
-                                  (save-excursion
-                                    (back-to-indentation)
-                                    (not (looking-at prefix-re))
-                                    ))
-                             (and (not (eq fsharp-honor-comment-indentation t))
-                                  (save-excursion
-                                    (back-to-indentation)
-                                    (and (not (looking-at prefix-re))
-                                         (or (looking-at "[^/]")
-                                             (not (zerop (current-column)))
-                                             ))
-                                    ))
-                             ))
-              )))
-        ;; if we landed inside a string, go to the beginning of that
-        ;; string. this handles triple quoted, multi-line spanning
-        ;; strings.
-        (fsharp-goto-beginning-of-tqs (nth 3 (parse-partial-sexp bod (point))))
-        ;; now skip backward over continued lines
-        (setq placeholder (point))
-        (fsharp-goto-initial-line)
-        ;; we may *now* have landed in a TQS, so find the beginning of
-        ;; this string.
-        (fsharp-goto-beginning-of-tqs
-         (save-excursion (nth 3 (parse-partial-sexp
-                                 placeholder (point)))))
-        (+ (current-indentation)
-           (if (fsharp-statement-opens-block-p)
-               fsharp-indent-offset
-             (if (and honor-block-close-p (fsharp-statement-closes-block-p))
-                 (- fsharp-indent-offset)
-               0)))
-        )))))
+       (t (fsharp--compute-indentation-relative-to-previous honor-block-close-p))))))
 
 (defun fsharp-guess-indent-offset (&optional global)
   "Guess a good value for, and change, `fsharp-indent-offset'.
