@@ -756,26 +756,29 @@ dedenting."
     (let* ((bod (fsharp-point 'bod))
            (pps (parse-partial-sexp bod (point)))
            (boipps (parse-partial-sexp bod (fsharp-point 'boi)))
-           (open-bracket-pos (fsharp-nesting-level))
-           placeholder)
+           (open-bracket-pos (fsharp-nesting-level)))
 
       (cond
-
-       ;; Continuation Lines with specific handling
-       ((and (fsharp-continuation-line-p)
-             (not (fsharp--previous-line-continuation-line-p)))
+       ;; Continuation Lines
+       ((fsharp-continuation-line-p)
         (if open-bracket-pos
             (fsharp--compute-indentation-open-bracket open-bracket-pos)
           (fsharp--compute-indentation-continuation-line)))
+
+       ;; Previous line is a continuation line, use indentation of previous line
+       ((fsharp--previous-line-continuation-line-p)
+        (forward-line -1)
+        (current-indentation))
 
        ((or
          ;; Beginning of Buffer; not on a continuation line
          (bobp)
          ;; "Indenting Comment"
-         (fsharp--indenting-comment-p)
-         ;; Previous line is a continuation line
-         (fsharp--previous-line-continuation-line-p)) (current-indentation))
+         (fsharp--indenting-comment-p)) (current-indentation))
 
+       ;; Final case includes things like pipe expressions (matches, left pipe)
+       ;; and if/else blocks.
+       ;;
        ;; else indentation based on that of the statement that
        ;; precedes us; use the first line of that statement to
        ;; establish the base, in case the user forced a non-std
