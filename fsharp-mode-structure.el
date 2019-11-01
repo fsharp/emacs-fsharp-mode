@@ -320,13 +320,10 @@ are aligned as statements."
              (current-indentation)))))
 
 
-;; TODO[gastove|2019-10-22] This function will return false in most cases; it
-;; only returns true if there's a hanging arithmetic operator at the end of a
-;; line, and that's very, very uncommon.
-(defun fsharp-backslash-continuation-line-p ()
+(defun fsharp--hanging-operator-continuation-line-p ()
   "Return t if point is on at least the *second* line of the
-buffer, and the previous line matches `fsharp-continued-re' --
-which is to say, it end in +, -, /, or *."
+buffer, and the previous line matches `fsharp--hanging-operator-re' --
+which is to say, it ends in +, -, /, or *."
   (save-excursion
     (beginning-of-line)
     (and
@@ -381,11 +378,19 @@ computation expression, etc)."
     (fsharp-continuation-line-p)))
 
 
-;; NOTE[gastove|2019-10-22] this is utter nonsense. Blocks in F# don't use colons.
 (defun fsharp-statement-opens-block-p ()
-  "Return t iff the current statement opens a block.
-I.e., iff it ends with a colon that is not in a comment.  Point should
-be at the start of a statement."
+  "Return t if the current statement opens a block. For instance:
+
+type Shape =
+    | Square
+    | Rectangle
+
+or:
+
+let computation = [ this; that ]
+    |> Array.someCalculation
+
+Point should be at the start of a statement."
   (save-excursion
     (let ((start (point))
           (finish (progn (fsharp-goto-beyond-final-line) (1- (point))))
@@ -393,14 +398,10 @@ be at the start of a statement."
           (answer nil)
           state)
       (goto-char start)
+      ;; Keep searching until we're finished.
       (while searching
-        ;; look for a colon with nothing after it except whitespace, and
-        ;; maybe a comment
-
         (if (re-search-forward fsharp-block-opening-re finish t)
-            (if (eq (point) finish)     ; note: no `else' clause; just
-                                        ; keep searching if we're not at
-                                        ; the end yet
+            (if (eq (point) finish)
                 ;; sure looks like it opens a block -- but it might
                 ;; be in a comment
                 (progn
@@ -408,7 +409,7 @@ be at the start of a statement."
                   (setq state (parse-partial-sexp start
                                                   (match-beginning 0)))
                   (setq answer (not (nth 4 state)))))
-          ;; search failed: couldn't find another interesting colon
+          ;; search failed: couldn't find a reason to believe we're opening a block.
           (setq searching nil)))
       answer)))
 
@@ -1323,15 +1324,15 @@ line of the block."
           (goto-char open-bracket-pos)))))
   (beginning-of-line))
 
+;; TODO[gastove|2019-10-31] This is completely broken. I'm not totally sure why
+;; or how, but it simply doesn't do the thing it says on the tin.
 (defun fsharp-goto-beyond-final-line ()
-  "Go to the point just beyond the fine line of the current statement.
+  "Go to the point just beyond the final line of the current expression.
 Usually this is the start of the next line, but if this is a
-multi-line statement we need to skip over the continuation lines."
-  ;; Tricky: Again we need to be clever to avoid quadratic time
-  ;; behavior.
-  ;;
-  ;; XXX: Not quite the right solution, but deals with multi-line doc
-  ;; strings
+multi-line expression we need to skip over the continuation
+lines."
+  ;; TODO[gastove|2019-10-30] This works on triple-quoted strings that start on
+  ;; their own line, but not if they are opened on the same line as a let.
   (if (looking-at (concat "[ \t]*\\(" fsharp-stringlit-re "\\)"))
       (goto-char (match-end 0)))
   ;;
@@ -1350,11 +1351,11 @@ multi-line statement we need to skip over the continuation lines."
         (forward-line 1))
       ;; if in nest, zip to the end of the nest
       (setq state (fsharp-parse-state))
-      (if (and (not (zerop (car state)))
-               (not (eobp)))
-          (progn
-            (parse-partial-sexp (point) (point-max) 0 nil state)
-            (forward-line 1))))))
+      (when (and (not (zerop (car state)))
+                 (not (eobp)))
+        (progn
+          (parse-partial-sexp (point) (point-max) 0 nil state)
+          (forward-line 1))))))
 
 
 (defun fsharp-goto-beyond-block ()
