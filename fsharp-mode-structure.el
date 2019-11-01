@@ -162,12 +162,7 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching a Fsharp string literal.")
 
 
-(defconst fsharp-continued-re
-  ;; This is tricky because a trailing backslash does not mean
-  ;; continuation if it's in a comment
-  ;;
-  ;; NOTE[gastove|2019-10-22] even trickier because F# doesn't have backslash
-  ;; continuations *and* backslash isn't matched by this regexp at all.
+(defconst fsharp--hanging-operator-re
   (concat ".*\\(" (mapconcat 'identity
                              '("+" "-" "*" "/")
                              "\\|")
@@ -271,13 +266,13 @@ This function preserves point and mark."
 ;;-------------------------------- Predicates --------------------------------;;
 
 (defun fsharp-in-literal-p (&optional lim)
-  "Return non-nil if point is in a Fsharp literal (a comment or string).
-Optional argument LIM indicates the beginning of the containing form,
-i.e. the limit on how far back to scan."
-  ;; This is the version used for non-XEmacs, which has a nicer
-  ;; interface.
-  ;;
-  ;; WARNING: Watch out for infinite recursion.
+  "Return non-nil if point is in a Fsharp literal (a comment or
+string). The return value is specifically one of the symbols
+'comment or 'string. Optional argument LIM indicates the
+beginning of the containing form, i.e. the limit on how far back
+to scan."
+  ;; NOTE: Watch out for infinite recursion between this function and
+  ;; `fsharp-point'.
   (let* ((lim (or lim (fsharp-point 'bod)))
          (state (parse-partial-sexp lim (point))))
     (cond
@@ -345,9 +340,8 @@ which is to say, it end in +, -, /, or *."
      (not (eq (char-after (- (point) 2)) nil))
      ;; make sure; since eq test passed, there is a preceding line
      (forward-line -1)                  ; always true -- side effect
-     ;; NOTE:[gastove|2019-10-22] `fsharp-continued-re' matches any line, so
-     ;; long as it contains one of +, -, *, or /
-     (looking-at fsharp-continued-re))))
+     ;; matches any line, so long as it ends with one of +, -, *, or /
+     (looking-at fsharp--hanging-operator-re))))
 
 
 ;; TODO[gastove|2019-10-31] This function doesn't do everything it needs to.
@@ -371,10 +365,12 @@ which is to say, it end in +, -, /, or *."
 ;; `fsharp-goto-beyond-final-line', which... relies on
 ;; `fsharp-continuation-line-p'. So that will need untangling.
 (defun fsharp-continuation-line-p ()
-  "Return t if current line is a continuation line."
+  "Return t if current line continues a line with a hanging
+arithmetic operator *or* is inside a nesting construct (a list,
+computation expression, etc)."
   (save-excursion
     (beginning-of-line)
-    (or (fsharp-backslash-continuation-line-p)
+    (or (fsharp--hanging-operator-continuation-line-p)
         (fsharp-nesting-level))))
 
 
@@ -1319,8 +1315,8 @@ line of the block."
   (let (open-bracket-pos)
     (while (fsharp-continuation-line-p)
       (beginning-of-line)
-      (if (fsharp-backslash-continuation-line-p)
-          (while (fsharp-backslash-continuation-line-p)
+      (if (fsharp--hanging-operator-continuation-line-p)
+          (while (fsharp--hanging-operator-continuation-line-p)
             (forward-line -1))
         ;; else zip out of nested brackets/braces/parens
         (while (setq open-bracket-pos (fsharp-nesting-level))
@@ -1341,10 +1337,15 @@ multi-line statement we need to skip over the continuation lines."
   ;;
   (forward-line 1)
   (let (state)
+    ;; I think this first predicate is the problem -- "continuation lines", as
+    ;; defined by that function, are only lines with hanging arithmetic
+    ;; operators *or* lines inside certain pairs (things like data structures
+    ;; and computation expressions). This fully doesn't account for
+    ;; continuations using pipes.
     (while (and (fsharp-continuation-line-p)
                 (not (eobp)))
-      ;; skip over the backslash flavor
-      (while (and (fsharp-backslash-continuation-line-p)
+      ;; skip over hanging operator lines
+      (while (and (fsharp--hanging-operator-continuation-line-p)
                   (not (eobp)))
         (forward-line 1))
       ;; if in nest, zip to the end of the nest
