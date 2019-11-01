@@ -327,14 +327,7 @@ which is to say, it ends in +, -, /, or *."
   (save-excursion
     (beginning-of-line)
     (and
-     ;; use a cheap test first to avoid the regexp if possible
-     ;; use 'eq' because char-after may return nil
-     ;;
-     ;; NOTE[gastove|2019-10-22] This check simply looks to see if the character
-     ;; two before point is *absent* - which only happens when the character is
-     ;; out of range.
-     ;; TODO: replace this with `bobp' at some point.
-     (not (eq (char-after (- (point) 2)) nil))
+     (not (bobp))
      ;; make sure; since eq test passed, there is a preceding line
      (forward-line -1)                  ; always true -- side effect
      ;; matches any line, so long as it ends with one of +, -, *, or /
