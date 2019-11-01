@@ -3,6 +3,112 @@
 
 (defvar fsharp-struct-test-files-dir (concat test-dir "StructureTest/"))
 
+;;-------------------------------- Regex Tests --------------------------------;;
+
+(ert-deftest fsharp-stringlit-re-test ())
+
+;;--------------------------- Structure Navigation ---------------------------;;
+;; TODO[gastove|2019-10-31] This function turns out to be incredibly broken! It
+;; wont move past the final line of _most_ multi-line expressions. Wonderful.
+;;
+;; This will get fixed in the next PR.
+;; (ert-deftest fsharp-goto-beyond-final-line-test ()
+;;   (let ((blocks-file (file-truename (concat fsharp-struct-test-files-dir "Blocks.fs"))))
+;;     (using-file blocks-file
+;;       ;; A single-line expression
+;;       (goto-char 1)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 19))
+
+;;       ;; A multi-line expression using a pipe. We should wind up in the same
+;;       ;; place whether we start at the beginning or the end of the expression.
+;;       (goto-char 20)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 88))
+;;       (goto-char 46)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 88))
+
+;;       ;; A multi-line discriminated union.
+;;       (goto-char 89)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 146))
+;;       (goto-char 122)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 146))
+
+;;       ;; A function using an if/else block
+;;       (goto-char 147)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 218))
+;;       (goto-char 171)
+;;       (fsharp-goto-beyond-final-line)
+;;       (should (eq (point) 218))
+;;       )))
+
+;;-------------------------------- Predicates --------------------------------;;
+
+(ert-deftest fsharp--hanging-operator-continuation-line-p-test ()
+  "Does `fsharp-backslash-continuation-line-p' return true when we expect it to?"
+  (let ((continuation-file (file-truename (concat fsharp-struct-test-files-dir "ContinuationLines.fs"))))
+    (using-file continuation-file
+      (beginning-of-buffer)
+      (should (eq (fsharp--hanging-operator-continuation-line-p) nil))
+      (forward-line 1)
+      (should (eq (fsharp--hanging-operator-continuation-line-p) nil))
+      (forward-line 5)
+      (should (eq (fsharp--hanging-operator-continuation-line-p) t))
+      )))
+
+(ert-deftest fsharp-in-literal-p-test ()
+  "Does `fsharp-in-literal-p' return non-nil in both strings and comments?"
+  (let ((literals-file (file-truename (concat fsharp-struct-test-files-dir "Literals.fs"))))
+    (using-file literals-file
+      ;; Comments
+      (goto-char 3)
+      (should (eq (fsharp-in-literal-p) 'comment))
+      (goto-char 642)
+      (should (eq (fsharp-in-literal-p) 'comment))
+      (goto-char 968)
+      (should (eq (fsharp-in-literal-p) 'comment))
+      (goto-char 1481)
+      (should (eq (fsharp-in-literal-p) 'comment))
+      (goto-char 2124)
+      (should (eq (fsharp-in-literal-p) 'comment))
+      ;; String literals
+      (goto-char 2717)
+      (should (eq (fsharp-in-literal-p) 'string))
+      ;; This string contains an inner, backslash-escaped string.
+      ;; First, with point outside the backslash-escaped string:
+      (goto-char 2759)
+      (should (eq (fsharp-in-literal-p) 'string))
+      ;; ...and now with point inside it
+      (goto-char 2774)
+      (should (eq (fsharp-in-literal-p) 'string))
+      ;; Inside triple-quoted strings
+      (goto-char 2835)
+      (should (eq (fsharp-in-literal-p) 'string))
+      (goto-char 2900)
+      (should (eq (fsharp-in-literal-p) 'string)))))
+
+;; NOTE[gastove|2019-10-31] I am entirely convinced this doesn't work precisely
+;; as it should, because it depends on `fsharp-goto-beyond-final-line', which I
+;; am positive is buggy.
+;;
+;; Udate: yep! It's buggy! Will uncomment and fix in the next PR.
+;; (ert-deftest fsharp-statement-opens-block-p-test ()
+;;   "Does `fsharp-statement-opens-block-p' correctly detect block-opening statements?"
+;;   (let ((blocks-file (file-truename (concat fsharp-struct-test-files-dir "Blocks.fs"))))
+;;     (using-file blocks-file
+;;       (goto-char 1)
+;;       (should-not (fsharp-statement-opens-block-p))
+;;       (goto-char 20)
+;;       (should (fsharp-statement-opens-block-p))
+;;       (goto-char 89)
+;;       (should (fsharp-statement-opens-block-p)))))
+
+;;--------------------- Nesting and Indentation Functions ---------------------;;
+
 (ert-deftest fsharp-nesting-level-test-should-nil ()
   "Does `fsharp-nesting-level' return nil when we expect it to?"
   (with-temp-buffer
@@ -164,17 +270,4 @@ position of the opening pair closest to point?"
       (should (eq (fsharp--compute-indentation-relative-to-previous t) 4))
       (should (eq (fsharp--compute-indentation-relative-to-previous t)
                   (fsharp-compute-indentation t)))
-      )))
-
-
-(ert-deftest fsharp-backslash-continuation-line-p-test ()
-  "Does `fsharp-backslash-continuation-line-p' return true when we expect it to?"
-  (let ((continuation-file (file-truename (concat fsharp-struct-test-files-dir "ContinuationLines.fs"))))
-    (using-file continuation-file
-      (beginning-of-buffer)
-      (should (eq (fsharp-backslash-continuation-line-p) nil))
-      (forward-line 1)
-      (should (eq (fsharp-backslash-continuation-line-p) nil))
-      (forward-line 5)
-      (should (eq (fsharp-backslash-continuation-line-p) t))
       )))
