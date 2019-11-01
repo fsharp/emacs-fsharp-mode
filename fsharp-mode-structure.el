@@ -134,7 +134,13 @@ as indentation hints, unless the comment character is in column zero."
 
 
 ;;--------------------------------- Constants ---------------------------------;;
-
+;; TODO[gastove|2019-10-30] So much:
+;;   - No SQTQ in F#
+;;   - No raw strings either
+;;   - But there *are* verbatim strings that begin with @
+;;   - And can use \ to escape a newline
+;;   - But *can* contain newlines
+;; It's a good thing this isn't called often, because it is a mess and wrong.
 (defconst fsharp-stringlit-re
   (concat
    ;; These fail if backslash-quote ends the string (not worth
@@ -169,7 +175,7 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching unterminated algebra expressions.")
 
 
-;; TODO[gastove|2019-10-22] This doesn't match (* long comments *)
+;; TODO[gastove|2019-10-22] This doesn't match (* long comments *), but it *does* capture.
 (defconst fsharp-blank-or-comment-re "[ \t]*\\(//.*\\)?"
   "Regular expression matching a blank or comment line.")
 
@@ -344,6 +350,26 @@ which is to say, it end in +, -, /, or *."
      (looking-at fsharp-continued-re))))
 
 
+;; TODO[gastove|2019-10-31] This function doesn't do everything it needs to.
+;; Currently, it only reports a continuation line if there's a hanging
+;; arithmetic operator *or* if we're inside a delimited block (something like {}
+;; or []). It _needs_ to also respect symbols that open a new whitespace block
+;; -- things like -> at the end of a line, or |> at the beginning of one.
+;;
+;; The trick is: the other major place where |> and -> lines are considered is
+;; in `fsharp-compute-indentation', which... catches "undelimited" blocks as a
+;; default case. They aren't _explicitly_ detected.
+;;
+;; In all, this makes me think we need a cleaner distinction between a
+;; "continuation line" and a "relative line" -- that is, a line that continues
+;; an ongoing expression (a sequence of items in a list, the completion of an
+;; arithmetic expression) and a new block scope opened by a single symbol and
+;; terminated with whitespace.
+;;
+;; We do already have `fsharp-statement-opens-block-p', which we could make much
+;; more active use of. However: `fsharp-statement-opens-block-p' calls
+;; `fsharp-goto-beyond-final-line', which... relies on
+;; `fsharp-continuation-line-p'. So that will need untangling.
 (defun fsharp-continuation-line-p ()
   "Return t if current line is a continuation line."
   (save-excursion
