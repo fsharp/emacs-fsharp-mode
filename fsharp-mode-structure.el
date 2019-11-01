@@ -350,8 +350,8 @@ which is to say, it ends in +, -, /, or *."
 ;; arithmetic expression) and a new block scope opened by a single symbol and
 ;; terminated with whitespace.
 ;;
-;; We do already have `fsharp-statement-opens-block-p', which we could make much
-;; more active use of. However: `fsharp-statement-opens-block-p' calls
+;; We do already have `fsharp-expression-opens-block-p', which we could make much
+;; more active use of. However: `fsharp-expression-opens-block-p' calls
 ;; `fsharp-goto-beyond-final-line', which... relies on
 ;; `fsharp-continuation-line-p'. So that will need untangling.
 (defun fsharp-continuation-line-p ()
@@ -371,8 +371,8 @@ computation expression, etc)."
     (fsharp-continuation-line-p)))
 
 
-(defun fsharp-statement-opens-block-p ()
-  "Return t if the current statement opens a block. For instance:
+(defun fsharp-expression-opens-block-p ()
+  "Return t if the current expression opens a block. For instance:
 
 type Shape =
     | Square
@@ -684,7 +684,7 @@ above, but only when the previous line is not itself a continuation line."
             (skip-chars-forward "^ \t\n")))
       ;; if this is a continuation for a block opening
       ;; statement, add some extra offset.
-      (+ (current-column) (if (fsharp-statement-opens-block-p)
+      (+ (current-column) (if (fsharp-expression-opens-block-p)
                               fsharp-continuation-offset 0)
          1)
       )))
@@ -738,7 +738,7 @@ lines (if any)"
        (save-excursion (nth 3 (parse-partial-sexp
                                placeholder (point)))))
       (+ (current-indentation)
-         (if (fsharp-statement-opens-block-p)
+         (if (fsharp-expression-opens-block-p)
              fsharp-indent-offset
            (if (and honor-block-close-p (fsharp-statement-closes-block-p))
                (- fsharp-indent-offset)
@@ -834,7 +834,7 @@ it's tried again going backward."
                  (not (fsharp-in-literal-p restart)))
         (setq restart (point))
         (fsharp-goto-initial-line)
-        (if (fsharp-statement-opens-block-p)
+        (if (fsharp-expression-opens-block-p)
             (setq found t)
           (goto-char restart))))
     (unless found
@@ -844,7 +844,7 @@ it's tried again going backward."
         (setq found (and
                      (re-search-backward fsharp-block-opening-re nil 'move)
                      (or (fsharp-goto-initial-line) t) ; always true -- side effect
-                     (fsharp-statement-opens-block-p)))))
+                     (fsharp-expression-opens-block-p)))))
     (setq colon-indent (current-indentation)
           found (and found (zerop (fsharp-next-statement 1)))
           new-value (- (current-indentation) colon-indent))
@@ -1085,7 +1085,7 @@ NOMARK is not nil."
     (when (or (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
               (looking-at-p "[ \t]*and[ \t]+"))
       (fsharp-goto-statement-at-or-above)
-      (setq found (fsharp-statement-opens-block-p)))
+      (setq found (fsharp-expression-opens-block-p)))
     ;; search back for colon line indented less
     (setq initial-indent (current-indentation))
     (if (zerop initial-indent)
@@ -1097,7 +1097,7 @@ NOMARK is not nil."
              (re-search-backward fsharp-block-opening-re nil 'move)
              (or (fsharp-goto-initial-line) t) ; always true -- side effect
              (< (current-indentation) initial-indent)
-             (fsharp-statement-opens-block-p))))
+             (fsharp-expression-opens-block-p))))
     (if found
         (progn
           (or nomark (push-mark start))
@@ -1356,7 +1356,7 @@ lines."
 This is the same as where `fsharp-goto-beyond-final-line' goes unless
 we're on colon line, in which case we go to the end of the block.
 Assumes point is at the beginning of the line."
-  (if (fsharp-statement-opens-block-p)
+  (if (fsharp-expression-opens-block-p)
       (fsharp-mark-block nil 'just-move)
     (fsharp-goto-beyond-final-line)))
 
@@ -1617,7 +1617,7 @@ moves to the end of the block (& does not set mark or display a msg)."
         (setq first-symbol next-symbol)))
 
      ;; else if line *opens* a block, search for next stmt indented <=
-     ((fsharp-statement-opens-block-p)
+     ((fsharp-expression-opens-block-p)
       (while (and
               (setq last-pos (point))   ; always true -- side effect
               (fsharp-goto-statement-below)
