@@ -1,7 +1,6 @@
 (require 'fsharp-mode-structure)
-(require 'test-common)
 
-(defvar fsharp-struct-test-files-dir (concat test-dir "StructureTest/"))
+(defvar fsharp-struct-test-files-dir "test/StructureTest/")
 
 ;;-------------------------------- Regex Tests --------------------------------;;
 
