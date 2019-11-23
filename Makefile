@@ -1,168 +1,36 @@
-# Directories
+all: build
+export EMACS ?= emacs
+EMACSFLAGS = -L .
+CASK = cask
+VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
+PKG = fsharp-mode
 
-base_d = $(abspath .)
-test_d = $(abspath test)
-tmp_d  = $(abspath tmp)
-bin_d  = $(abspath bin)
+elpa-$(EMACS):
+	$(CASK) install
+	$(CASK) update
+	touch $@
 
-# Elisp files required for tests.
-src_files         = $(wildcard ./*.el)
-obj_files         = $(patsubst %.el,%.elc,$(src_files))
-integration_tests = $(test_d)/integration-tests.el
-unit_tests        = $(filter-out $(integration_tests), $(wildcard $(test_d)/*tests.el))
-utils             = $(test_d)/test-common.el
+test/eglot-tests.el:
+	curl -o eglot-tests.el https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el
 
-# F# fontification test files
-faceup_inputs  = $(wildcard $(test_d)/apps/*/*.fs) $(wildcard $(test_d)/apps/*/*.fsx)
-faceup_outputs = $(patsubst %,%.faceup, $(faceup_inputs))
+elpa: elpa-$(EMACS)
 
-# Emacs command format.
-emacs            = emacs
-load_files       = $(patsubst %,-l %, $(utils))
-load_unit_tests  = $(patsubst %,-l %, $(unit_tests))
-load_integration_tests = $(patsubst %,-l %, $(integration_tests))
+build: elpa version
+	$(CASK) build
 
-# Autocomplete binary distribution.
-ac_name    = fsautocomplete
-ac_exe     = $(bin_d)/$(ac_name).exe
-ac_version = 0.38.1
-ac_archive = $(ac_name)-$(ac_version).zip
-ac_url     = https://github.com/fsharp/FsAutoComplete/releases/download/$(ac_version)/$(ac_name).zip
+version:
+	$(EMACS) --version
 
-# Autocomplete commit or branch to build from if not using the binary distribution.
-ac_commit = master
-ac_src_url = https://github.com/fsharp/FsAutoComplete/archive/$(ac_commit).zip
-ac_src_archive = $(ac_name)-$(ac_commit).zip
-ac_from_src = no
+test: version build test/eglot-tests.el
+	$(CASK) exec buttercup -L . -L ./test
 
-ac_build_dir = $(tmp_d)/FsAutoComplete-$(ac_commit)
+clean:
+	rm -f .depend elpa-$(EMACS) $(OBJECTS) $(PKG)-autoloads.el
 
-# Installation paths.
-dest_root = $(HOME)/.emacs.d/fsharp-mode/
-dest_bin  = $(HOME)/.emacs.d/fsharp-mode/bin/
+elpaclean: clean
+	rm -f elpa*
+	rm -rf .cask # Clean packages installed for development
 
-# ----------------------------------------------------------------------------
-
-.PHONY : test unit-test integration-test packages clean-elc install byte-compile check-compile run update-version release faceup
-.ONESHELL : $(ac_archive)
-
-# Building
-
-$(ac_archive): | $(bin_d)
-ifeq ($(ac_from_src), no)
-	curl -L "$(ac_url)" -o "$(ac_archive)"
-else
-	curl -L "$(ac_src_url)" -o "$(ac_src_archive)"
-	unzip "$(ac_src_archive)" -d "$(tmp_d)"
-	sed -i -e 's/"version": ".*"/"version": "'$(dotnet --version)'"/g' $(ac_build_dir)/global.json
-	$(ac_build_dir)/build.sh releasearchive
-	mv $(ac_build_dir)/bin/pkgs/$(ac_name).zip $(ac_archive)
-endif
-
-
-$(ac_exe) : $(bin_d) $(ac_archive)
-	unzip "$(ac_archive)" -d "$(bin_d)"
-	touch "$(ac_exe)"
-
-~/.config/.mono/certs:
-	mozroots --import --sync --quiet
-
-install : $(ac_exe) $(dest_root) $(dest_bin)
-# Install elisp packages
-	$(emacs) $(load_files) --batch -f load-packages
-# Copy files
-	for f in $(src_files); do \
-		cp $$f $(dest_root) ;\
-	done
-# Copy bin folder.
-	cp -R $(bin_d) $(dest_root)
-
-
-$(dest_root) :; mkdir -p $(dest_root)
-$(dest_bin)  :; mkdir -p $(dest_bin)
-$(bin_d)     :; mkdir -p $(bin_d)
-
-# Cleaning
-
-clean : clean-elc
-	rm -rf $(bin_d)
-	rm -rf $(tmp_d)
-	rm -f $(ac_archive)
-
-clean-elc :
-	rm -f  *.elc
-	rm -f  $(test_d)/*.elc
-
-# Testing
-
-fake-home: export HOME=$(tmp_d)
-
-test unit-test fake-home:
-	$(emacs) $(load_files) --batch -f run-fsharp-unit-tests
-
-integration-test : $(ac_exe) packages fake-home
-ifdef test-selector
-	$(emacs) $(load_files) --batch --eval "(let ((fsharp--test-selector \"$(test-selector)\"))(run-fsharp-integration-tests))"
-else
-	$(emacs) $(load_files) --batch --eval "(run-fsharp-integration-tests)"
-endif
-
-test-all : unit-test integration-test check-compile check-declares
-
-packages : fake-home
-	$(emacs) $(load_files) --batch -f load-packages
-
-byte-compile : packages fake-home
-	$(emacs) -batch --eval "(package-initialize)"\
-          --eval "(add-to-list 'load-path \"$(base_d)\")" \
-          -f batch-byte-compile $(src_files)
-
-check-declares : packages fake-home
-	$(emacs) -batch --eval "(package-initialize)"\
-          --eval "(dolist (file '($(foreach var,$(src_files),\"$(var)\"))) (when (check-declare-file file) (kill-emacs 1)))"
-
-check-compile : packages $(obj_files)
-
-faceup : $(faceup_outputs)
-
-%.faceup : % fsharp-mode-font.el fake-home
-	$(emacs) $(load_files) -batch \
-          --eval "(regen-faceup-output \"$<\")"
-
-.el.elc: fake-home
-	$(emacs) -batch --eval "(package-initialize)"\
-          --eval "(add-to-list 'load-path \"$(base_d)\")" \
-          --eval '(setq byte-compile-error-on-warn t)'    \
-          --eval "(eval-after-load \"bytecomp\"           \
-                    '(add-to-list                         \
-                        'byte-compile-not-obsolete-vars   \
-                        'find-tag-marker-ring))"          \
-          -f batch-byte-compile $<
-
-run : $(ac_exe) packages fake-home
-	$(emacs) $(load_files) -f configure-fsharp-tests
-
-# Releasing
-
-cur_release := $(shell grep '\#\#' CHANGELOG.md | cut -d' ' -f2 | head -n 1)
-prev_release := $(shell grep '\#\#' CHANGELOG.md | cut -d' ' -f2 | head -n 2 | tail -n 1)
-
-update-version:
-	sed -i -r "s/$(prev_release)/$(cur_release)/" *.el
-	git add *.el CHANGELOG.md Makefile
-	git commit -m "Bump version number to $(cur_release)"
-	git tag -a $(cur_release) -m "Tag release $(cur_release)"
-
-emacs-fsharp-mode-bin:
-	git clone git@github.com:/rneatherway/emacs-fsharp-mode-bin
-
-release: update-version emacs-fsharp-mode-bin $(ac_exe)
-	cd emacs-fsharp-mode-bin && git pull
-	cp $(bin_d)/*.exe $(bin_d)/*.exe.config $(bin_d)/*.dll emacs-fsharp-mode-bin
-	cp $(src_files) emacs-fsharp-mode-bin
-	cd emacs-fsharp-mode-bin && git checkout FSharp.Core.dll  # Do not change this
-	cd emacs-fsharp-mode-bin && git add --all
-	cd emacs-fsharp-mode-bin && git commit -m "Update to version $(cur_release)"
-	cd emacs-fsharp-mode-bin && git tag -a $(cur_release) -m "Tag release $(cur_release)"
-
+run-$(PKG): elpa
+	cask exec $(EMACS) -Q -L . --eval "(require '$(PKG))"
 
