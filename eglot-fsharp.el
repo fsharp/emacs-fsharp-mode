@@ -26,6 +26,7 @@
 ;;; Code:
 
 (require 'eglot)
+(require 'fsharp-mode)
 (require 'gnutls)
 
 (defgroup eglot-fsharp nil
