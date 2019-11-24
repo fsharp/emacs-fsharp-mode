@@ -1,243 +1,55 @@
-(require 'ert)
-(setq flycheck-check-syntax-automatically nil)
+;;; integration-tests.el ---                         -*- lexical-binding: t; -*-
 
-(defmacro wait-for-condition (&rest body)
-  "Wait up to 10 seconds for BODY to evaluate non-nil"
-  `(with-timeout (10)
-    (while (not (progn
-		  ,@body))
-      (sleep-for 1))))
+;; Copyright (C) 2019  Jürgen Hötzel
 
-(defun fsharp-mode-wrapper (bufs fun)
-  "Load fsharp-mode and make sure any completion process is killed after test"
-  (unwind-protect
-      ; Run the actual test
-      (funcall fun)
+;; Author: Jürgen Hötzel <juergen@hoetzel.info>
+;; Keywords: abbrev, abbrev
 
-    ; Clean up below
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
-    ; Close any buffer requested by the test
-    (dolist (buf bufs)
-      (when (get-buffer buf)
-        (switch-to-buffer buf)
-        (when (file-exists-p buffer-file-name)
-          (revert-buffer t t))
-        (kill-buffer buf)))
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
-    ; Close any buffer associated with the loaded project
-    (mapc (lambda (buf)
-            (when (gethash (buffer-file-name buf) fsharp-ac--project-files)
-              (switch-to-buffer buf)
-              (revert-buffer t t)
-              (kill-buffer buf)))
-          (buffer-list))
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-    ; Stop the fsautocomplete process and close its buffer
-    (fsharp-ac/stop-process)
-    (wait-for-condition (not (fsharp-ac--process-live-p nil)))
-    (when (fsharp-ac--process-live-p nil)
-      (kill-process fsharp-ac-completion-process)
-      (wait-for-condition (not (fsharp-ac--process-live-p nil))))
-    (when (get-buffer "*fsharp-complete*")
-      (kill-buffer "*fsharp-complete*"))
+;;; Commentary:
 
-    ; Kill the FSI process and buffer, if it was used
-    (let ((inf-fsharp-process (get-process inferior-fsharp-buffer-subname)))
-      (when inf-fsharp-process
-        (when (process-live-p inf-fsharp-process)
-          (kill-process inf-fsharp-process)
-          (wait-for-condition (not (process-live-p
-				    inf-fsharp-process))))))))
+;; This file is part of fsharp-mode
 
-(defun find-file-and-wait-for-project-load (file)
-  (find-file file)
-  (wait-for-condition (and (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files)
-			   (/= 0 (hash-table-count fsharp-ac--project-data)))))
+;;; Code:
 
-(ert-deftest check-project-files ()
-  "Check the program files are set correctly"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     (let ((project (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files))
-           (projectfiles))
-       (maphash (lambda (k _) (add-to-list 'projectfiles k)) fsharp-ac--project-files)
-       (should-match "Test1/Program.fs" (s-join "" projectfiles))
-       (should-match "Test1/FileTwo.fs" (s-join "" projectfiles))
-       (should-match (regexp-quote (convert-standard-filename "Test1/bin/Debug/Test1.exe"))
-                     (gethash "Output" (gethash project fsharp-ac--project-data)))))))
+(require 'buttercup)
+(require 'eglot-fsharp)
+(require 'eglot-tests)
 
-(ert-deftest check-completion ()
-  "Check completion-at-point works"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     (search-forward "X.func")
-     (delete-char -3)
-     (let ((company-async-timeout 5)) (company-complete))
-     (beginning-of-line)
-     (should (search-forward "X.func")))))
+(describe "F# LSP server"
+  (it "Can be installed"
+    (eglot-fsharp--maybe-install)
+    (expect (file-exists-p  (eglot-fsharp--path-to-server)) :to-be t))
+  (it "is enabled on F# Files"
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
+      (eglot--tests-connect 10)
+      (expect (type-of (eglot--current-server-or-lose)) :to-be 'eglot-fsautocomplete)))
+  (it "provides completion"
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
+      (expect (plist-get (eglot--capabilities (eglot--current-server-or-lose)) :completionProvider) :not :to-be nil)))
+  (it "completes function in other modules"
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+      (search-forward "X.func")
+      (delete-char -3)
+      ;; ERROR in fsautocomplet.exe?  Should block instead of "no type check results"
+      (eglot--sniffing (:server-notifications s-notifs)
+        (eglot--wait-for (s-notifs 10)
+            (&key _id method &allow-other-keys)
+          (string= method "textDocument/publishDiagnostics")))
+      (completion-at-point)
+      (expect (looking-back "X\\.func") :to-be t))))
 
-(ert-deftest check-completion-type-annotation ()
-  "Check completion-at-point works with type annotation"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     (search-forward "val5:Dummy")
-     (delete-char -3)
-     (let ((company-async-timeout 5)) (company-complete))
-     (beginning-of-line)
-     (should (search-forward "val5:Dummy")))))
-
-(ert-deftest check-completion-no-project ()
-  "Check completion-at-point if File is not part of a Project."
-  (fsharp-mode-wrapper '("NoProject.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/NoProject.fs")
-     (search-forward "open System.Collectio")
-     (company-complete)
-     (beginning-of-line)
-     (should (re-search-forward "open System\\.Collection$" nil t)))))
-
-(ert-deftest check-gotodefn ()
-  "Check jump to (and back from) definition works"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     (search-forward "X.func")
-     (backward-char 2)
-     (fsharp-ac-parse-current-buffer t)
-     (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (/= (point) 88))
-     (should= (point) 18)
-     (fsharp-ac/pop-gotodefn-stack)
-     (should= (point) 88)
-     ;; across files
-     (goto-char (point-min))
-     (search-forward "NewObjectType()")
-     (backward-char 7)
-     (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition
-      (progn
-	;; Command loop doesn't get executed so the buffer change
-	;; in the filter function doesn't take effect. Prod it manually.
-	(set-buffer (window-buffer (selected-window)))
-	(and (/= (point) 64)
-	     (equal (buffer-name) "FileTwo.fs"))))
-     (should= (buffer-name) "FileTwo.fs")
-     (should= (point) 97)
-     (fsharp-ac/pop-gotodefn-stack)
-     (should= (buffer-name) "Program.fs")
-     (should= (point) 64))))
-
-(ert-deftest check-tooltip ()
-  "Check tooltip request works"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (let ((tiptext)
-           (fsharp-ac-use-popup t))
-       (noflet ((fsharp-ac/show-popup (s) (setq tiptext s)))
-         (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-         (search-forward "X.func")
-         (backward-char 2)
-         (fsharp-ac-parse-current-buffer t)
-         (fsharp-ac/show-tooltip-at-point)
-         (wait-for-condition tiptext)
-         (should-match "val func:[ \n]+x: int[ \n]+-> int"
-                       tiptext))))))
-
-(ert-deftest check-errors ()
-  "Check error underlining works"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     (search-forward "X.func")
-     (delete-char -1)
-     (backward-char)
-     (flycheck-buffer)
-     (wait-for-condition (car-safe (flycheck-overlay-errors-at (point))))
-     (let ((ferror (car-safe (flycheck-overlay-errors-at (point)))))
-       (should= (flycheck-error-level ferror) 'error)
-       (should= (flycheck-error-message ferror)
-                "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token.")))))
-
-
-(ert-deftest check-errors-without-newline ()
-  "Check error on buffers without trailing newline"
-  (fsharp-mode-wrapper '("Program.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Program.fs")
-     ;; Remove trailing whitspace
-     ;; Flycheck should still respond: https://github.com/fsharp/emacs-fsharp-mode/issues/119
-     (replace-regexp "0
-+\\'" "0" nil (point-max) (point-min))
-     (beginning-of-buffer)
-     (search-forward "X.func")
-     (delete-char -1)
-     (backward-char)
-     (flycheck-buffer)
-     (wait-for-condition (car-safe (flycheck-overlay-errors-at (point))))
-     (let ((ferror (car-safe (flycheck-overlay-errors-at (point)))))
-       (should= (flycheck-error-level ferror) 'error)
-       (should= (flycheck-error-message ferror)
-                "Unexpected keyword 'fun' in binding. Expected incomplete structured construct at or before this point or other token.")))))
-
-(ert-deftest check-script-tooltip ()
-  "Check we can request a tooltip from a script"
-  (fsharp-mode-wrapper '("Script.fsx")
-   (lambda ()
-     (let ((tiptext)
-           (fsharp-ac-use-popup t))
-       (noflet ((fsharp-ac/show-popup (s) (setq tiptext s)))
-         (find-file-and-wait-for-project-load "test/Test1/Script.fsx")
-         (fsharp-ac-parse-current-buffer t)
-         (search-forward "XA.fun")
-         (fsharp-ac/show-tooltip-at-point)
-         (wait-for-condition tiptext)
-         (should-match "val funky : x:int -> int\n\nFull name: Script.XA.funky"
-                       tiptext))))))
-
-(ert-deftest check-script-tooltip ()
-  "Check the symbol highlighting works"
-  (fsharp-mode-wrapper '("Script.fsx")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/Script.fsx")
-     (search-forward "funky")
-     (wait-for-condition (> (length (overlays-at (point))) 0))
-     (let ((ovs (overlays-in (point-min) (point-max))))
-       (mapc (lambda (ov) (should= (overlay-get ov 'face) 'fsharp-usage-face)) ovs)))))
-
-(ert-deftest check-inf-fsharp ()
-  "Check that FSI can be used to evaluate"
-  (fsharp-mode-wrapper '("tmp.fsx")
-   (lambda ()
-     (fsharp-run-process-if-needed inferior-fsharp-program)
-     (wait-for-condition (get-buffer inferior-fsharp-buffer-name))
-     (find-file "tmp.fsx")
-     (goto-char (point-max))
-     (insert "let myvariable = 123 + 456")
-     (fsharp-eval-phrase)
-     (switch-to-buffer inferior-fsharp-buffer-name)
-     (wait-for-condition (search-backward "579" nil t))
-     (should-match "579" (buffer-substring-no-properties (point-min) (point-max))))))
-
-(ert-deftest check-multi-project ()
-  "Check that we can get intellisense for multiple projects at once"
-  (fsharp-mode-wrapper '("FileTwo.fs" "Main.fs")
-   (lambda ()
-     (find-file-and-wait-for-project-load "test/Test1/FileTwo.fs")
-     (find-file-and-wait-for-project-load "../Test2/Main.fs")
-
-     (switch-to-buffer "FileTwo.fs")
-     (search-forward "   y")
-     (fsharp-ac-parse-current-buffer t)
-     (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (/= (point) 159))
-     (should= (point) 137)
-
-     (switch-to-buffer "Main.fs")
-     (search-forward "\" val2")
-     (fsharp-ac-parse-current-buffer t)
-     (fsharp-ac/gotodefn-at-point)
-     (wait-for-condition (/= (point) 113))
-     (should= (point) 24))))
+(provide 'integration-tests)
+;;; integration-tests.el ends here

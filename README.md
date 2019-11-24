@@ -1,3 +1,14 @@
+# Current state of this repo
+
+Previous versions of `fsharp-mode` (mis)used a second repository [emacs-fsharp-mode-bin](rneatherway/emacs-fsharp-mode-bin) to distribute `fsautocomplete.exe` and `fsharp-mode` together.
+
+Future versions of `fsharp-mode` on [melpa](https://melpa.org/#/fsharp-mode) will be distributed directly from this repository and the installation of `fsautocomplete.exe` will
+be done by the lsp-client [eglot](https://github.com/joaotavora/eglot) or [lsp-mode](https://github.com/emacs-lsp/lsp-mode).
+
+On my build system all tests (using `eglot`) are passed but on travis and appveyor they fail because the tests now use .net core instead of mono: The .travis.yml configuration must be adapted.
+
+If the tests pass through cleanly, I will change the [melpa recipe](https://melpa.org/#/fsharp-mode) to this repo.
+
 # fsharp-mode
 
 Provides support for the F# language in Emacs. Includes the following features:

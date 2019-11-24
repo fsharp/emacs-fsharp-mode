@@ -24,9 +24,10 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
+(require 'tramp)
 (require 'comint)
 (require 'fsharp-mode-util)
-(require 'fsharp-mode-completion)
+
 (with-no-warnings (require 'cl))
 
 ;; User modifiable variables
@@ -82,6 +83,14 @@ be sent from another buffer in fsharp mode.
 (defconst inferior-fsharp-buffer-subname "inferior-fsharp")
 (defconst inferior-fsharp-buffer-name
   (concat "*" inferior-fsharp-buffer-subname "*"))
+
+(defun fsharp--localname (file)
+  "Return localname of a Tramp filename.
+If FILE is not a Tramp filename return FILENAME"
+  (if (tramp-tramp-file-p file)
+      (with-parsed-tramp-file-name file nil
+	localname)
+    file))
 
 (defun fsharp-run-process-if-needed (&optional cmd)
   "Launch fsi if needed, using CMD if supplied."
@@ -147,7 +156,7 @@ Input and output via buffer `*inferior-fsharp*'."
   (fsharp-run-process-if-needed)
   ;; send location to fsi
   (let* ((name (file-truename (buffer-file-name (current-buffer))))
-         (dir (fsharp-ac--localname (file-name-directory name)))
+         (dir (fsharp--localname (file-name-directory name)))
          (line (number-to-string (line-number-at-pos start)))
          (loc (concat "# " line " \"" name "\"\n"))
          (movedir (concat "#silentCd @\"" dir "\";;\n")))

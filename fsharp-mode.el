@@ -5,9 +5,11 @@
 ;; Author: 1993-1997 Xavier Leroy, Jacques Garrigue and Ian T Zimmerman
 ;;         2010-2011 Laurent Le Brun <laurent@le-brun.eu>
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
-;; Maintainer: Robin Neatherway
+;;         2017-2019 Jürgen Hötzel
+;; Maintainer: Jürgen Hötzel
+;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0") (eglot))
 ;; Keywords: languages
-;; Version: 1.9.14
+;; Version: 1.9.15
 
 ;; This file is not part of GNU Emacs.
 
@@ -28,13 +30,11 @@
 
 ;;; Code:
 
-(require 'fsharp-mode-completion)
 (require 'fsharp-mode-structure)
-(require 'flycheck-fsharp)
-(require 'fsharp-doc)
 (require 'inf-fsharp-mode)
 (require 'fsharp-mode-util)
 (require 'compile)
+(require 'project)
 (require 'dash)
 
 (defgroup fsharp nil
@@ -63,28 +63,6 @@
 (defvar fsharp-mode-map nil
   "Keymap used in fsharp mode.")
 
-(defvar fsharp-run-executable-file-history nil
-  "History of executable commands run.")
-
-;; define a mode-specific abbrev table for those who use such things
-(defvar fsharp-mode-abbrev-table nil
-  "Abbrev table in use in `fsharp-mode' buffers.")
-(define-abbrev-table 'fsharp-mode-abbrev-table nil)
-
-
-(require 'info-look)
-;; The info-look package does not always provide this function (it
-;; appears this is the case with XEmacs 21.1)
-(when (fboundp 'info-lookup-maybe-add-help)
-  (info-lookup-maybe-add-help
-   :mode 'fsharp-mode
-   :regexp "[a-zA-Z0-9_]+"
-   :doc-spec '(("(fsharp-lib)Module Index")
-               ("(fsharp-lib)Class-Exception-Object Index")
-               ("(fsharp-lib)Function-Method-Variable Index")
-               ("(fsharp-lib)Miscellaneous Index"))))
-
-
 (unless fsharp-mode-map
   (setq fsharp-mode-map (make-sparse-keymap))
   (if running-xemacs
@@ -94,7 +72,6 @@
   ;; F# bindings
   (define-key fsharp-mode-map "\C-c\C-a" 'fsharp-find-alternate-file)
   (define-key fsharp-mode-map "\C-c\C-c" 'compile)
-  (define-key fsharp-mode-map "\C-cx" 'fsharp-run-executable-file)
   (define-key fsharp-mode-map "\M-\C-x" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-c\C-e" 'fsharp-eval-phrase)
   (define-key fsharp-mode-map "\C-x\C-e" 'fsharp-eval-phrase)
@@ -114,24 +91,12 @@
 
   (define-key fsharp-mode-map (kbd "C-c <up>") 'fsharp-goto-block-up)
 
-  (define-key fsharp-mode-map (kbd "C-c C-p") 'fsharp-ac/load-project)
-  (define-key fsharp-mode-map (kbd "C-c C-t") 'fsharp-ac/show-tooltip-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-d") 'fsharp-ac/gotodefn-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-b") 'fsharp-ac/pop-gotodefn-stack)
-  (define-key fsharp-mode-map (kbd "M-.")     'fsharp-ac/gotodefn-at-point)
-  (define-key fsharp-mode-map (kbd "M-,")     'fsharp-ac/pop-gotodefn-stack)
-  (define-key fsharp-mode-map (kbd "C-c C-q") 'fsharp-ac/stop-process)
-  (define-key fsharp-mode-map (kbd "C-c C-.") 'fsharp-ac/complete-at-point)
-  (define-key fsharp-mode-map (kbd "C-c C-u") 'fsharp-ac/symboluse-at-point)
-
   (unless running-xemacs
     (let ((map (make-sparse-keymap "fsharp"))
           (forms (make-sparse-keymap "Forms")))
       (define-key fsharp-mode-map [menu-bar] (make-sparse-keymap))
       (define-key fsharp-mode-map [menu-bar fsharp] (cons "F#" map))
 
-      (define-key map [pop-goto-defn] '("Pop goto definition stack" . fsharp-ac/pop-gotodefn-stack))
-      (define-key map [goto-defn] '("Goto definition" . fsharp-ac/gotodefn-at-point))
       (define-key map [goto-block-up] '("Goto block up" . fsharp-goto-block-up))
       (define-key map [mark-phrase] '("Mark phrase" . fsharp-mark-phrase))
       (define-key map [shift-left] '("Shift region to right" . fsharp-shift-region-right))
@@ -139,7 +104,6 @@
       (define-key map [separator-2] '("---"))
 
       ;; others
-      (define-key map [run] '("Run..." . fsharp-run-executable-file))
       (define-key map [compile] '("Compile..." . compile))
       (define-key map [switch-view] '("Switch view" . fsharp-find-alternate-file))
       (define-key map [separator-1] '("--"))
@@ -214,10 +178,6 @@
 \\{fsharp-mode-map}"
 
   (require 'fsharp-mode-font)
-  (require 'fsharp-doc)
-  (require 'fsharp-mode-completion)
-
-  (require 'company)
 
   (fsharp-mode-indent-smie-setup)
 
@@ -270,38 +230,15 @@
   (setq font-lock-defaults '(fsharp-font-lock-keywords))
   (setq syntax-propertize-function 'fsharp--syntax-propertize-function)
                                         ; Some reasonable defaults for company mode
-  (add-to-list 'company-backends 'fsharp-ac/company-backend)
-  (setq company-auto-complete 't)
-  (setq company-auto-complete-chars ".")
-  (setq company-require-match 'nil)
-  (setq company-tooltip-align-annotations 't)
-
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
-  (when (and (display-graphic-p)
-             (boundp 'company-quickhelp-mode)) ; not supported on ttys
-    (company-quickhelp-local-mode 1))
 
   (let ((file (buffer-file-name)))
     (when file
-      (setq compile-command (fsharp-mode-choose-compile-command file))
-      (fsharp-mode--load-with-binding file)))
-
-  (when fsharp-ac-intellisense-enabled
-    (flycheck-mode 1)
-    (turn-on-fsharp-doc-mode))
+      (setq compile-command (fsharp-mode-choose-compile-command file))))
 
   (run-hooks 'fsharp-mode-hook))
-
-(defun fsharp-mode--load-with-binding (file)
-  "Attempt to load FILE using the F# compiler binding.
-If FILE is part of an F# project, load the project.
-Otherwise, treat as a stand-alone file."
-  (when fsharp-ac-intellisense-enabled
-    (or (fsharp-ac/load-project (fsharp-mode/find-fsproj file))
-        (fsharp-ac/load-file file))
-    (company-mode 1)))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:
@@ -399,30 +336,6 @@ whole string."
     (if string (substring string begin end)
       (buffer-substring-no-properties begin end))))
 
-(defun fsharp-run-executable-file ()
-  "Execute a file with specified arguments. If a project is
-currently loaded and the output is a .exe file (stored in
-FSHARP-AC--OUTPUT-FILE), then this will be used as a default. If
-the current system is not Windows then the command string will be
-passed to `mono'."
-  (interactive)
-  (let* ((project (gethash (fsharp-ac--buffer-truename) fsharp-ac--project-files))
-         (projdata (when project (gethash project fsharp-ac--project-data)))
-         (outputfile (when projdata (gethash "Output" projdata)))
-         (default (if (and outputfile
-                           (s-equals? "exe"
-                                      (downcase (file-name-extension outputfile))))
-                      (if fsharp-ac-using-mono
-                          (s-concat "mono " outputfile)
-                        outputfile)
-                    ""))
-         (cmd (read-from-minibuffer "Run: "
-                                    default
-                                    nil
-                                    nil
-                                    'fsharp-run-executable-file-history)))
-    (start-process-shell-command cmd nil cmd)))
-
 ;;; Project
 
 (defun fsharp-mode/find-sln-or-fsproj (dir-or-file)
@@ -448,6 +361,16 @@ folders relative to DIR-OR-FILE."
   (let ((p (file-name-directory (directory-file-name dir))))
     (unless (equal p dir)
       p)))
+
+;; Make project.el aware of fsharp projects
+(defun fsharp-mode-project-root (dir)
+  (-when-let (project-file (fsharp-mode/find-sln-or-fsproj dir))
+    (cons 'fsharp (file-name-directory project-file))))
+
+(cl-defmethod project-roots ((project (head fsharp)))
+  (list (cdr project)))
+
+(add-hook 'project-find-functions #'fsharp-mode-project-root)
 
 (provide 'fsharp-mode)
 
