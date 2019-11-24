@@ -37,4 +37,4 @@ before_install:
   - travis_retry sudo apt-get install -y fsharp mono-xbuild
 
 script:
-  - make test-all
+  - make test
