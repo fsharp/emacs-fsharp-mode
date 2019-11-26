@@ -4,3 +4,4 @@ REM emacs -l test\test-common.el --batch --eval "(progn (set-default-coding-syst
 
 REM emacs -l test\test-common.el --batch --eval "(progn (set-default-coding-systems 'utf-8) (run-fsharp-unit-tests))"
 
+%userprofile%\.cask\bin\cask exec buttercup -L . -L \test
