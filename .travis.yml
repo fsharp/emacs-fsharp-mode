@@ -15,7 +15,6 @@ matrix:
   allow_failures:
     - env: EMACS_VERSION=emacs-snapshot
 env:
-  - EMACS_VERSION=emacs25
   - EMACS_VERSION=emacs26
   - EMACS_VERSION=emacs-snapshot
 
