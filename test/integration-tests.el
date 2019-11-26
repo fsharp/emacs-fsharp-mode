@@ -34,7 +34,7 @@
     (expect (file-exists-p  (eglot-fsharp--path-to-server)) :to-be t))
   (it "is enabled on F# Files"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
-      (eglot--tests-connect 10)
+      (eglot--tests-connect 30)
       (expect (type-of (eglot--current-server-or-lose)) :to-be 'eglot-fsautocomplete)))
   (it "provides completion"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
@@ -45,7 +45,7 @@
       (delete-char -3)
       ;; ERROR in fsautocomplet.exe?  Should block instead of "no type check results"
       (eglot--sniffing (:server-notifications s-notifs)
-        (eglot--wait-for (s-notifs 10)
+        (eglot--wait-for (s-notifs 90)
             (&key _id method &allow-other-keys)
           (string= method "textDocument/publishDiagnostics")))
       (completion-at-point)

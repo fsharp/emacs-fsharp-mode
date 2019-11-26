@@ -21,7 +21,10 @@ build: elpa version
 version:
 	$(EMACS) --version
 
-test: version build test/eglot-tests.el
+test/Test1/project.assets.json:
+	dotnet restore test/Test1
+
+test: version build test/eglot-tests.el test/Test1/project.assets.json
 	$(CASK) exec buttercup -L . -L ./test
 
 clean:
