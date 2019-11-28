@@ -20,6 +20,6 @@ install:
   - ps: Start-FileDownload "https://raw.githubusercontent.com/cask/cask/master/go"
   - ps: python go
 build_script:
-  - cmd: .\.appveyor\test.bat
+  - ps: .\.appveyor\test.ps1
 test: off
  
