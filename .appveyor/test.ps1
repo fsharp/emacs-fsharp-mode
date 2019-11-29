@@ -9,4 +9,5 @@ $location= Join-Path ($env:USERPROFILE) '\.cask\bin'
 $env:Path += ";$location"
 cask install | Out-String
 cask update | Out-String
+Get-ChildItem $PSScriptRoot\..
 cask exec buttercup -L . -L $PSScriptRoot\..\test | Out-String
