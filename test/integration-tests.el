@@ -32,6 +32,19 @@
   (it "Can be installed"
     (eglot-fsharp--maybe-install)
     (expect (file-exists-p  (eglot-fsharp--path-to-server)) :to-be t))
+  (it "shows flymake errors"
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/Error.fs")
+      (eglot--tests-connect 10)
+      (search-forward "nonexisting")
+      (flymake-mode t)
+      (flymake-start)
+      (goto-char (point-min))
+      (eglot--sniffing (:server-notifications s-notifs)
+        (eglot--wait-for (s-notifs 10)
+            (&key _id method &allow-other-keys)
+          (string= method "textDocument/publishDiagnostics")))
+      (flymake-goto-next-error 1 '() t)
+      (expect (face-at-point) :to-be 'flymake-error )))
   (it "is enabled on F# Files"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
       (eglot--tests-connect 30)
