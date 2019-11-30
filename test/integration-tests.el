@@ -30,7 +30,7 @@
 
 (defun eglot-fsharp--sniff-diagnostics ()
   (eglot--sniffing (:server-notifications s-notifs)
-    (eglot--wait-for (s-notifs 10)
+    (eglot--wait-for (s-notifs 20)
 	(&key _id method &allow-other-keys)
       (string= method "textDocument/publishDiagnostics"))))
 
