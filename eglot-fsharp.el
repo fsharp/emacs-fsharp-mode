@@ -107,6 +107,18 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   "Passes through required FsAutoComplete initialization options."
   '(:automaticWorkspaceInit t))
 
+;; FIXME: this should be fixed in FsAutocomplete
+(cl-defmethod xref-backend-definitions :around ((type symbol) _identifier)
+  "FsAutoComplete breaks spec and and returns error instead of empty list."
+  (if (eq major-mode 'fsharp-mode)
+      (condition-case err
+	  (cl-call-next-method)
+	(jsonrpc-error
+	 (when (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration"))
+	   nil)))
+    (when (cl-next-method-p)
+      (cl-call-next-method))))
+
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
 (provide 'eglot-fsharp)
