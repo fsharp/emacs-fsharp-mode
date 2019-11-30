@@ -25,7 +25,7 @@ test/Test1/project.assets.json:
 	dotnet restore test/Test1
 
 test: version build test/eglot-tests.el test/Test1/project.assets.json
-	$(CASK) exec buttercup -L . -L ./test
+	$(CASK) exec buttercup -L . -L ./test --traceback full
 
 clean:
 	rm -f .depend elpa-$(EMACS) $(OBJECTS) $(PKG)-autoloads.el
