@@ -49,7 +49,17 @@
             (&key _id method &allow-other-keys)
           (string= method "textDocument/publishDiagnostics")))
       (completion-at-point)
-      (expect (looking-back "X\\.func") :to-be t))))
+      (expect (looking-back "X\\.func") :to-be t)))
+  (it "doesn't throw error when definition does not exist"
+      (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+	(goto-char 253)
+	(expect (current-word) :to-equal "printfn") ;sanity check
+	(expect
+	 (condition-case err
+	     (call-interactively #'xref-find-definitions)
+	   (user-error
+	    (cadr err)))
+	 :to-equal "No definitions found for: LSP identifier at point."))))
 
 (provide 'integration-tests)
 ;;; integration-tests.el ends here
