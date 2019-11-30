@@ -59,7 +59,13 @@
 	     (call-interactively #'xref-find-definitions)
 	   (user-error
 	    (cadr err)))
-	 :to-equal "No definitions found for: LSP identifier at point."))))
+	 :to-equal "No definitions found for: LSP identifier at point.")))
+  (it "finds definitions in other files of Project"
+      (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+	(goto-char 150)
+	(expect (current-word) :to-equal "NewObjectType") ;sanity check
+	(call-interactively #'xref-find-definitions)
+	(expect (file-name-nondirectory (buffer-file-name)) :to-equal "FileTwo.fs"))))
 
 (provide 'integration-tests)
 ;;; integration-tests.el ends here
