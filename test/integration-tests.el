@@ -28,6 +28,12 @@
 (require 'eglot-fsharp)
 (require 'eglot-tests)
 
+(defun eglot-fsharp--sniff-diagnostics ()
+  (eglot--sniffing (:server-notifications s-notifs)
+    (eglot--wait-for (s-notifs 10)
+	(&key _id method &allow-other-keys)
+      (string= method "textDocument/publishDiagnostics"))))
+
 (describe "F# LSP server"
   (it "Can be installed"
     (eglot-fsharp--maybe-install)
@@ -39,46 +45,41 @@
       (flymake-mode t)
       (flymake-start)
       (goto-char (point-min))
-      (eglot--sniffing (:server-notifications s-notifs)
-        (eglot--wait-for (s-notifs 10)
-            (&key _id method &allow-other-keys)
-          (string= method "textDocument/publishDiagnostics")))
+      (eglot-fsharp--sniff-diagnostics)
       (flymake-goto-next-error 1 '() t)
       (expect (face-at-point) :to-be 'flymake-error )))
   (it "is enabled on F# Files"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
-      (eglot--tests-connect 30)
       (expect (type-of (eglot--current-server-or-lose)) :to-be 'eglot-fsautocomplete)))
   (it "provides completion"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
+      (eglot-fsharp--sniff-diagnostics)
       (expect (plist-get (eglot--capabilities (eglot--current-server-or-lose)) :completionProvider) :not :to-be nil)))
   (it "completes function in other modules"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
       (search-forward "X.func")
       (delete-char -3)
       ;; ERROR in fsautocomplet.exe?  Should block instead of "no type check results"
-      (eglot--sniffing (:server-notifications s-notifs)
-        (eglot--wait-for (s-notifs 90)
-            (&key _id method &allow-other-keys)
-          (string= method "textDocument/publishDiagnostics")))
+      (eglot-fsharp--sniff-diagnostics)
       (completion-at-point)
       (expect (looking-back "X\\.func") :to-be t)))
   (it "doesn't throw error when definition does not exist"
-      (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
-	(goto-char 253)
-	(expect (current-word) :to-equal "printfn") ;sanity check
-	(expect
-	 (condition-case err
-	     (call-interactively #'xref-find-definitions)
-	   (user-error
-	    (cadr err)))
-	 :to-equal "No definitions found for: LSP identifier at point.")))
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+      (eglot-fsharp--sniff-diagnostics)
+      (goto-char 253)
+      (expect (current-word) :to-equal "printfn") ;sanity check
+      (expect
+       (condition-case err
+	   (call-interactively #'xref-find-definitions)
+	 (user-error
+	  (cadr err)))
+       :to-equal "No definitions found for: LSP identifier at point.")))
   (it "finds definitions in other files of Project"
-      (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
-	(goto-char 150)
-	(expect (current-word) :to-equal "NewObjectType") ;sanity check
-	(call-interactively #'xref-find-definitions)
-	(expect (file-name-nondirectory (buffer-file-name)) :to-equal "FileTwo.fs"))))
+    (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+      (goto-char 150)
+      (expect (current-word) :to-equal "NewObjectType") ;sanity check
+      (call-interactively #'xref-find-definitions)
+      (expect (file-name-nondirectory (buffer-file-name)) :to-equal "FileTwo.fs"))))
 
 (provide 'integration-tests)
 ;;; integration-tests.el ends here
