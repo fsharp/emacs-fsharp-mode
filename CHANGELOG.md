@@ -1,3 +1,17 @@
+## 1.10 (2019.12-01)
+
+Features:
+  - #210: Remove old FsAutoComplete support (use LSP)
+	- provide eglot (Emacs LSP client) integration and add eglot
+      integration tests (using Emacs buttercup)
+    - Use Cask instead to automate the package development cycle;
+      development, dependencies, testing, building, packaging
+    - Make project.el aware of F# projects
+  - Use Emacs org-mode for README
+Bugfixes:
+    - #68: Indentation Cleanup / SMIE mode not being applied properly
+      (Gastove)
+
 ## 1.9.14 (2019-06-09)
 
 Features:
