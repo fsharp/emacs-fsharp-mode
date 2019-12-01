@@ -1,0 +1,190 @@
+[[http://melpa.org/#/fsharp-mode][file:http://melpa.org/packages/fsharp-mode-badge.svg]]
+[[https://travis-ci.org/fsharp/emacs-fsharp-mode][file:https://travis-ci.org/fsharp/emacs-fsharp-mode.png]]
+* fsharp-mode
+
+Provides support for the F# language in Emacs. Includes the following features:
+
+- Syntax highlighting and indentation
+- Support for F# Interactive
+- Via [[https://github.com/joaotavora/eglot/issues][Eglot]] LSP-client integration:
+  - Displays type signatures and tooltips
+  - Flymake
+  - Completion
+  - Jump to definition [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][Find Identifier References]] (Xref)
+
+** LSP mode
+Previous versions of =fsharp-mode= (mis)used a second repository [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]] to distribute =fsautocomplete.exe= and =fsharp-mode= together.
+
+The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically via  [eglot-fsharp](https://github.com/joaotavora/eglot) (part of this repo) or 
+[lsp-mode](https://github.com/emacs-lsp/lsp-mode) (untested).
+
+=fsharp-mode= is tested with Emacs 26.1+ and NET Core 2.1 (LTS)
+
+** Installation
+
+*** Package (*OUTDATED*)
+
+*Currently the MELPA package is outdated*! ATM it still refers to  [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]]!
+
+=fsharp-mode= is available on [MELPA](https://melpa.org) and can
+be installed using the built-in package manager.
+
+If you're not already using MELPA, add the following to your init.el:
+
+#+BEGIN_SRC elisp
+  ;;; Initialize MELPA
+  (require 'package)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+  (unless package-archive-contents (package-refresh-contents))
+  (package-initialize)
+
+  ;;; Install fsharp-mode
+  (unless (package-installed-p 'fsharp-mode)
+    (package-install 'fsharp-mode))
+
+  (require 'fsharp-mode)
+#+END_SRC
+
+If you are a user of [use-package](https://github.com/jwiegley/use-package) you can instead do
+
+#+BEGIN_SRC elisp
+(use-package fsharp-mode
+  :defer t
+  :ensure t)
+#+END_SRC
+
+*** From source
+
+I recommend to use [[https://cask.github.io/why-cask.html][Cask]]. Add this to your =Cask= file:
+
+#+BEGIN_SRC elisp
+(depends-on "fsharp-mode" :git "https://github.com/fsharp/emacs-fsharp-mode.git")
+#+END_SRC
+
+** Eglot integration
+
+=fsharp-eglot= is part of this package and provides integration to [[https://github.com/joaotavora/eglot][Eglot]] Emacs LSP client:
+
+   - Automatic =fsautocomplete= download
+   - Workaround for non-LSP standard-compliant
+
+Add to your config:
+#+BEGIN_SRC elisp
+(require 'fsharp-eglot)
+#+END_SRC
+
+and execute =M-x eglot=
+
+
+** Projects
+
+=fsharp-mode= has support for Emacs build-in project management via =project.el=
+
+** Configuration
+
+*** Compiler and REPL paths
+
+The F# compiler and interpreter should be set to good defaults for
+your OS as long as the relevant executables can be found on your PATH
+or in other standard locations. If you have a non-standard setup you
+may need to configure these paths manually.
+
+On Windows:
+
+#+BEGIN_SRC elisp
+(setq inferior-fsharp-program "c:\\Path\\To\\Fsi.exe")
+#+END_SRC
+
+On Unix-like systems, you must use the *--readline-* flag to ensure F#
+Interactive will work correctly with Emacs. Typically =fsi= and =fsc= are
+invoked through the shell scripts =fsharpi= and =fsharpc=:
+
+#+BEGIN_SRC elisp
+(setq inferior-fsharp-program "path/to/fsharpi --readline-")
+#+END_SRC
+
+***  Key Bindings
+
+If you are new to Emacs, you might want to use the menu (call
+=menu-bar-mode= if you don't see it). However, it's usually faster to learn
+a few useful bindings:
+
+| Key binding      | Description                               |
+|------------------+-------------------------------------------|
+| =C-c C-r=        | Evaluate region                           |
+| =C-c C-f=        | Load current buffer into toplevel         |
+| =C-c C-e=        | Evaluate current toplevel phrase          |
+| =C-M-x=          | Evaluate current toplevel phrase          |
+| =C-M-h=          | Mark current toplevel phrase              |
+| =C-c C-s=        | Show interactive buffer                   |
+| =C-c C-c=        | Compile with fsc                          |
+| =C-c x=          | Run the executable                        |
+| =C-c C-a=        | Open alternate file (.fsi or .fs)         |
+| =C-c l=          | Shift region to left                      |
+| =C-c r=          | Shift region to right                     |
+| =C-c <up>=       | Move cursor to the beginning of the block |
+| =C-c C-d=, =M-.= | Jump to definition of symbol at point     |
+| =C-c C-b=, =M-,= | Return to where point was before jump.    |
+
+
+To interrupt the interactive mode, use =C-c C-c=. This is useful if your
+code does an infinite loop or a very long computation.
+
+If you want to shift the region by 2 spaces, use: =M-2 C-c r=
+
+In the interactive buffer, use ==M-RET= to send the code without
+explicitly adding the =;;= thing.
+
+
+** Editor
+
+In order to change tab size it is possible to put this in emacs profile:
+
+#+BEGIN_SRC elisp
+(setq-default fsharp-indent-offset 2)
+#+END_SRC
+
+Because the F# language is sensitive to indentation, you might wan't to highlight indentation:
+
+#+BEGIN_SRC elisp
+(add-hook 'fsharp-mode-hook 'highlight-indentation-mode)
+#+END_SRC
+
+** Troubleshooting
+
+=fsharp-mode= is still under development, so you may encounter some
+issues. Please report them so we can improve things! Open an issue on [[https://github.com/fsharp/emacs-fsharp-mode/][Github]].
+
+*** Project file issues
+
+If your project file does not seem to be being parsed correctly, so
+that you have missing references or other incorrect intellisense
+results, it is possible to obtain a detailed log of LSP events in this buffers:
+
+
+- =*EGLOT (PROJECT/fsharp-mode) stderr*=
+- =*EGLOT (PROJECT/fsharp-mode) output*=
+- =*EGLOT (PROJECT/fsharp-mode) events*=
+
+** Contributing
+
+This project is maintained by the
+[[http://fsharp.org/][F# Software Foundation]], with the repository hosted
+on [[https://github.com/fsharp/emacs-fsharp-mode][GitHub]].
+
+Pull requests are welcome. Please run the test-suite with =make
+test= before submitting a pull request.
+
+*** Maintainers
+
+The maintainers of this repository appointed by the F# Core Engineering Group are:
+
+ - [[https://github.com/juergenhoetzel][Jürgen Hötzel]], [[http://github.com/forki][Steffen Forkmann]], [[http://github.com/kjnilsson][Karl Nilsson]] and [[http://github.com/guillermooo][Guillermo López-Anglada]]
+ - The primary maintainer for this repository is [[https://github.com/juergenhoetzel][Jürgen Hötzel]]
+
+Previous maintainers:
+ - [[https://github.com/rneatherway][Robin Neatherway]]
+
+
+
+
