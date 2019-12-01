@@ -10,4 +10,4 @@ $env:Path += ";$location"
 cask install | Out-String
 cask update | Out-String
 
-cask exec buttercup -L . -L (Join-Path (Split-Path $PSScriptRoot -parent) "test") | Out-String
+cask exec buttercup -L . -L (Join-Path (Split-Path $PSScriptRoot -parent) "test")
