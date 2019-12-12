@@ -22,9 +22,7 @@ The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically
 
 ** Installation
 
-*** Package (*OUTDATED*)
-
-*Currently the MELPA package is outdated*! ATM it still refers to  [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]]!
+*** Package
 
 =fsharp-mode= is available on [[https://melpa.org][MELPA]] and can
 be installed using the built-in package manager.
