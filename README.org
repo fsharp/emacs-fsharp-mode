@@ -15,8 +15,8 @@ Provides support for the F# language in Emacs. Includes the following features:
 ** LSP mode
 Previous versions of =fsharp-mode= (mis)used a second repository [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]] to distribute =fsautocomplete.exe= and =fsharp-mode= together.
 
-The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically via  [eglot-fsharp](https://github.com/joaotavora/eglot) (part of this repo) or 
-[lsp-mode](https://github.com/emacs-lsp/lsp-mode) (untested).
+The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically via [[https://github.com/joaotavora/eglot][eglot-fsharp]] (part of this repo) or
+[[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] (untested).
 
 =fsharp-mode= is tested with Emacs 26.1+ and NET Core 2.1 (LTS)
 
@@ -26,7 +26,7 @@ The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically
 
 *Currently the MELPA package is outdated*! ATM it still refers to  [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]]!
 
-=fsharp-mode= is available on [MELPA](https://melpa.org) and can
+=fsharp-mode= is available on [[https://melpa.org][MELPA]] and can
 be installed using the built-in package manager.
 
 If you're not already using MELPA, add the following to your init.el:
@@ -45,7 +45,7 @@ If you're not already using MELPA, add the following to your init.el:
   (require 'fsharp-mode)
 #+END_SRC
 
-If you are a user of [use-package](https://github.com/jwiegley/use-package) you can instead do
+If you are a user of [[https://github.com/jwiegley/use-package][use-package]] you can instead do
 
 #+BEGIN_SRC elisp
 (use-package fsharp-mode
