@@ -154,6 +154,17 @@ Because the F# language is sensitive to indentation, you might wan't to highligh
 =fsharp-mode= is still under development, so you may encounter some
 issues. Please report them so we can improve things! Open an issue on [[https://github.com/fsharp/emacs-fsharp-mode/][Github]].
 
+*** No autocompletion in FSX files
+
+The root cause is documented in this Ionide issue:  [[https://github.com/ionide/ionide-vscode-fsharp/issues/1244][4.2.0 - No auto complete or typechecking in FSX files]]
+
+As a workaround can add a reference to the facade netstandard assembly (path is platform/SDK-dependent).
+
+On Arch Linux using [[https://aur.archlinux.org/packages/dotnet-sdk-lts-bin][dotnet sdk lts]] add this to your =fsx= file:
+#+BEGIN_SRC fsharp
+#r "/opt/dotnet/sdk/2.1.801/ref/netstandard.dll"
+#+END_SRC
+
 *** Project file issues
 
 If your project file does not seem to be being parsed correctly, so
