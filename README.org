@@ -62,14 +62,14 @@ I recommend to use [[https://cask.github.io/why-cask.html][Cask]]. Add this to y
 
 ** Eglot integration
 
-=fsharp-eglot= is part of this package and provides integration to [[https://github.com/joaotavora/eglot][Eglot]] Emacs LSP client:
+=eglot-fsharp= is part of this package and provides integration to [[https://github.com/joaotavora/eglot][Eglot]] Emacs LSP client:
 
    - Automatic =fsautocomplete= download
    - Workaround for non-LSP standard-compliant
 
 Add to your config:
 #+BEGIN_SRC elisp
-(require 'fsharp-eglot)
+(require 'eglot-fsharp)
 #+END_SRC
 
 and execute =M-x eglot=
