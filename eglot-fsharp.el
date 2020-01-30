@@ -66,7 +66,7 @@
 (defun eglot-fsharp--maybe-install ()
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
   (make-directory (file-name-directory (eglot-fsharp--path-to-server)) t)
-  (let* ((url (format "https://ci.appveyor.com/api/projects/fsautocomplete/fsautocomplete/artifacts/bin/pkgs/fsautocomplete%szip?branch=master"
+  (let* ((url (format "https://ci.appveyor.com/api/projects/fsautocomplete/fsautocomplete/artifacts/bin/pkgs/fsautocomplete%szip?branch=master&pr=false"
 		      (if (eq eglot-fsharp-server-runtime 'net-core)
 			  ".netcore."
 			".")))
