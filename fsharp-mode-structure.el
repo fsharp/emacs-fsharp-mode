@@ -134,34 +134,6 @@ as indentation hints, unless the comment character is in column zero."
 
 
 ;;--------------------------------- Constants ---------------------------------;;
-;; TODO[gastove|2019-10-30] So much:
-;;   - No SQTQ in F#
-;;   - No raw strings either
-;;   - But there *are* verbatim strings that begin with @
-;;   - And can use \ to escape a newline
-;;   - But *can* contain newlines
-;; It's a good thing this isn't called often, because it is a mess and wrong.
-(defconst fsharp-stringlit-re
-  (concat
-   ;; These fail if backslash-quote ends the string (not worth
-   ;; fixing?).  They precede the short versions so that the first two
-   ;; quotes don't look like an empty short string.
-   ;;
-   ;; (maybe raw), long single quoted triple quoted strings (SQTQ),
-   ;; with potential embedded single quotes
-   "[rR]?'''[^']*\\(\\('[^']\\|''[^']\\)[^']*\\)*'''"
-   "\\|"
-   ;; (maybe raw), long double quoted triple quoted strings (DQTQ),
-   ;; with potential embedded double quotes
-   "[rR]?\"\"\"[^\"]*\\(\\(\"[^\"]\\|\"\"[^\"]\\)[^\"]*\\)*\"\"\""
-   "\\|"
-   "[rR]?'\\([^'\n\\]\\|\\\\.\\)*'"     ; single-quoted
-   "\\|"                                ; or
-   "[rR]?\"\\([^\"\n\\]\\|\\\\.\\)*\""  ; double-quoted
-   )
-  "Regular expression matching a Fsharp string literal.")
-
-
 (defconst fsharp--hanging-operator-re
   (concat ".*\\(" (mapconcat 'identity
                              '("+" "-" "*" "/")
