@@ -71,7 +71,7 @@
 			  ".netcore."
 			".")))
 	 (exe (eglot-fsharp--path-to-server))
-	 (zip (concat (file-name-directory exe) (file-name-nondirectory url)))
+	 (zip (concat (file-name-directory exe) "fsautocomplete.zip"))
 	 (gnutls-algorithm-priority
 	  (if (and (not gnutls-algorithm-priority)
 			  (boundp 'libgnutls-version)
@@ -84,7 +84,8 @@
       ;; FIXME: Windows
       (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
 	(unless (zerop (call-process "unzip" nil nil nil "-x" zip))
-	  (error "Failed to unzip %s" zip))))))
+	  (error "Failed to unzip %s" zip))
+	(delete-file zip)))))
 
  ;;;###autoload
 (defun eglot-fsharp (interactive)
