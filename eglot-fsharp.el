@@ -95,10 +95,10 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
     (eglot-fsharp--maybe-install))
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (cons 'eglot-fsautocomplete
-	  `(,(if (eq eglot-fsharp-server-runtime 'net-core)
-		 "dotnet"
-	       ;; FIXME: Windows
-	       "mono") ,(eglot-fsharp--path-to-server) "--background-service-enabled"))))
+	  `(,(cond ((eq eglot-fsharp-server-runtime 'net-core) "dotnet")
+               ((eq window-system 'w32) "")
+               ("mono"))
+        ,(eglot-fsharp--path-to-server) "--background-service-enabled"))))
 
 
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
