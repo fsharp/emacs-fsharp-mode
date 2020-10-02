@@ -41,7 +41,7 @@
   :risky t
   :type 'directory)
 
-(defcustom eglot-fsharp-server-version "0.38.1"
+(defcustom eglot-fsharp-server-version "0.41.1"
   "FsAutoComplete version."
   :group 'eglot-fsharp
   :risky t
