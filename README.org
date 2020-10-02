@@ -1,6 +1,6 @@
 [[http://melpa.org/#/fsharp-mode][file:http://melpa.org/packages/fsharp-mode-badge.svg]]
 [[https://stable.melpa.org/#/fsharp-mode][file:https://stable.melpa.org/packages/fsharp-mode-badge.svg]]
-[[https://travis-ci.org/fsharp/emacs-fsharp-mode][file:https://travis-ci.org/fsharp/emacs-fsharp-mode.png]]
+[[https://github.com/fsharp/emacs-fsharp-mode/actions][file:https://github.com/fsharp/emacs-fsharp-mode/workflows/CI/badge.svg]]
 * fsharp-mode
 
 Provides support for the F# language in Emacs. Includes the following features:
