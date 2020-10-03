@@ -5,9 +5,8 @@ on:
     # Comment out this section to enable testing of all branches.
     branches:
       - master
-
 jobs:
-  build:
+  gnu-build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -29,3 +28,31 @@ jobs:
       run: dotnet --info
     - name: Test
       run: make test
+  windows-build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/setup-dotnet@v1
+    - name: Install Cask/scoop-emacs
+      run: |
+        Set-ExecutionPolicy RemoteSigned -scope CurrentUser
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+        scoop update
+        scoop bucket add extras
+        scoop install emacs
+        scoop install make
+        echo "$env:PATH" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+    - uses: actions/checkout@v2
+    - name: Test                # FIXME: cask hack
+      run: |
+        git clone https://github.com/tom-bowles/cask cask-windows
+        Remove-Item -recurse .\cask-windows\test
+        dotnet restore test/Test1
+        Invoke-WebRequest -Uri https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el -OutFile eglot-tests.el
+        Start .\Cask-windows\bin\cask.bat -ArgumentList install -NoNewWindow -Wait
+        Start .\Cask-windows\bin\cask.bat -ArgumentList build -NoNewWindow -Wait
+        Start .\Cask-windows\bin\cask.bat -ArgumentList "exec buttercup -L . -L test --traceback full" -NoNewWindow -Wait
+
+
+
