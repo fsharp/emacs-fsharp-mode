@@ -76,7 +76,8 @@
 	    (let ((json-object-type 'hash-table)
 		  (url-mime-accept-string "application/json"))
 	      (url-insert-file-contents "https://github.com/fsharp/fsautocomplete/releases/latest")
-	      (setq eglot-fsharp--github-version (gethash "tag_name" (json-parse-buffer))))
+	      (goto-char (point-min))
+	      (setq eglot-fsharp--github-version (gethash "tag_name" (json-read))))
 	  (file-error
 	   (warn "fsautocomplete.exe update check:: %s" (error-message-string err)))))))
 
