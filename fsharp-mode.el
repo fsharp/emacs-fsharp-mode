@@ -201,8 +201,8 @@
           compile-command
           syntax-propertize-function
           company-backends
-          company-auto-complete
-          company-auto-complete-chars
+          company-auto-commit
+          company-auto-commit-chars
           company-require-match
           company-tooltip-align-annotations))
 
