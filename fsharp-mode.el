@@ -199,12 +199,7 @@
           add-log-current-defun-function
           underline-minimum-offset
           compile-command
-          syntax-propertize-function
-          company-backends
-          company-auto-complete
-          company-auto-complete-chars
-          company-require-match
-          company-tooltip-align-annotations))
+          syntax-propertize-function))
 
   (setq local-abbrev-table       fsharp-mode-abbrev-table
         paragraph-start          (concat "^$\\|" page-delimiter)
