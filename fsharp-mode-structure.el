@@ -31,7 +31,7 @@
 ;; currently override.
 ;;
 ;; SMIE configs by m00nlight Wang <dot.wangyushi@gmail.com>, 2015
-;; Last major update by Ross Donaldson <@gastove>, 2019
+;; Last major update by Ross Donaldson <@gastove>, 2020
 
 ;;; Code:
 
@@ -399,11 +399,12 @@ fun _ ->
 (Most blocks in F# *can* be expressed as single lines.)
 
 Point should be at the start of an expression."
-  (unless (looking-at-p "^\\s-*$")
+  (unless (looking-at-p "^\\s-+$")
     (save-excursion
       (let ((start (progn
                      (beginning-of-line)
-                     (forward-whitespace 1)
+                     (when (looking-at-p "\\s-+")
+                      (forward-whitespace 1))
                      (point)))
             (finish (fsharp-point 'eol))
             (searching t)
@@ -424,6 +425,7 @@ Point should be at the start of an expression."
 
 (defun fsharp--previous-line-opens-block-p ()
   (save-excursion
+    (forward-line -1)
     (while (and (not (bobp))
                 (looking-at-p (concat "^" fsharp-blank-or-comment-re "$")))
       (forward-line -1))
@@ -595,7 +597,7 @@ This function is normally bound to `indent-line-function' so
   (interactive "P")
   (let* ((ci (current-indentation))
          (levels (fsharp--compute-indent-levels))
-         (next-level-out (car (-filter (lambda (i) (> ci i)) levels)))
+         (next-level-out (or (car (-filter (lambda (i) (> ci i)) levels)) fsharp-indent-offset))
          (move-to-indentation-p (<= (current-column) ci))
          (need (fsharp-compute-indentation (not arg)))
          (cc (current-column)))
