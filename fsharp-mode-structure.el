@@ -78,6 +78,8 @@ allowed, because brackets reset the current offside column."
   :type 'boolean
   :group 'fsharp)
 
+
+;; NOTE[gastove|2020-12-20] This is currently unused; should it be?
 (defcustom fsharp-smart-indentation t
   "*Should `fsharp-mode' try to automagically set some indentation variables?
 When this variable is non-nil, two things happen when a buffer is set
@@ -168,21 +170,6 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching keywords which typically close a block.")
 
 
-(defconst fsharp-no-outdent-re
-  (concat
-   "\\("
-   (mapconcat 'identity
-              (list "try"
-                    "while\\s +.*"
-                    "for\\s +.*"
-                    "then"
-                    (concat fsharp-block-closing-keywords-re "[ \t\n]")
-                    )
-              "\\|")
-   "\\)")
-  "Regular expression matching lines not to dedent after.")
-
-
 (defconst fsharp-block-opening-re
   (concat "\\(" (mapconcat 'identity
                            '("if"
@@ -203,7 +190,8 @@ as indentation hints, unless the comment character is in column zero."
 Captures the specific block opener matched.")
 
 
-;; TODO: this regexp looks transparently like a python regexp. That means it's almost certainly wrong.
+;; TODO[gastove|2020-12-20] this regexp looks transparently like a python
+;; regexp. That means it's almost certainly wrong.
 (defvar fsharp-parse-state-re
   (concat
    "^[ \t]*\\(elif\\|else\\|while\\|def\\|class\\)\\>"
@@ -363,16 +351,8 @@ computation expression, etc)."
     (looking-at-p "^\\s-*|\\{1,3\\}>?.*$")))
 
 
-;; TODO[gastove|2019-11-01] The next two functions are really well intended, but
-;; need to specifically know how to handle skipping over blocks and comments.
-(defun fsharp--previous-line-pipe-expression-p ()
-  "Returns true if the previous line is a pipe expression."
-  (save-excursion
-    (forward-line -1)
-    (while (fsharp-in-literal-p)
-      (forwrd-line -1))
-    (fsharp--pipe-expression-p)))
-
+;; TODO[gastove|2019-11-01] This function is really well intended, but needs to
+;; specifically handle skipping over blocks and comments.
 (defun fsharp--next-line-pipe-expression-p ()
   "If the next line, skipping over comments and long string
 blocks, is a pipe expression, return point at the start of that
@@ -448,6 +428,9 @@ and `pass'.  This doesn't catch embedded statements."
 
 ;;---------------------------- Electric Keystrokes ----------------------------;;
 
+;; TODO[gastove|2020-12-20] This is a weird function. F# makes very little use
+;; of colons; feels like a Python hold-over. Need to be more confident in what
+;; it does before it's removed though.
 (defun fsharp-electric-colon (arg)
   "Insert a colon.
 In certain cases the line is dedented appropriately.  If a numeric
