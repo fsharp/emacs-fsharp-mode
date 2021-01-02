@@ -1,9 +1,9 @@
 ;;; eglot-fsharp.el --- Lua eglot integration                     -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2020  Jürgen Hötzel
+;; Copyright (C) 2019-2021  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@archlinux.org>
-;; Package-Requires: ((eglot "1.4"))
+;; Package-Requires: ((eglot "1.4") (fsharp-mode "1.10"))
 ;; Keywords: languages
 
 ;; This program is free software; you can redistribute it and/or modify
