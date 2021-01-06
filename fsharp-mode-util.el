@@ -24,7 +24,6 @@
 ;; Boston, MA 02110-1301, USA.
 
 (with-no-warnings (require 'cl))
-(require 'dash)
 
 (defvar fsharp-ac-using-mono
   (case system-type

@@ -28,9 +28,6 @@
 
 ;;; Code:
 
-;; (require 'fsharp-mode)
-;; (require 'dash)
-
 (defgroup fsharp-ui nil
   "F# UI group for the defcustom interface."
   :prefix "fsharp-ui-"

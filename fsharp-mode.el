@@ -7,7 +7,7 @@
 ;;         2012-2014 Robin Neatherway <robin.neatherway@gmail.com>
 ;;         2017-2019 Jürgen Hötzel
 ;; Maintainer: Jürgen Hötzel
-;; Package-Requires: ((emacs "25")  (s "1.3.1") (dash "1.1.0") (eglot))
+;; Package-Requires: ((emacs "25")  (s "1.3.1") (eglot))
 ;; Keywords: languages
 ;; Version: 1.9.15
 
@@ -35,7 +35,6 @@
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'project)
-(require 'dash)
 
 (defgroup fsharp nil
   "Support for the Fsharp programming language, <http://www.fsharp.net/>"
@@ -45,11 +44,11 @@
 ;;; Compilation
 
 (defvar fsharp-compile-command
-  (-any #'fsharp-mode--executable-find '("fsharpc" "fsc"))
+  (seq-some #'fsharp-mode--executable-find '("fsharpc" "fsc"))
   "The program used to compile F# source files.")
 
 (defvar fsharp-build-command
-  (-any #'fsharp-mode--msbuild-find '("msbuild" "xbuild"))
+  (seq-some #'fsharp-mode--msbuild-find '("msbuild" "xbuild"))
   "The command used to build F# projects and solutions.")
 
 ;;; ----------------------------------------------------------------------------
