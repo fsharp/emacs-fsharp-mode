@@ -87,7 +87,6 @@
     (let* ((cmd (append (cdr (eglot-fsharp nil)) '("--version")))
 	   (version-line (concat (car (apply #'process-lines cmd )))))
       (when (string-match "^FsAutoComplete \\([[:digit:].]+\\) " version-line)
-	(substring version-line (match-beginning 1) (match-end 1))
 	(match-string 1 version-line)))))
 
 (defun eglot-fsharp-current-version-p ()
