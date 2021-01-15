@@ -3,8 +3,10 @@
 ;; Copyright (C) 2019-2021  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@archlinux.org>
-;; Package-Requires: ((eglot "1.4") (fsharp-mode "1.10"))
+;; Package-Requires: ((emacs "27.1") (eglot "1.4") (fsharp-mode "1.10"))
+;; Version: 1.10
 ;; Keywords: languages
+;; URL: https://github.com/fsharp/emacs-fsharp-mode
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
