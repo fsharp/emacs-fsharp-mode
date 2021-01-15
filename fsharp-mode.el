@@ -9,7 +9,7 @@
 ;; Maintainer: Jürgen Hötzel
 ;; Package-Requires: ((emacs "25")  (s "1.3.1") (eglot))
 ;; Keywords: languages
-;; Version: 1.9.15
+;; Version: 1.11-snapshot
 
 ;; This file is not part of GNU Emacs.
 
