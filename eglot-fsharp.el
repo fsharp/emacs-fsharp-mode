@@ -85,9 +85,8 @@
   "Return version string of fsautocomplete."
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (let* ((cmd (append (cdr (eglot-fsharp nil)) '("--version")))
-           (version-line (concat (car (apply #'process-lines cmd )))))
+           (version-line (concat (car (apply #'process-lines cmd)))))
       (when (string-match "^FsAutoComplete \\([[:digit:].]+\\) " version-line)
-        (substring version-line (match-beginning 1) (match-end 1))
         (match-string 1 version-line)))))
 
 (defun eglot-fsharp-current-version-p ()
@@ -143,19 +142,18 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
   :documentation "F# FsAutoComplete langserver.")
 
-(cl-defmethod eglot-initialization-options ((server eglot-fsautocomplete))
+(cl-defmethod eglot-initialization-options ((_server eglot-fsautocomplete))
   "Passes through required FsAutoComplete initialization options."
   '(:automaticWorkspaceInit t))
 
 ;; FIXME: this should be fixed in FsAutocomplete
-(cl-defmethod xref-backend-definitions :around ((type symbol) _identifier)
+(cl-defmethod xref-backend-definitions :around ((_type symbol) _identifier)
   "FsAutoComplete breaks spec and and returns error instead of empty list."
   (if (eq major-mode 'fsharp-mode)
       (condition-case err
           (cl-call-next-method)
         (jsonrpc-error
-         (when (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration"))
-           nil)))
+         (not (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration")))))
     (when (cl-next-method-p)
       (cl-call-next-method))))
 
