@@ -162,4 +162,4 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
 (provide 'eglot-fsharp)
-;;; eglot-fsharp.el ends herep
+;;; eglot-fsharp.el ends here
