@@ -5,5 +5,6 @@
 (files "*.el")
 ;; FIXME: Use multiple packages: https://github.com/melpa/melpa#example-multiple-packages-in-one-repository ?
 (development
- (depends-on "buttercup"))
+ (depends-on "buttercup")
+ (depends-on "eglot"))
 

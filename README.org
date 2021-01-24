@@ -14,10 +14,10 @@ Provides support for the F# language in Emacs. Includes the following features:
   - Jump to definition [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][Find Identifier References]] (Xref)
 
 ** LSP mode
-Previous versions of =fsharp-mode= (mis)used a second repository [[https://github.com/rneatherway/emacs-fsharp-mode-bin][emacs-fsharp-mode-bin]] to distribute =fsautocomplete.exe= and =fsharp-mode= together.
 
-The current version of =fsharp-mode= installs =fsautocomplete.exe= automatically via [[https://github.com/joaotavora/eglot][eglot-fsharp]] (part of this repo) or
-[[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] (untested).
+The current version of =fsharp-mode= installs =fsautocomplete.exe=
+automatically via =eglot-fsharp.el= (part of this mono repo, [[https://melpa.org/#/eglot-fsharp][eglot-fsharp
+on melpa]]) or [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] (untested).
 
 =fsharp-mode= is tested with Emacs 26.1+ and NET Core 2.1 (LTS)
 
@@ -62,10 +62,9 @@ I recommend to use [[https://cask.github.io/why-cask.html][Cask]]. Add this to y
 
 ** Eglot integration
 
-=eglot-fsharp= is part of this package and provides integration to [[https://github.com/joaotavora/eglot][Eglot]] Emacs LSP client:
+The =eglot-fsharp= integration is not part of [[https://melpa.org/#/fsharp-mode][fsharp-mode on melpa]].
 
-   - Automatic =fsautocomplete= download
-   - Workaround for non-LSP standard-compliant
+It is available via the seperate package [[https://melpa.org/#/eglot-fsharp][eglot-fsharp on melpa]].
 
 Add to your config:
 #+BEGIN_SRC elisp
