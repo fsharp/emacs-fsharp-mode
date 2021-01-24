@@ -1,4 +1,4 @@
-;;; eglot-fsharp.el --- Lua eglot integration                     -*- lexical-binding: t; -*-
+;;; eglot-fsharp.el --- fsharp-mode eglot integration                     -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019-2021  Jürgen Hötzel
 
