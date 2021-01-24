@@ -2,7 +2,7 @@ Copyright 2011-2015
 
 
     Robin Neatherway
-    Jurgen Hurtzel
+    Jürgen Hötzel
     Jason Imison
     Chris Barrett
 
