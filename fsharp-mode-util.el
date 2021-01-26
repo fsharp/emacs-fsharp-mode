@@ -1,4 +1,4 @@
-;;; fsharp-mode-util.el --- utility functions
+;;; fsharp-mode-util.el --- utility functions -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2015 Robin Neatherway
 
@@ -23,10 +23,10 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 ;; Boston, MA 02110-1301, USA.
 
-(with-no-warnings (require 'cl))
+(require 'cl-lib)
 
 (defvar fsharp-ac-using-mono
-  (case system-type
+  (cl-case system-type
     ((windows-nt cygwin msdos) nil)
     (otherwise t))
   "Whether the .NET runtime in use is mono.
@@ -35,36 +35,39 @@ for all *nix.")
 
 (defun fsharp-mode--program-files-x86 ()
   (file-name-as-directory
-   (car (-drop-while 'not
-                     (list (getenv "ProgramFiles(x86)")
-                           (getenv "ProgramFiles")
-                           "C:\\Program Files (x86)")))))
+   (or (getenv "ProgramFiles(x86)")
+       (getenv "ProgramFiles")
+       "C:\\Program Files (x86)")))
 
 (defun fsharp-mode--vs2017-msbuild-find (exe)
   "Return EXE absolute path for Visual Studio 2017, if existent, else nil."
-  (->> (--map (concat (fsharp-mode--program-files-x86)
-                      "Microsoft Visual Studio/2017/"
-                      it
-                      "msbuild/15.0/bin/"
-                      exe)
-              '("Enterprise/" "Professional/" "Community/" "BuildTools/"))
-       (--first (file-executable-p it))))
+  (let ((candidates (mapcar (lambda (edition)
+                              (concat (fsharp-mode--program-files-x86)
+                                      edition
+                                      "msbuild/15.0/bin/"
+                                      exe))
+                            '("Enterprise/" "Professional/"
+                              "Community/" "BuildTools/"))))
+    (cl-find-if (lambda (exe) (file-executable-p exe)) candidates)))
 
 (defun fsharp-mode--msbuild-find (exe)
   (if fsharp-ac-using-mono
       (executable-find exe)
-    (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
-                                      "MSBuild/" it "/Bin")
-                              '("14.0" "13.0" "12.0")))
+    (let* ((searchdirs (mapcar (lambda (ver)
+                                 (concat (fsharp-mode--program-files-x86)
+                                         "MSBuild/" ver "/Bin"))
+                               '("14.0" "13.0" "12.0")))
            (exec-path (append searchdirs exec-path)))
       (or (fsharp-mode--vs2017-msbuild-find exe) (executable-find exe)))))
 
 (defun fsharp-mode--executable-find (exe)
   (if fsharp-ac-using-mono
       (executable-find exe)
-    (let* ((searchdirs (--map (concat (fsharp-mode--program-files-x86)
-                                      "Microsoft SDKs/F#/" it "/Framework/v4.0")
-                              '("10.1" "4.0" "3.1" "3.0")))
+    (let* ((searchdirs (mapcar (lambda (ver)
+                                 (concat (fsharp-mode--program-files-x86)
+                                         "Microsoft SDKs/F#/"
+                                         ver "/Framework/v4.0"))
+                               '("10.1" "4.0" "3.1" "3.0")))
            (exec-path (append searchdirs exec-path)))
       (executable-find exe))))
 

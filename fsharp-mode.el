@@ -35,6 +35,8 @@
 (require 'fsharp-mode-util)
 (require 'compile)
 (require 'project)
+(require 'subr-x)
+(require 'seq)
 
 (defgroup fsharp nil
   "Support for the Fsharp programming language, <http://www.fsharp.net/>"
@@ -358,7 +360,7 @@ folders relative to DIR-OR-FILE."
 
 ;; Make project.el aware of fsharp projects
 (defun fsharp-mode-project-root (dir)
-  (-when-let (project-file (fsharp-mode/find-sln-or-fsproj dir))
+  (when-let (project-file (fsharp-mode/find-sln-or-fsproj dir))
     (cons 'fsharp (file-name-directory project-file))))
 
 (cl-defmethod project-roots ((project (head fsharp)))
