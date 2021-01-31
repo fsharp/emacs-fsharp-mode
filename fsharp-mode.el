@@ -284,6 +284,9 @@
       (setq p2 (point))
       (fsharp-eval-region p1 p2))))
 
+(defvar fsharp-autosave-on-file-load nil
+  "*If true, buffer will be automatically saved on load.")
+
 (defun fsharp-load-buffer-file ()
   "Load the filename corresponding to the present buffer in F# with #load"
   (interactive)
@@ -291,8 +294,9 @@
   (let* ((name buffer-file-name)
          (command (concat "#load \"" name "\"")))
     (when (buffer-modified-p)
-      (when (y-or-n-p (concat "Do you want to save \"" name "\" before
-loading it? "))
+      (when (or (symbol-value fsharp-autosave-on-file-load)
+		(y-or-n-p (concat "Do you want to save \"" name
+				  "\" before loading it? ")))
         (save-buffer)))
     (fsharp-run-process-if-needed)
     (fsharp-simple-send inferior-fsharp-buffer-name command)))
