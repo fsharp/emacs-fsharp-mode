@@ -171,6 +171,13 @@
 (defvar fsharp-mode-hook nil
   "Hook for fsharp-mode")
 
+(defcustom fsharp-autosave-on-file-load nil
+  "Determine if buffer should be automatically saved on
+`fsharp-load-buffer-file'.
+If set to t, the buffer will always be saved, silently."
+  :type 'boolean
+  :group 'fsharp-mode)
+
 ;;;###autoload
 (define-derived-mode fsharp-mode prog-mode "fsharp"
   :syntax-table fsharp-mode-syntax-table
@@ -290,10 +297,11 @@
   (require 'inf-fsharp-mode)
   (let* ((name buffer-file-name)
          (command (concat "#load \"" name "\"")))
-    (when (buffer-modified-p)
-      (when (y-or-n-p (concat "Do you want to save \"" name "\" before
-loading it? "))
-        (save-buffer)))
+    (when (and (buffer-modified-p)
+	       (or fsharp-autosave-on-file-load
+		   (y-or-n-p (concat "Do you want to save \"" name
+				     "\" before loading it? "))))
+      (save-buffer))
     (fsharp-run-process-if-needed)
     (fsharp-simple-send inferior-fsharp-buffer-name command)))
 
