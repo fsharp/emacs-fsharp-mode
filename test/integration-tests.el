@@ -63,17 +63,13 @@
       (eglot-fsharp--sniff-diagnostics)
       (completion-at-point)
       (expect (looking-back "X\\.func") :to-be t)))
-  (it "doesn't throw error when definition does not exist"
+  (it "finds definition in pervasives"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
       (eglot-fsharp--sniff-diagnostics)
       (goto-char 253)
       (expect (current-word) :to-equal "printfn") ;sanity check
-      (expect
-       (condition-case err
-	   (call-interactively #'xref-find-definitions)
-	 (user-error
-	  (cadr err)))
-       :to-equal "No definitions found for: LSP identifier at point.")))
+      (call-interactively #'xref-find-definitions)
+      (expect (file-name-nondirectory (buffer-file-name)) :to-equal "fslib-extra-pervasives.fs")))
   (it "finds definitions in other files of Project"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
       (goto-char 150)
