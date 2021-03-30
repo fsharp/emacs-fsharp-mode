@@ -124,7 +124,12 @@
       (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
         (unless (zerop (call-process "unzip" nil nil nil "-o" zip))
           (error "Failed to unzip %s" zip))
-        (delete-file zip)))))
+	(unless (eq system-type 'windows-nt)
+	  (dolist  (file (directory-files-recursively (file-name-directory (eglot-fsharp--path-to-server)) "." t))
+	    (if (file-directory-p file)
+		(chmod file #o755)
+	      (chmod file #o644)))))
+        (delete-file zip))))
 
  ;;;###autoload
 (defun eglot-fsharp (interactive)
