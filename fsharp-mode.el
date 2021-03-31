@@ -218,6 +218,7 @@ If set to t, the buffer will always be saved, silently."
         comment-end              ""
         comment-column           40
         comment-start-skip       "///* *"
+        adaptive-fill-regexp     "[ \t]*\\(//+[ \t]*\\)*"
         comment-indent-function  'fsharp-comment-indent-function
         indent-region-function   'fsharp-indent-region
         indent-line-function     'fsharp-indent-line
