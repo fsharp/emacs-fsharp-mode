@@ -201,6 +201,7 @@ If set to t, the buffer will always be saved, silently."
           comment-column
           comment-start-skip
           comment-indent-function
+          adaptive-fill-regexp
           parse-sexp-ignore-comments
           indent-region-function
           indent-line-function
