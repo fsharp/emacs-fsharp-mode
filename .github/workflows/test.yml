@@ -22,7 +22,7 @@ jobs:
         version: ${{ matrix.emacs_version }}
     - uses: actions/setup-dotnet@v1
     - uses: actions/checkout@v2
-    - uses: conao3/setup-cask@master
+    - uses: cask/setup-cask@master
     - name: Show dotnet sdks
       run: dotnet --list-sdks
     - name: Show dotnet version
@@ -35,7 +35,8 @@ jobs:
       fail-fast: false
     steps:
     - uses: actions/setup-dotnet@v1
-    - name: Install Cask/scoop-emacs
+    - uses: cask/setup-cask@master
+    - name: Install scoop-emacs
       run: |
         Set-ExecutionPolicy RemoteSigned -scope CurrentUser
         Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
@@ -45,15 +46,10 @@ jobs:
         scoop install make
         echo "$env:PATH" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
     - uses: actions/checkout@v2
-    - name: Test                # FIXME: cask hack
+    - name: Test
       run: |
-        git clone https://github.com/tom-bowles/cask cask-windows
-        Remove-Item -recurse .\cask-windows\test
         dotnet restore test/Test1
-        Invoke-WebRequest -Uri https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el -OutFile eglot-tests.el
-        Start .\Cask-windows\bin\cask.bat -ArgumentList install -NoNewWindow -Wait
-        Start .\Cask-windows\bin\cask.bat -ArgumentList build -NoNewWindow -Wait
-        Start .\Cask-windows\bin\cask.bat -ArgumentList "exec buttercup -L . -L test --traceback full" -NoNewWindow -Wait
+        make test
 
 
 
