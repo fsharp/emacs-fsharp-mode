@@ -49,6 +49,7 @@ jobs:
     - name: Test
       run: |
         dotnet restore test/Test1
+        cask install
         make test
 
 
