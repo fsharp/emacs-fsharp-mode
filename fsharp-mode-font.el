@@ -171,6 +171,17 @@ with initial value INITVALUE and optional DOCSTRING."
   "<|\\{1,3\\}\\||\\{1,3\\}>"
   "Match the full range of pipe operators -- |>, ||>, |||>, etc.")
 
+(def-fsharp-compiled-var fsharp-custom-operator-with-pipe-regexp
+  (let ((op-chars "!%&\\*\\+\\-\\./<=>@\\^~") ;; all F# custom operator chars except for `|`
+        (backward-pipe "<|\\{1,3\\}")
+        (forward-pipe "|\\{1,3\\}>")
+        (alt "\\|"))
+    (concat "[" op-chars "|]*" backward-pipe "[" op-chars  "]+"
+        alt "[" op-chars "|]+" backward-pipe "[" op-chars  "]*"
+        alt "[" op-chars  "]*" forward-pipe  "[" op-chars "|]+"
+        alt "[" op-chars  "]+" forward-pipe  "[" op-chars "|]*"))
+  "Match operators that contains pipe sequence -- <|>, |>>, <<|, etc.")
+
 (def-fsharp-compiled-var fsharp-operator-case-regexp
   "\\s-+\\(|\\)[A-Za-z0-9_' ]"
   "Match literal | in contexts like match and type declarations.")
@@ -297,6 +308,7 @@ with initial value INITVALUE and optional DOCSTRING."
         nil nil
         (1 font-lock-function-name-face)
         (2 'fsharp-ui-operator-face)))
+      (,fsharp-custom-operator-with-pipe-regexp . 'fsharp-ui-generic-face)
       (,fsharp-operator-pipe-regexp . 'fsharp-ui-operator-face)
       (,fsharp-member-function-regexp 1 font-lock-function-name-face)
       (,fsharp-overload-operator-regexp 1 font-lock-function-name-face)
