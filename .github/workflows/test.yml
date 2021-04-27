@@ -34,17 +34,10 @@ jobs:
     strategy:
       fail-fast: false
     steps:
+    - uses: jcs090218/setup-emacs-windows@master
     - uses: actions/setup-dotnet@v1
     - uses: cask/setup-cask@master
-    - name: Install scoop-emacs
-      run: |
-        Set-ExecutionPolicy RemoteSigned -scope CurrentUser
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-        scoop update
-        scoop bucket add extras
-        scoop install emacs
-        scoop install make
-        echo "$env:PATH" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
     - uses: actions/checkout@v2
     - name: Test
       run: |
