@@ -31,13 +31,14 @@
 ;; currently override.
 ;;
 ;; SMIE configs by m00nlight Wang <dot.wangyushi@gmail.com>, 2015
-;; Last major update by Ross Donaldson <@gastove>, 2019
+;; Last major update by Ross Donaldson <@gastove>, 2020
 
 ;;; Code:
 
 (require 'comint)
 (require 'custom)
 (require 'compile)
+(require 'dash)
 (require 'smie)
 
 ;;-------------------------- Customization Variables --------------------------;;
@@ -77,6 +78,8 @@ allowed, because brackets reset the current offside column."
   :type 'boolean
   :group 'fsharp)
 
+
+;; NOTE[gastove|2020-12-20] This is currently unused; should it be?
 (defcustom fsharp-smart-indentation t
   "*Should `fsharp-mode' try to automagically set some indentation variables?
 When this variable is non-nil, two things happen when a buffer is set
@@ -134,34 +137,6 @@ as indentation hints, unless the comment character is in column zero."
 
 
 ;;--------------------------------- Constants ---------------------------------;;
-;; TODO[gastove|2019-10-30] So much:
-;;   - No SQTQ in F#
-;;   - No raw strings either
-;;   - But there *are* verbatim strings that begin with @
-;;   - And can use \ to escape a newline
-;;   - But *can* contain newlines
-;; It's a good thing this isn't called often, because it is a mess and wrong.
-(defconst fsharp-stringlit-re
-  (concat
-   ;; These fail if backslash-quote ends the string (not worth
-   ;; fixing?).  They precede the short versions so that the first two
-   ;; quotes don't look like an empty short string.
-   ;;
-   ;; (maybe raw), long single quoted triple quoted strings (SQTQ),
-   ;; with potential embedded single quotes
-   "[rR]?'''[^']*\\(\\('[^']\\|''[^']\\)[^']*\\)*'''"
-   "\\|"
-   ;; (maybe raw), long double quoted triple quoted strings (DQTQ),
-   ;; with potential embedded double quotes
-   "[rR]?\"\"\"[^\"]*\\(\\(\"[^\"]\\|\"\"[^\"]\\)[^\"]*\\)*\"\"\""
-   "\\|"
-   "[rR]?'\\([^'\n\\]\\|\\\\.\\)*'"     ; single-quoted
-   "\\|"                                ; or
-   "[rR]?\"\\([^\"\n\\]\\|\\\\.\\)*\""  ; double-quoted
-   )
-  "Regular expression matching a Fsharp string literal.")
-
-
 (defconst fsharp--hanging-operator-re
   (concat ".*\\(" (mapconcat 'identity
                              '("+" "-" "*" "/")
@@ -170,7 +145,9 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching unterminated algebra expressions.")
 
 
-;; TODO[gastove|2019-10-22] This doesn't match (* long comments *), but it *does* capture.
+;; TODO[gastove|2019-10-22] This doesn't match (* long comments *), but it
+;; *does* capture. When used with `looking-at-p', it also returns true on lines
+;; that are neither blank nor comment.
 (defconst fsharp-blank-or-comment-re "[ \t]*\\(//.*\\)?"
   "Regular expression matching a blank or comment line.")
 
@@ -193,40 +170,28 @@ as indentation hints, unless the comment character is in column zero."
   "Regular expression matching keywords which typically close a block.")
 
 
-(defconst fsharp-no-outdent-re
-  (concat
-   "\\("
-   (mapconcat 'identity
-              (list "try"
-                    "while\\s +.*"
-                    "for\\s +.*"
-                    "then"
-                    (concat fsharp-block-closing-keywords-re "[ \t\n]")
-                    )
-              "\\|")
-   "\\)")
-  "Regular expression matching lines not to dedent after.")
-
-
 (defconst fsharp-block-opening-re
   (concat "\\(" (mapconcat 'identity
-                           '("then"
+                           '("if"
+                             "then"
                              "else"
                              "with"
+                             "try"
                              "finally"
                              "class"
                              "struct"
                              "="        ; for example: let f x =
                              "->"
                              "do"
-                             "try"
                              "function")
                            "\\|")
           "\\)")
-  "Regular expression matching expressions which begin a block")
+  "Regular expression matching expressions which begin a block.
+Captures the specific block opener matched.")
 
 
-;; TODO: this regexp looks transparently like a python regexp. That means it's almost certainly wrong.
+;; TODO[gastove|2020-12-20] this regexp looks transparently like a python
+;; regexp. That means it's almost certainly wrong.
 (defvar fsharp-parse-state-re
   (concat
    "^[ \t]*\\(elif\\|else\\|while\\|def\\|class\\)\\>"
@@ -267,7 +232,7 @@ This function preserves point and mark."
 
 (defun fsharp-in-literal-p (&optional lim)
   "Return non-nil if point is in a Fsharp literal (a comment or
-string). The return value is specifically one of the symbols
+String). The return value is specifically one of the symbols
 'comment or 'string. Optional argument LIM indicates the
 beginning of the containing form, i.e. the limit on how far back
 to scan."
@@ -278,6 +243,9 @@ to scan."
     (cond
      ((nth 3 state) 'string)
      ((nth 4 state) 'comment)
+     ;; The above approach cannot tell if point is on the opening character of a
+     ;; comment.
+     ((looking-at comment-start) 'comment)
      (t nil))))
 
 
@@ -350,9 +318,9 @@ which is to say, it ends in +, -, /, or *."
 ;; arithmetic expression) and a new block scope opened by a single symbol and
 ;; terminated with whitespace.
 ;;
-;; We do already have `fsharp-statement-opens-block-p', which we could make much
-;; more active use of. However: `fsharp-statement-opens-block-p' calls
-;; `fsharp-goto-beyond-final-line', which... relies on
+;; We do already have `fsharp-expression-opens-block-p', which we could make much
+;; more active use of. However: `fsharp-expression-opens-block-p' calls
+;; `fsharp-goto-beyond-current-expression', which... relies on
 ;; `fsharp-continuation-line-p'. So that will need untangling.
 (defun fsharp-continuation-line-p ()
   "Return t if current line continues a line with a hanging
@@ -368,43 +336,80 @@ computation expression, etc)."
   "Returns true if previous line is a continuation line"
   (save-excursion
     (forward-line -1)
+    (while (and (not (bobp))
+                (looking-at-p (concat "^" fsharp-blank-or-comment-re "$")))
+      (forward-line -1))
     (fsharp-continuation-line-p)))
 
 
-(defun fsharp-statement-opens-block-p ()
-  "Return t if the current statement opens a block. For instance:
+(defun fsharp--pipe-expression-p ()
+  "Returns true if current expression is part of a multi-line
+  pipe expression, like a discriminated union or a chain of
+  left-pipes."
+  (save-excursion
+    (beginning-of-line)
+    (looking-at-p "^\\s-*|\\{1,3\\}>?.*$")))
 
-type Shape =
-    | Square
-    | Rectangle
+
+;; TODO[gastove|2019-11-01] This function is really well intended, but needs to
+;; specifically handle skipping over blocks and comments.
+(defun fsharp--next-line-pipe-expression-p ()
+  "If the next line, skipping over comments and long string
+blocks, is a pipe expression, return point at the start of that
+pipe expression.."
+  (save-excursion
+    (forward-line 1)
+    (fsharp--skip-past-comment-or-string)
+    (when (fsharp--pipe-expression-p)
+      (forward-whitespace 1)
+      (point))))
+
+
+(defun fsharp-expression-opens-block-p ()
+  "Return t if the current expression opens a block. For instance:
+
+if thing
+    stuff()
+else otherThing()
 
 or:
 
-let computation = [ this; that ]
-    |> Array.someCalculation
+fun _ ->
 
-Point should be at the start of a statement."
-  (save-excursion
-    (let ((start (point))
-          (finish (progn (fsharp-goto-beyond-final-line) (1- (point))))
-          (searching t)
-          (answer nil)
-          state)
-      (goto-char start)
-      ;; Keep searching until we're finished.
-      (while searching
-        (if (re-search-forward fsharp-block-opening-re finish t)
-            (if (eq (point) finish)
+(Most blocks in F# *can* be expressed as single lines.)
+
+Point should be at the start of an expression."
+  (unless (looking-at-p "^\\s-+$")
+    (save-excursion
+      (let ((start (progn
+                     (beginning-of-line)
+                     (when (looking-at-p "\\s-+")
+                      (forward-whitespace 1))
+                     (point)))
+            (finish (fsharp-point 'eol))
+            (searching t)
+            (answer nil))
+        (goto-char start)
+        ;; Keep searching until we're finished.
+        (while searching
+          (if (re-search-forward fsharp-block-opening-re finish t)
+              (when (eq (point) finish)
                 ;; sure looks like it opens a block -- but it might
                 ;; be in a comment
-                (progn
-                  (setq searching nil)  ; search is done either way
-                  (setq state (parse-partial-sexp start
-                                                  (match-beginning 0)))
-                  (setq answer (not (nth 4 state)))))
-          ;; search failed: couldn't find a reason to believe we're opening a block.
-          (setq searching nil)))
-      answer)))
+                (setq searching nil)  ; search is done either way
+                (setq answer (not (eq 'comment (fsharp-in-literal-p)))))
+
+            ;; search failed: couldn't find a reason to believe we're opening a block.
+            (setq searching nil)))
+        answer))))
+
+(defun fsharp--previous-line-opens-block-p ()
+  (save-excursion
+    (forward-line -1)
+    (while (and (not (bobp))
+                (looking-at-p (concat "^" fsharp-blank-or-comment-re "$")))
+      (forward-line -1))
+    (fsharp-expression-opens-block-p)))
 
 
 ;; TODO[@gastove|2019-10-22]: the list of keywords this function claims to catch
@@ -423,6 +428,9 @@ and `pass'.  This doesn't catch embedded statements."
 
 ;;---------------------------- Electric Keystrokes ----------------------------;;
 
+;; TODO[gastove|2020-12-20] This is a weird function. F# makes very little use
+;; of colons; feels like a Python hold-over. Need to be more confident in what
+;; it does before it's removed though.
 (defun fsharp-electric-colon (arg)
   "Insert a colon.
 In certain cases the line is dedented appropriately.  If a numeric
@@ -514,8 +522,7 @@ above."
       (delete-char 1)                   ; toss the dummy character
       (delete-horizontal-space)
       (indent-to base-indent)
-      (if base-found-p
-          (message "Closes block: %s" base-text)))))
+      )))
 
 
 (defun fsharp-electric-delete (arg)
@@ -546,6 +553,21 @@ number of characters to delete (default is 1)."
 
 
 ;;-------------------------------- Indentation --------------------------------;;
+(defun fsharp--compute-indent-levels ()
+  (let ((levels (list))
+        ci)
+    (save-excursion
+      (while (not (or (bobp)
+                      (eq ci 0)))
+        (if (looking-at-p "^\\s-*$")
+            (forward-line -1)
+          (let ((last-seen (car levels))
+                (ci (current-indentation)))
+            (when (or (not last-seen)
+                      (< ci last-seen))
+              (setq levels (cons ci levels))))
+          (forward-line -1)))
+      (reverse levels))))
 
 (defun fsharp-indent-line (&optional arg)
   "Fix the indentation of the current line according to Fsharp rules.
@@ -557,9 +579,12 @@ This function is normally bound to `indent-line-function' so
 \\[indent-for-tab-command] will call it."
   (interactive "P")
   (let* ((ci (current-indentation))
+         (levels (fsharp--compute-indent-levels))
+         (next-level-out (or (car (-filter (lambda (i) (> ci i)) levels)) fsharp-indent-offset))
          (move-to-indentation-p (<= (current-column) ci))
          (need (fsharp-compute-indentation (not arg)))
          (cc (current-column)))
+
     ;; dedent out a level if previous command was the same unless we're in
     ;; column 1
     (if (and (equal last-command this-command)
@@ -567,23 +592,25 @@ This function is normally bound to `indent-line-function' so
         (progn
           (beginning-of-line)
           (delete-horizontal-space)
-          (indent-to (* (/ (- cc 1) fsharp-indent-offset) fsharp-indent-offset)))
+          (indent-to next-level-out))
 
-      (progn
-        ;; see if we need to dedent
-        (if (fsharp-outdent-p)
-            (setq need (- need fsharp-indent-offset)))
+      ;; else
+      ;; see if we need to dedent
+      (if (fsharp-outdent-p)
+          (setq need (- need fsharp-indent-offset)))
 
-        (if (or fsharp-tab-always-indent
-                move-to-indentation-p)
-            (progn (if (/= ci need)
-                       (save-excursion
-                         (beginning-of-line)
-                         (delete-horizontal-space)
-                         (indent-to need)))
-                   (if move-to-indentation-p (back-to-indentation)))
-          (insert-tab)))
-      )))
+      (if (or fsharp-tab-always-indent
+              move-to-indentation-p)
+          (progn
+            (when (/= ci need)
+              ;; This when body was originally a save-excursion, which kinda makes
+              ;; no sense? Why save-excursion while moving point?
+              (beginning-of-line)
+              (delete-horizontal-space)
+              (indent-to need))
+            (if move-to-indentation-p (back-to-indentation)))
+        (insert-tab)))
+    ))
 
 
 ;; NOTE[gastove|2019-10-25] An interesting point: this function is *only* ever
@@ -684,11 +711,23 @@ above, but only when the previous line is not itself a continuation line."
             (skip-chars-forward "^ \t\n")))
       ;; if this is a continuation for a block opening
       ;; statement, add some extra offset.
-      (+ (current-column) (if (fsharp-statement-opens-block-p)
+      (+ (current-column) (if (fsharp-expression-opens-block-p)
                               fsharp-continuation-offset 0)
          1)
       )))
 
+(defun fsharp--get-last-indentation ()
+  "Tries to find the indentation of the last line of code,
+searching up from point."
+  (save-excursion
+    (beginning-of-line)
+    (forward-line -1)
+    (while (and
+            (or (looking-at "^\\s-*$")
+                (fsharp--indenting-comment-p))
+            (not (bobp)))
+      (forward-line -1))
+    (current-indentation)))
 
 (defun fsharp--compute-indentation-relative-to-previous (honor-block-close-p)
   "Indentation based on that of the statement that precedes us;
@@ -697,34 +736,14 @@ case the user forced a non-std indentation for the continuation
 lines (if any)"
   ;; skip back over blank & non-indenting comment lines note:
   ;; will skip a blank or non-indenting comment line that
-  ;; happens to be a continuation line too.  use fast Emacs 19
-  ;; function if it's there.
+  ;; happens to be a continuation line too.
   (save-excursion
     (let ((bod (fsharp-point 'bod))
+          (last-indentation (fsharp--get-last-indentation))
           placeholder)
-      (if (and (eq fsharp-honor-comment-indentation nil)
-               (fboundp 'forward-comment))
-          (forward-comment (- (point-max)))
-        (let ((prefix-re "//[ \t]*")
-              done)
-          (while (not done)
-            (re-search-backward "^[ \t]*\\([^ \t\n]\\|//\\)" nil 'move)
-            (setq done (or (bobp)
-                           (and (eq fsharp-honor-comment-indentation t)
-                                (save-excursion
-                                  (back-to-indentation)
-                                  (not (looking-at prefix-re))
-                                  ))
-                           (and (not (eq fsharp-honor-comment-indentation t))
-                                (save-excursion
-                                  (back-to-indentation)
-                                  (and (not (looking-at prefix-re))
-                                       (or (looking-at "[^/]")
-                                           (not (zerop (current-column)))
-                                           ))
-                                  ))
-                           ))
-            )))
+      (unless fsharp-honor-comment-indentation
+        (forward-comment (- (point-max))))
+
       ;; if we landed inside a string, go to the beginning of that
       ;; string. this handles triple quoted, multi-line spanning
       ;; strings.
@@ -737,13 +756,24 @@ lines (if any)"
       (fsharp-goto-beginning-of-tqs
        (save-excursion (nth 3 (parse-partial-sexp
                                placeholder (point)))))
-      (+ (current-indentation)
-         (if (fsharp-statement-opens-block-p)
-             fsharp-indent-offset
-           (if (and honor-block-close-p (fsharp-statement-closes-block-p))
-               (- fsharp-indent-offset)
-             0)))))
-  )
+      ;; Okay. We have three basic cases:
+      ;;
+      ;; - Increase indent
+      ;; - Decrease indent
+      ;; - Stay the same
+      ;;
+      ;; Given how F# works, I think the most sensible approach is to default to
+      ;; *staying the same* in most cases.
+      (+ last-indentation
+         ;; TODO: this appears to be where things are broken, oh boy
+         (cond
+          ((or (fsharp-expression-opens-block-p)
+               (fsharp--previous-line-opens-block-p)) fsharp-indent-offset)
+          ((and honor-block-close-p (fsharp-statement-closes-block-p))
+           (- fsharp-indent-offset))
+          ;; Default case, don't increase over current
+          (t 0)))
+      )))
 
 
 (defun fsharp-newline-and-indent ()
@@ -778,28 +808,58 @@ dedenting."
        ;; Continuation Lines
        ((fsharp-continuation-line-p)
         (if open-bracket-pos
-            (fsharp--compute-indentation-open-bracket open-bracket-pos)
+            ;; There are a set of circumstances in which one might write, for
+            ;; instance, a list of functions that need evaluating. Think of
+            ;; Expecto tests, often written like:
+            ;; [<Tests>]
+            ;; let tests =
+            ;;     testList "Serialization Round-Tripping"
+            ;;         [ testCase "Some description" <| fun _ ->
+            ;;               Expecto.equal 1 1
+            ;;           testCase "Other description" <| fun _ ->
+            ;;               Expecto.equal true false ]
+            ;;
+            ;; In this case, `open-bracket-pos' will be true, *but* we want to
+            ;; indent a level deeper than that usually implies. If one were to
+            ;; want to add another assertion after `Expecto.equal 1 1', for
+            ;; instance, we'd want to be at the indent level of the E in
+            ;; Expecto, not of the opening square bracket.
+            ;;
+            ;; Thus, we compute both numbers and return the max, letting the
+            ;; programmer tab back a level as needed.
+            (progn
+              ;; (message "Open bracket is %s" (fsharp--compute-indentation-open-bracket open-bracket-pos))
+              ;; (message "Relative to previous is %s" (fsharp--compute-indentation-relative-to-previous honor-block-close-p))
+              ;; (message "Last is %s" (fsharp--get-last-indentation))
+              (max
+               (fsharp--compute-indentation-open-bracket open-bracket-pos)
+               ;; (fsharp--compute-indentation-relative-to-previous honor-block-close-p)
+               (fsharp--get-last-indentation)))
           (fsharp--compute-indentation-continuation-line)))
 
        ;; Previous line is a continuation line, use indentation of previous line
        ((fsharp--previous-line-continuation-line-p)
-        (forward-line -1)
+        (while (and (not (bobp))
+                    (looking-at-p (concat "^" fsharp-blank-or-comment-re "$")))
+          (forward-line -1))
         (current-indentation))
 
        ((or
          ;; Beginning of Buffer; not on a continuation line
          (bobp)
          ;; "Indenting Comment"
-         (fsharp--indenting-comment-p)) (current-indentation))
+         (fsharp--indenting-comment-p))
+        (current-indentation))
 
-       ;; Final case includes things like pipe expressions (matches, left pipe)
-       ;; and if/else blocks.
+       ;; Final case includes things like pipe expressions, anonymous functions,
+       ;; long assignment expressions, and if/else blocks.
        ;;
        ;; else indentation based on that of the statement that
        ;; precedes us; use the first line of that statement to
        ;; establish the base, in case the user forced a non-std
        ;; indentation for the continuation lines (if any)
-       (t (fsharp--compute-indentation-relative-to-previous honor-block-close-p))))))
+       (t
+        (fsharp--compute-indentation-relative-to-previous honor-block-close-p))))))
 
 (defun fsharp-guess-indent-offset (&optional global)
   "Guess a good value for, and change, `fsharp-indent-offset'.
@@ -834,7 +894,7 @@ it's tried again going backward."
                  (not (fsharp-in-literal-p restart)))
         (setq restart (point))
         (fsharp-goto-initial-line)
-        (if (fsharp-statement-opens-block-p)
+        (if (fsharp-expression-opens-block-p)
             (setq found t)
           (goto-char restart))))
     (unless found
@@ -844,7 +904,7 @@ it's tried again going backward."
         (setq found (and
                      (re-search-backward fsharp-block-opening-re nil 'move)
                      (or (fsharp-goto-initial-line) t) ; always true -- side effect
-                     (fsharp-statement-opens-block-p)))))
+                     (fsharp-expression-opens-block-p)))))
     (setq colon-indent (current-indentation)
           found (and found (zerop (fsharp-next-statement 1)))
           new-value (- (current-indentation) colon-indent))
@@ -888,7 +948,7 @@ Optional CLASS is passed directly to `fsharp-beginning-of-def-or-class'."
       (fsharp-beginning-of-def-or-class class)
       (narrow-to-region (point) end))))
 
-
+
 (defun fsharp-shift-region (start end count)
   "Indent lines from START to END by COUNT spaces."
   (save-excursion
@@ -1064,6 +1124,8 @@ do not include blank, comment, or continuation lines."
       (if (> count 0) (goto-char start)))
     count))
 
+;; TODO[gastove|2019-10-31] This errors, and hard, if point is already on the
+;; start of the current block. This should be a noop, with no error.
 (defun fsharp-goto-block-up (&optional nomark)
   "Move up to start of current block.
 Go to the statement that starts the smallest enclosing block; roughly
@@ -1085,7 +1147,7 @@ NOMARK is not nil."
     (when (or (looking-at "[ \t]*\\($\\|//[^ \t\n]\\)")
               (looking-at-p "[ \t]*and[ \t]+"))
       (fsharp-goto-statement-at-or-above)
-      (setq found (fsharp-statement-opens-block-p)))
+      (setq found (fsharp-expression-opens-block-p)))
     ;; search back for colon line indented less
     (setq initial-indent (current-indentation))
     (if (zerop initial-indent)
@@ -1097,18 +1159,18 @@ NOMARK is not nil."
              (re-search-backward fsharp-block-opening-re nil 'move)
              (or (fsharp-goto-initial-line) t) ; always true -- side effect
              (< (current-indentation) initial-indent)
-             (fsharp-statement-opens-block-p))))
+             (fsharp-expression-opens-block-p))))
     (if found
         (progn
           (or nomark (push-mark start))
           (back-to-indentation))
       (goto-char start)
-      (error "Enclosing block not found"))))
+      (when (called-interactively-p)
+        (error "Enclosing block not found")))))
 
-;; The FIXME comment here is antique, and unexplained. My suspicion is that this
-;; function was lifted from a Python mode (F# doesn't have the `def' keyword).
-;; -- RMD 2019-10-20
-;;FIXME
+
+;; TODO[gastove|2019-11-01] F# doesn't have defs. Name needs fixing, and this
+;; thing needs to get under test, see if it does what it claims.
 (defun fsharp-beginning-of-def-or-class (&optional class count)
   "Move point to start of `def' or `class'.
 
@@ -1317,48 +1379,327 @@ line of the block."
           (goto-char open-bracket-pos)))))
   (beginning-of-line))
 
-;; TODO[gastove|2019-10-31] This is completely broken. I'm not totally sure why
-;; or how, but it simply doesn't do the thing it says on the tin.
-(defun fsharp-goto-beyond-final-line ()
-  "Go to the point just beyond the final line of the current expression.
-Usually this is the start of the next line, but if this is a
-multi-line expression we need to skip over the continuation
-lines."
-  ;; TODO[gastove|2019-10-30] This works on triple-quoted strings that start on
-  ;; their own line, but not if they are opened on the same line as a let.
-  (if (looking-at (concat "[ \t]*\\(" fsharp-stringlit-re "\\)"))
-      (goto-char (match-end 0)))
-  ;;
-  (forward-line 1)
-  (let (state)
-    ;; I think this first predicate is the problem -- "continuation lines", as
-    ;; defined by that function, are only lines with hanging arithmetic
-    ;; operators *or* lines inside certain pairs (things like data structures
-    ;; and computation expressions). This fully doesn't account for
-    ;; continuations using pipes.
-    (while (and (fsharp-continuation-line-p)
-                (not (eobp)))
-      ;; skip over hanging operator lines
-      (while (and (fsharp--hanging-operator-continuation-line-p)
-                  (not (eobp)))
+
+(defun fsharp--goto-end-of-string ()
+  "If point is inside an F# string literal or looking at the
+quotes on either side, move point to one past the closing
+character of the string. If point is before or after the string,
+do not move point."
+  ;; If point is on a quote, scoot forward past it. This will either take us
+  ;; *in* to the string, so `parse-partial-sexp' can do its work, or out past
+  ;; the end, which is what we want in any case.
+  (while (looking-at-p "\"")
+    (forward-char 1))
+
+  ;; FIXME: currently, the syntax-table for fsharp-mode doesn't appear to
+  ;; register triple-quoted strings, which has a lot of weird effects. We'll
+  ;; handle that here until syntax-table can be fixed.
+  (while (eq 'string (fsharp-in-literal-p))
+    ;; `parse-partial-sexp' can have strange side-effects if not called inside a
+    ;; string, so check first.
+    (when (fsharp-in-literal-p)
+      (progn
+        ;; `parse-partial-sexp' moves point to the closing character of the string, so
+        ;; this parse is all we need to do.
+        (parse-partial-sexp (point) (point-max) nil nil nil 'syntax-table)
+        ;; Due to the aforementioned syntax-table troubles, we might wind up
+        ;; inside the triple-quotes rather than after. If this happens, scoot
+        ;; forward.
+        (while (looking-at-p "\"")
+          (forward-char 1))
+        ))))
+
+
+(defun fsharp--skip-past-comment-or-string ()
+  "If point is inside a comment or string, go to the end of that
+comment or string."
+  (-let [continue t]
+    (while continue
+      (-if-let (current-literal (progn
+                                  ;; Use forward-whitespace before checking for
+                                  ;; a comment, in case of indentation (like,
+                                  ;; for instance, this comment line itself.)
+                                  (cond
+                                   ((looking-at-p "\\s-*\\(//\\|(\\*\\)")
+                                    (forward-whitespace 1))
+                                   ((looking-at-p "\"\"\"") (forward-char 3))
+                                   ((looking-at-p "\"") (forward-char 1)))
+                                  (fsharp-in-literal-p)))
+          (cond
+           ((eq current-literal 'comment) (forward-line 1))
+           ((eq current-literal 'string)
+            (fsharp--goto-end-of-string))
+           ;; Something has happened, stop.
+           (:default (setq continue nil)))
+        (setq continue nil)))
+    ))
+
+
+(defun fsharp--skip-past-pipes ()
+  "Move point to the line after the end of a long pipe
+  expression, skipping over comments and long strings in the
+  process."
+  (-let [continue t]
+    (while continue
+      (if (fsharp--pipe-expression-p)
+          ;; Pipes not infrequently open blocks, in which case, traverse
+          (if (fsharp-expression-opens-block-p)
+              ;; TODO[gastove|2019-12-14] Remove this function use... somehow.
+              (fsharp--goto-end-of-block)
+            ;; Otherwise, normal block, just go to the end.
+            (forward-line 1))
+        ;; Next possibility: the next pipe in the sequence is after some number
+        ;; of comments or a long string literal.
+        (-if-let (next-pipe (fsharp--next-line-pipe-expression-p))
+            (goto-char next-pipe)
+          ;; Final else
+          (setq continue nil)
+          ))
+      )))
+
+
+(defun fsharp-goto-beyond-current-expression ()
+  "Go to the beginning of the line after the final line of the
+current expression. E.g, with █ representing point after the
+function is called:
+
+let x = 5
+█
+
+let thing =
+    long
+    |> pipe
+    |> sequence
+█
+
+\"Current Expression\" is a conceptually complex term, as F#
+allows for arbitrarily nested expressions. This function attempts
+to move to the end of the smallest complete expression possible.
+That is, given this (line numbers included for clarity):
+
+1| let x =
+2|     let y = 5
+3|     let z = 10
+4|     y ** z
+5|
+
+With point on line 1, this function would move point to line 5.
+However, with point on line 2, this function advances to line 3,
+and on line 3, we advance to line 4.
+
+The algorithm here is roughly as follows:
+
+1. Record: initial indentation level; set `continue' to `true'.
+
+2. Is the current line a continuation of an ongoing expression?
+  (That is, part of a pipe expression, multi-line string,
+  multi-line comment, etc.)
+
+  - Yes, current line is a continuation line: move forward to the
+    end of the continuation.
+  - No: move on to next check
+
+3. Does the current line open a multi-line expression?
+
+  - Yes: advance one line; go back to 2
+  - No: advance one line.
+
+4. Is the current line empty?
+
+  - Yes: are we currently trying to get to the end of an ongoing, multi-line expression?
+    - Yes: we're done if the next line of code is at the same or less indentation than the initial indentation.
+    - No: we're done; set `continue' to `false'
+
+  - No: does the current line increase indentation?
+    - Yes: advance one line
+    - No: we're done; set `continue' to `false'
+
+5. Is `continue' true?
+
+  - Yes: loop back to 2
+  - No: exit.
+"
+  (-let ((init (point))
+         (benchmark-indentation (current-indentation))
+         (continue t))
+    (beginning-of-line)
+    ;; We pretty much always go forward one line.
+    (forward-line 1)
+    (while continue
+      (cond
+       ;; The most common kind of block is pipes. If we start in pipes or wind
+       ;; up in pipes, we scoot past 'em, then exit.
+       ((or (fsharp--pipe-expression-p)
+            (fsharp--next-line-pipe-expression-p))
+        (fsharp--skip-past-pipes)
+        (setq continue nil))
+
+       ;; Next most common kind of multi-line expression is literals. Skip past comments or strings.
+       ((fsharp-in-literal-p)
+        (fsharp--skip-past-comment-or-string))
+
+       ;; Line opens a block. Advance one line.
+       ((fsharp-expression-opens-block-p)
         (forward-line 1))
-      ;; if in nest, zip to the end of the nest
-      (setq state (fsharp-parse-state))
-      (when (and (not (zerop (car state)))
-                 (not (eobp)))
-        (progn
-          (parse-partial-sexp (point) (point-max) 0 nil state)
-          (forward-line 1))))))
+
+       ;; NOTE: not actually sure we want this
+       ;; Point is in a "single-line block"; go to the next line and exit
+       ;; ((fsharp--single-line-block-p)
+       ;;  (forward-line 1)
+       ;;  (setq continue nil))
+
+       ;; If the current line is blank, we're done if:
+       ;; - The next line of code is indented <= benchmark
+       ;; Otherwise, go forward one line
+       ((looking-at-p "^\\s-*$")
+        (if (save-excursion
+              (re-search-forward "\\w" (point-max) t)
+              (and
+               (/= 0 (current-indentation))
+               (> (current-indentation) benchmark-indentation)))
+
+            (forward-line 1)
+          ;; If the above failed, exit!
+          (setq continue nil)))
+
+       ;; Maybe we win? If we've dedented, exit.
+       ((< (current-indentation) benchmark-indentation)
+        (setq continue nil))
+
+       ;; ran out of search, return to start
+       ((eobp)
+        (goto-char init)
+        (setq continue nil))
+
+       ((= (current-indentation) benchmark-indentation)
+        (setq continue nil))
+
+       ;; If there's nothing else to say or do, scoot forward one line.
+       (t
+        (forward-line 1))))))
+
+
+(defun fsharp--anonymous-function-single-line-p ()
+  "Returns true if point is somewhere in the body of an anonymous
+function is fully expressed on a single line, nil otherwise."
+  (save-excursion
+    (-let ((back-lim (fsharp-point 'bol))
+           (forward-lim (fsharp-point 'eol))
+           (curr-indent (current-indentation))
+           (next-indent (save-excursion (forward-line 1) (current-indentation))))
+      (beginning-of-line)
+      (and
+       ;; Needs to be an anonymous function on this line _at all_
+       (re-search-forward "\\<fun\\>" forward-lim t)
+       ;; The line ends in an arrow; definitely multi-line
+       (not (looking-at ".*->$"))
+       (or
+        ;; The next line is indented as much or less than the current line,
+        ;; indicating no new block was opened.
+        (<= curr-indent next-indent)
+        ;; We have the `fun' keyword and matched surrounding parens
+        ;; TODO: look in to doing this with parse-partial-sexp.
+        (and (looking-back "(\\s-*fun" back-lim)
+             (looking-at ".*)")))
+       ))))
+
+;; TODO[gastove|2019-11-02] Not actually sure how this one will work. Just
+;; inverting the previous is wrong. I also... might not need this? Good
+;; question.
+;; (defun fsharp--anonymous-function-multi-line-p ()
+;;   (and
+;;    (re-search-forward "\\<fun\\>" forward-lim t)
+;;    (not (fsharp--anonymous-function-single-line-p))))
+
+(defun fsharp--single-line-if-p ()
+  (save-excursion
+    (or
+     (looking-at ".*if.*else")
+     (and (looking-back "if.*" (fsharp-point 'bol))
+          (looking-at ".*else \\w+$"))
+     (looking-back "if.*else.*" (fsharp-point 'bol)))))
+
+
+(defun fsharp--single-line-block-p ()
+  "Returns true if point is in a 'single-line block'.
+That is: some F# expressions _can_ open new blocks, but aren't
+_required_ to do so. This includes if/else expressions and
+anonymous functions."
+  (save-excursion
+    (beginning-of-line)
+    (or
+     ;; Single-line if/else
+     (fsharp--single-line-if-p)
+     ;; Single-line anonymous function
+     (fsharp--anonymous-function-single-line-p)
+     )))
+
+
+;; TODO[gastove|2019-12-07] Remove this once I'm sure it's not needed any more.
+;; NOTE[gastove|2019-12-14] It's still used by `fsharp--skip-past-pipes'.
+(defun fsharp--goto-end-of-block ()
+  "Go to the line after the end of the block opened under point.
+If the block is single-line, go to the next line. If indentation
+never changes, or line under point does not open a block, point
+does not move."
+  (-let ((init (point))
+         (benchmark-indentation (current-indentation))
+         (continue (fsharp-expression-opens-block-p)))
+    (beginning-of-line)
+    (while continue
+      (cond
+       ;; Line opens a block. Advance one line.
+       ((re-search-forward fsharp-block-opening-re (fsharp-point 'eol) t)
+        (forward-line 1))
+
+       ;; The most common kind of block is pipes.
+       ((fsharp--pipe-expression-p)
+        (setq benchmark-indentation (current-indentation))
+        (while (fsharp--pipe-expression-p)
+          (forward-line 1)))
+
+       ;; Point is in a "single-line block"; go to the next line and exit
+       ((fsharp--single-line-block-p)
+        (forward-line 1)
+        (setq continue nil))
+
+       ;; Mostly for comments, but if there _is_ a big string in there
+       ;; somewhere, we should skip that too.
+       ((fsharp-in-literal-p) (fsharp--skip-past-comment-or-string))
+
+       ;; If the current line is blank, we're only done if the next line isn't a
+       ;; member of the current block.
+       ((looking-at-p "^\\s-*$")
+        (if (save-excursion
+              (forward-line 1)
+              (> (current-indentation) benchmark-indentation))
+            (forward-line 1)
+          ;; If the above failed, exit!
+          (setq continue nil)))
+
+       ;; Maybe we win? If we've dedented, exit.
+       ((< (current-indentation) benchmark-indentation)
+        (setq continue nil))
+
+       ;; ran out of search, return to start
+       ((eobp)
+        (goto-char init)
+        (setq continue nil))
+
+       ;; If there's nothing else to say or do, scoot forward one line.
+       (t (forward-line 1))))
+    )
+  )
 
 
 (defun fsharp-goto-beyond-block ()
   "Go to point just beyond the final line of block begun by the current line.
-This is the same as where `fsharp-goto-beyond-final-line' goes unless
+This is the same as where `fsharp-goto-beyond-current-expression' goes unless
 we're on colon line, in which case we go to the end of the block.
 Assumes point is at the beginning of the line."
-  (if (fsharp-statement-opens-block-p)
+  (if (fsharp-expression-opens-block-p)
       (fsharp-mark-block nil 'just-move)
-    (fsharp-goto-beyond-final-line)))
+    (fsharp-goto-beyond-current-expression)))
 
 
 (defun fsharp-goto-statement-at-or-above ()
@@ -1381,7 +1722,7 @@ Return t if there is such a statement, otherwise nil.  `Statement'
 does not include blank lines, comments, or continuation lines."
   (beginning-of-line)
   (let ((start (point)))
-    (fsharp-goto-beyond-final-line)
+    (fsharp-goto-beyond-current-expression)
     (while (and
             (or (looking-at fsharp-blank-or-comment-re)
                 (fsharp-in-literal-p))
@@ -1617,7 +1958,7 @@ moves to the end of the block (& does not set mark or display a msg)."
         (setq first-symbol next-symbol)))
 
      ;; else if line *opens* a block, search for next stmt indented <=
-     ((fsharp-statement-opens-block-p)
+     ((fsharp-expression-opens-block-p)
       (while (and
               (setq last-pos (point))   ; always true -- side effect
               (fsharp-goto-statement-below)
@@ -1629,7 +1970,7 @@ moves to the end of the block (& does not set mark or display a msg)."
      (t
       (while (and
               (setq last-pos (point))   ; always true -- side effect
-              (or (fsharp-goto-beyond-final-line) t)
+              (or (fsharp-goto-beyond-current-expression) t)
               (not (looking-at "[ \t]*$")) ; stop at blank line
               (or
                (>= (current-indentation) initial-indent)
@@ -1638,7 +1979,7 @@ moves to the end of the block (& does not set mark or display a msg)."
 
     ;; skip to end of last stmt
     (goto-char last-pos)
-    (fsharp-goto-beyond-final-line)
+    (fsharp-goto-beyond-current-expression)
 
     ;; set mark & display
     (if just-move
