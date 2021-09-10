@@ -238,6 +238,11 @@ If set to t, the buffer will always be saved, silently."
   ;; In Emacs 24.4 onwards, tell electric-indent-mode that fsharp-mode
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
+  ;; NOTE[gastove|2020-12-19] I'm seeing a behavior during test where
+  ;; electric-indent-inhibit is not being respected. I don't have time to run
+  ;; down Electric problems, and also, it *really* messes with F# indentation.
+  ;; For now, go ahead and disable electic indent during fsharp-mode entirely.
+  (electric-indent-local-mode -1)
 
   (let ((file (buffer-file-name)))
     (when file
