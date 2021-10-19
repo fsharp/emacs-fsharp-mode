@@ -146,9 +146,7 @@ Input and output via buffer `*inferior-fsharp*'."
     (while
         (> count 0)
       (previous-multiframe-window)
-      (setq count (- count 1)))
-    )
-  )
+      (setq count (- count 1)))))
 
 (defun inferior-fsharp-eval-region (start end)
   "Send the current region to the inferior fsharp process."
