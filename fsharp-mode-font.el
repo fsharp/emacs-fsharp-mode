@@ -177,9 +177,9 @@ with initial value INITVALUE and optional DOCSTRING."
         (forward-pipe "|\\{1,3\\}>")
         (alt "\\|"))
     (concat "[" op-chars "|]*" backward-pipe "[" op-chars  "]+"
-        alt "[" op-chars "|]+" backward-pipe "[" op-chars  "]*"
-        alt "[" op-chars  "]*" forward-pipe  "[" op-chars "|]+"
-        alt "[" op-chars  "]+" forward-pipe  "[" op-chars "|]*"))
+            alt "[" op-chars "|]+" backward-pipe "[" op-chars  "]*"
+            alt "[" op-chars  "]*" forward-pipe  "[" op-chars "|]+"
+            alt "[" op-chars  "]+" forward-pipe  "[" op-chars "|]*"))
   "Match operators that contains pipe sequence -- <|>, |>>, <<|, etc.")
 
 (def-fsharp-compiled-var fsharp-operator-case-regexp
@@ -382,16 +382,14 @@ with initial value INITVALUE and optional DOCSTRING."
                                    'syntax-table (string-to-syntax "."))
                 (put-text-property (match-beginning 0) (match-end 0)
                                    'syntax-table (string-to-syntax "|"))
-                nil)))
-        )
+                nil))))
 
        (t ; Then we are in a triple-quoted string
         (when (re-search-forward "\"\"\"" end 'move)
           (put-text-property (- (match-beginning 0) 1) (match-beginning 0)
                              'syntax-table (string-to-syntax "."))
           (put-text-property (match-beginning 0) (match-end 0)
-                             'syntax-table (string-to-syntax "|")))
-        )))))
+                             'syntax-table (string-to-syntax "|"))))))))
 
 (provide 'fsharp-mode-font)
 
