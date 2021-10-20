@@ -129,7 +129,7 @@
 	    (if (file-directory-p file)
 		(chmod file #o755)
 	      (chmod file #o644)))))
-        (delete-file zip))))
+      (delete-file zip))))
 
  ;;;###autoload
 (defun eglot-fsharp (interactive)

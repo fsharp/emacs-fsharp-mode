@@ -285,8 +285,7 @@ to scan."
   "Returns non-nil if the current line should dedent one level."
   (save-excursion
     (progn (back-to-indentation)
-           (looking-at fsharp-outdent-re))
-    ))
+           (looking-at fsharp-outdent-re))))
 
 
 (defun fsharp--indenting-comment-p ()
@@ -459,8 +458,7 @@ comment."
             (goto-char here)
             (beginning-of-line)
             (delete-horizontal-space)
-            (indent-to (- indent outdent))
-            )))))
+            (indent-to (- indent outdent)))))))
 
 
 ;; Electric deletion
@@ -582,8 +580,7 @@ This function is normally bound to `indent-line-function' so
                          (delete-horizontal-space)
                          (indent-to need)))
                    (if move-to-indentation-p (back-to-indentation)))
-          (insert-tab)))
-      )))
+          (insert-tab))))))
 
 
 ;; NOTE[gastove|2019-10-25] An interesting point: this function is *only* ever
@@ -686,8 +683,7 @@ above, but only when the previous line is not itself a continuation line."
       ;; statement, add some extra offset.
       (+ (current-column) (if (fsharp-statement-opens-block-p)
                               fsharp-continuation-offset 0)
-         1)
-      )))
+         1))))
 
 
 (defun fsharp--compute-indentation-relative-to-previous (honor-block-close-p)
@@ -720,11 +716,7 @@ lines (if any)"
                                   (back-to-indentation)
                                   (and (not (looking-at prefix-re))
                                        (or (looking-at "[^/]")
-                                           (not (zerop (current-column)))
-                                           ))
-                                  ))
-                           ))
-            )))
+                                           (not (zerop (current-column))))))))))))
       ;; if we landed inside a string, go to the beginning of that
       ;; string. this handles triple quoted, multi-line spanning
       ;; strings.
@@ -742,8 +734,7 @@ lines (if any)"
              fsharp-indent-offset
            (if (and honor-block-close-p (fsharp-statement-closes-block-p))
                (- fsharp-indent-offset)
-             0)))))
-  )
+             0))))))
 
 
 (defun fsharp-newline-and-indent ()
@@ -857,8 +848,7 @@ it's tried again going backward."
       (or noninteractive
           (message "%s value of fsharp-indent-offset set to %d"
                    (if global "Global" "Local")
-                   fsharp-indent-offset)))
-    ))
+                   fsharp-indent-offset)))))
 
 (defun fsharp-comment-indent-function ()
   "Fsharp version of `comment-indent-function'."
@@ -873,8 +863,7 @@ it's tried again going backward."
            (setq eol (match-beginning 0)))
       (goto-char eol)
       (skip-chars-backward " \t")
-      (max comment-column (+ (current-column) (if (bolp) 0 1)))
-      )))
+      (max comment-column (+ (current-column) (if (bolp) 0 1))))))
 
 (defun fsharp-narrow-to-defun (&optional class)
   "Make text outside current defun invisible.
@@ -1142,8 +1131,7 @@ To mark the current `def', see `\\[fsharp-mark-def-or-class]'."
         (start-of-stmt (goto-char (fsharp-point 'bos)))
         (start-re (cond ((eq class 'either) "^[ \t]*\\(type\\|let\\)\\>")
                         (class "^[ \t]*type\\>")
-                        (t "^[ \t]*let\\>")))
-        )
+                        (t "^[ \t]*let\\>"))))
     ;; searching backward
     (if (and (< 0 count)
              (or (/= start-of-stmt start-of-line)
@@ -1621,8 +1609,7 @@ moves to the end of the block (& does not set mark or display a msg)."
       (while (and
               (setq last-pos (point))   ; always true -- side effect
               (fsharp-goto-statement-below)
-              (> (current-indentation) initial-indent)
-              )))
+              (> (current-indentation) initial-indent))))
 
      ;; else plain code line; stop at next blank line, or stmt or
      ;; indenting comment line indented <
