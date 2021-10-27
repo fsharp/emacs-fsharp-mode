@@ -28,11 +28,13 @@
 (require 'eglot-fsharp)
 (require 'eglot-tests)
 
-(defun eglot-fsharp--sniff-diagnostics ()
+(defun eglot-fsharp--sniff-diagnostics (file-name-suffix)
   (eglot--sniffing (:server-notifications s-notifs)
     (eglot--wait-for (s-notifs 20)
-	(&key _id method &allow-other-keys)
-      (string= method "textDocument/publishDiagnostics"))))
+                     (&key _id method params &allow-other-keys)
+                     (and
+                      (string= method "textDocument/publishDiagnostics")
+                      (string-suffix-p file-name-suffix (plist-get params :uri))))))
 
 (describe "F# LSP server"
   (it "Can be installed"
@@ -45,7 +47,7 @@
       (flymake-mode t)
       (flymake-start)
       (goto-char (point-min))
-      (eglot-fsharp--sniff-diagnostics)
+      (eglot-fsharp--sniff-diagnostics "test/Test1/Error.fs")
       (flymake-goto-next-error 1 '() t)
       (expect (face-at-point) :to-be 'flymake-error )))
   (it "is enabled on F# Files"
@@ -53,23 +55,24 @@
       (expect (type-of (eglot--current-server-or-lose)) :to-be 'eglot-fsautocomplete)))
   (it "provides completion"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/FileTwo.fs")
-      (eglot-fsharp--sniff-diagnostics)
+      (eglot-fsharp--sniff-diagnostics "test/Test1/FileTwo.fs")
       (expect (plist-get (eglot--capabilities (eglot--current-server-or-lose)) :completionProvider) :not :to-be nil)))
   (it "completes function in other modules"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
       (search-forward "X.func")
       (delete-char -3)
-      ;; ERROR in fsautocomplet.exe?  Should block instead of "no type check results"
-      (eglot-fsharp--sniff-diagnostics)
+      (eglot-fsharp--sniff-diagnostics "test/Test1/Program.fs")
       (completion-at-point)
       (expect (looking-back "X\\.func") :to-be t)))
   (it "finds definition in pervasives"
-    (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
-      (eglot-fsharp--sniff-diagnostics)
-      (goto-char 253)
-      (expect (current-word) :to-equal "printfn") ;sanity check
-      (call-interactively #'xref-find-definitions)
-      (expect (file-name-nondirectory (buffer-file-name)) :to-equal "fslib-extra-pervasives.fs")))
+      (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
+	(eglot-shutdown-all)		;FIXME: Why is a restart required
+	(eglot--tests-connect 10)
+	(search-forward "printfn")
+	(eglot-fsharp--sniff-diagnostics "test/Test1/Program.fs")
+	(expect (current-word) :to-equal "printfn") ;sanity check
+	(call-interactively #'xref-find-definitions)
+	(expect (file-name-nondirectory (buffer-file-name)) :to-equal "fslib-extra-pervasives.fs")))
   (it "finds definitions in other files of Project"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
       (goto-char 150)
