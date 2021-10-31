@@ -28,7 +28,7 @@
 (require 'comint)
 (require 'fsharp-mode-util)
 
-(with-no-warnings (require 'cl))
+(require 'cl-lib)
 
 ;; User modifiable variables
 
