@@ -38,10 +38,11 @@
   "*If true, display the inferior fsharp buffer when evaluating expressions.")
 
 (defvar inferior-fsharp-program
-  (if fsharp-ac-using-mono
-      "fsharpi --readline-"
-    (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\" --fsi-server-input-codepage:65001"))
-  "*Program name for invoking an inferior fsharp from Emacs.")
+  (cond
+   ((executable-find "dotnet") "dotnet fsi --readline-")
+   (fsharp-ac-using-mono "fsharpi --readline-")
+   (t (concat "\"" (fsharp-mode--executable-find "fsi.exe") "\" --fsi-server-input-codepage:65001")))
+  "Inferior F# command.")
 
 ;; End of User modifiable variables
 
