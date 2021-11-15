@@ -28,6 +28,8 @@
 (require 'eglot-fsharp)
 (require 'eglot-tests)
 
+(setq eglot-fsharp-server-version "0.48.2")
+
 (defun eglot-fsharp--sniff-diagnostics (file-name-suffix)
   (eglot--sniffing (:server-notifications s-notifs)
     (eglot--wait-for (s-notifs 20)
