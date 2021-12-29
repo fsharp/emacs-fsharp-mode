@@ -79,7 +79,7 @@ be sent from another buffer in fsharp mode.
   ;; use compilation mode to parse errors, but RET and C-cC-c should still be from comint-mode
   (compilation-minor-mode)
   (make-local-variable 'minor-mode-map-alist)
-  (setq minor-mode-map-alist (assq-delete-all 'compilation-minor-mode (copy-seq minor-mode-map-alist))))
+  (setq minor-mode-map-alist (assq-delete-all 'compilation-minor-mode (cl-copy-seq minor-mode-map-alist))))
 
 (defconst inferior-fsharp-buffer-subname "inferior-fsharp")
 (defconst inferior-fsharp-buffer-name
