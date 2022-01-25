@@ -60,12 +60,18 @@
   :type '(choice (const :tag "Use .Net Core" net-core)
                  (const :tag "Use .Net Framework" net-framework)))
 
+(defvar eglot-fsharp-server-root
+  (file-truename (concat eglot-fsharp-server-install-dir
+			 (if (eq eglot-fsharp-server-runtime 'net-core)
+			     "netcore/"
+			     "netframework/"))))
+
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
-  (file-truename (concat eglot-fsharp-server-install-dir
-                         (if (eq eglot-fsharp-server-runtime 'net-core)
-                             "netcore/fsautocomplete.dll"
-                           "netframework/fsautocomplete.exe"))))
+  (file-truename (concat eglot-fsharp-server-root
+			 (if (eq eglot-fsharp-server-runtime 'net-core)
+			     "tools/net5.0/any/fsautocomplete.dll"
+			     "fsautocomplete.exe"))))
 
 ;; cache to prevent repetitive queries
 (defvar eglot-fsharp--github-version nil "Latest fsautocomplete.exe GitHub version string.")
@@ -100,17 +106,16 @@
 
 (defun eglot-fsharp--maybe-install ()
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
-  (make-directory (file-name-directory (eglot-fsharp--path-to-server)) t)
+  (make-directory eglot-fsharp-server-root t)
   (let* ((version (if (eq eglot-fsharp-server-version 'latest)
                       (eglot-fsharp--github-version)
                     eglot-fsharp-server-version))
-         (url (format "https://github.com/fsharp/FsAutoComplete/releases/download/%s/fsautocomplete%szip"
+         (url (format "https://github.com/fsharp/FsAutoComplete/releases/download/%s/fsautocomplete%s"
                       version
                       (if (eq eglot-fsharp-server-runtime 'net-core)
-                          ".netcore."
-                        ".")))
-         (exe (eglot-fsharp--path-to-server))
-         (zip (concat (file-name-directory exe) "fsautocomplete.zip"))
+                          (format ".%s.nupkg" (string-trim-left version "[vV]"))
+                        ".zip")))
+         (zip (concat eglot-fsharp-server-root "fsautocomplete.zip"))
          (gnutls-algorithm-priority
           (if (and (not gnutls-algorithm-priority)
                    (boundp 'libgnutls-version)
@@ -121,7 +126,7 @@
     (unless (eglot-fsharp-current-version-p)
       (url-copy-file url zip t)
       ;; FIXME: Windows (unzip preinstalled?)
-      (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
+      (let ((default-directory eglot-fsharp-server-root))
         (unless (zerop (call-process "unzip" nil nil nil "-o" zip))
           (error "Failed to unzip %s" zip))
 	(unless (eq system-type 'windows-nt)
