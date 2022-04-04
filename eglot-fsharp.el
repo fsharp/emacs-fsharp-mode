@@ -77,18 +77,10 @@
   "Remove any spurious prefix from the version string VERSION."
   (string-trim-left version "[Vv]"))
 
-(defun eglot-fsharp--github-version ()
-  "Return latest fsautocomplete.exe GitHub version string."
-  (or eglot-fsharp--github-version
-      (with-temp-buffer
-        (condition-case err
-            (let ((json-object-type 'hash-table)
-                  (url-mime-accept-string "application/json"))
-              (url-insert-file-contents "https://github.com/fsharp/fsautocomplete/releases/latest")
-              (goto-char (point-min))
-              (setq eglot-fsharp--github-version (gethash "tag_name" (json-read))))
-          (file-error
-           (warn "fsautocomplete.exe update check:: %s" (error-message-string err)))))))
+(defun eglot-fsharp--latest-version ()
+  "Return latest fsautocomplete.exe version."
+  (seq-some (lambda (s) (and (string-match "^Latest Version: \\(.*\\)$" s) (match-string 1 s)))
+	    (process-lines "dotnet"  "tool" "search" "fsautocomplete" "--detail")))
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
