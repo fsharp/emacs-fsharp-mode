@@ -84,11 +84,8 @@
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
-  (when (file-exists-p (eglot-fsharp--path-to-server))
-    (let* ((cmd (append (cdr (eglot-fsharp nil)) '("--version")))
-           (version-line (concat (car (apply #'process-lines cmd)))))
-      (when (string-match "^FsAutoComplete \\([[:digit:].]+\\) " version-line)
-        (match-string 1 version-line)))))
+  (seq-some (lambda (s) (and (string-match "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" s) (match-string 1 s)))
+	    (process-lines "dotnet"  "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))))
 
 (defun eglot-fsharp-current-version-p ()
   "Return t if the installation is not outdated."
