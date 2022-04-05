@@ -66,7 +66,6 @@
       (expect (looking-back "X\\.func") :to-be t)))
   (it "finds definition in pervasives"
       (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
-	(eglot-shutdown-all)		;FIXME: Why is a restart required
 	(eglot--tests-connect 10)
 	(search-forward "printfn")
 	(eglot-fsharp--sniff-diagnostics "test/Test1/Program.fs")

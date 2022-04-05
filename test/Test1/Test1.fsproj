@@ -9,6 +9,7 @@
     <Compile Include="Error.fs" />
     <Compile Include="FileTwo.fs" />
     <Compile Include="Program.fs" />
+    <Compile Include="Pervasive.fs" />
   </ItemGroup>
 
 </Project>
