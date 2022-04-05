@@ -71,7 +71,7 @@
                            "netframework/fsautocomplete.exe"))))
 
 ;; cache to prevent repetitive queries
-(defvar eglot-fsharp--github-version nil "Latest fsautocomplete.exe GitHub version string.")
+(defvar eglot-fsharp--latest-version nil "Latest fsautocomplete.exe version string.")
 
 (defun eglot-fsharp--clean-version (version)
   "Remove any spurious prefix from the version string VERSION."
@@ -79,8 +79,11 @@
 
 (defun eglot-fsharp--latest-version ()
   "Return latest fsautocomplete.exe version."
-  (seq-some (lambda (s) (and (string-match "^Latest Version: \\(.*\\)$" s) (match-string 1 s)))
-	    (process-lines "dotnet"  "tool" "search" "fsautocomplete" "--detail")))
+  (if eglot-fsharp--latest-version
+      eglot-fsharp--latest-version
+    (setq eglot-fsharp--latest-version
+	  (seq-some (lambda (s) (and (string-match "^Latest Version: \\(.*\\)$" s) (match-string 1 s)))
+		    (process-lines "dotnet"  "tool" "search" "fsautocomplete" "--detail")))))
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
@@ -91,7 +94,7 @@
   "Return t if the installation is not outdated."
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (if (eq eglot-fsharp-server-version 'latest)
-	(equal (eglot-fsharp--clean-version (eglot-fsharp--github-version))
+	(equal (eglot-fsharp--clean-version (eglot-fsharp--latest-version))
 	       (eglot-fsharp--clean-version (eglot-fsharp--installed-version)))
       (equal (eglot-fsharp--clean-version eglot-fsharp-server-version)
 	     (eglot-fsharp--clean-version (eglot-fsharp--installed-version))))))
@@ -151,7 +154,7 @@
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
   (make-directory (file-name-directory (eglot-fsharp--path-to-server)) t)
   (let* ((version (if (eq eglot-fsharp-server-version 'latest)
-                      (eglot-fsharp--github-version)
+                      (eglot-fsharp--latest-version)
                     eglot-fsharp-server-version)))
   (if (eq eglot-fsharp-server-runtime 'net-core)
       (eglot-fsharp--install-core version)
