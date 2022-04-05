@@ -73,10 +73,6 @@
 ;; cache to prevent repetitive queries
 (defvar eglot-fsharp--latest-version nil "Latest fsautocomplete.exe version string.")
 
-(defun eglot-fsharp--clean-version (version)
-  "Remove any spurious prefix from the version string VERSION."
-  (string-trim-left version "[Vv]"))
-
 (defun eglot-fsharp--latest-version ()
   "Return latest fsautocomplete.exe version."
   (if eglot-fsharp--latest-version
@@ -94,10 +90,9 @@
   "Return t if the installation is not outdated."
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (if (eq eglot-fsharp-server-version 'latest)
-	(equal (eglot-fsharp--clean-version (eglot-fsharp--latest-version))
-	       (eglot-fsharp--clean-version (eglot-fsharp--installed-version)))
-      (equal (eglot-fsharp--clean-version eglot-fsharp-server-version)
-	     (eglot-fsharp--clean-version (eglot-fsharp--installed-version))))))
+	(equal (eglot-fsharp--latest-version)
+	       (eglot-fsharp--installed-version))
+      (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
 
 (defun eglot-fsharp--install-w32 (version)
   "Download and install the full framework version of F# compiler service at version VERSION in `eglot-fsharp-server-install-dir'."
@@ -136,8 +131,7 @@
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
-  (let ((vers (eglot-fsharp--clean-version version))
-	(default-directory (file-name-directory (eglot-fsharp--path-to-server))))
+  (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
     (unless (eglot-fsharp-current-version-p)
       (if (file-exists-p (eglot-fsharp--path-to-server))
 	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
@@ -148,7 +142,7 @@
       (eglot-fsharp--process-tool-action (call-process "dotnet" nil '(nil "error_output.txt") nil
 						       "tool" "install" "fsautocomplete"
 						       "--tool-path" default-directory "--version"
-						       vers)))))
+						       version)))))
 
 (defun eglot-fsharp--maybe-install ()
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
@@ -156,9 +150,9 @@
   (let* ((version (if (eq eglot-fsharp-server-version 'latest)
                       (eglot-fsharp--latest-version)
                     eglot-fsharp-server-version)))
-  (if (eq eglot-fsharp-server-runtime 'net-core)
-      (eglot-fsharp--install-core version)
-    (eglot-fsharp--install-w32 version))))
+    (if (eq eglot-fsharp-server-runtime 'net-core)
+	(eglot-fsharp--install-core version)
+      (eglot-fsharp--install-w32 version))))
 
  ;;;###autoload
 (defun eglot-fsharp
