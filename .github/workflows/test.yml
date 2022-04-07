@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        dotnet: [6.0.200]
         emacs_version:
           - 26.3
           - 27.1
@@ -23,6 +24,8 @@ jobs:
       with:
         version: ${{ matrix.emacs_version }}
     - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ matrix.dotnet }}
     - uses: actions/checkout@v2
     - uses: conao3/setup-cask@master
     - name: Show dotnet sdks
