@@ -28,8 +28,6 @@
 (require 'eglot-fsharp)
 (require 'eglot-tests)
 
-(setq eglot-fsharp-server-version "0.48.2")
-
 (defun eglot-fsharp--sniff-diagnostics (file-name-suffix)
   (eglot--sniffing (:server-notifications s-notifs)
     (eglot--wait-for (s-notifs 20)
@@ -41,7 +39,11 @@
 (describe "F# LSP server"
   (it "Can be installed"
     (eglot-fsharp--maybe-install)
-    (expect (file-exists-p  (eglot-fsharp--path-to-server)) :to-be t))
+    (expect (eglot-fsharp--installed-version) :to-equal (eglot-fsharp--latest-version)))
+  (it "Can be invoked"
+      ;; FIXME: Should use dotnet tool run
+      (expect (car (process-lines (eglot-fsharp--path-to-server) "--version"))
+	      :to-match (rx line-start "FsAutoComplete" (1+ space) (eval (eglot-fsharp--installed-version)))))
   (it "shows flymake errors"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Error.fs")
       (eglot--tests-connect 10)
@@ -68,7 +70,6 @@
       (expect (looking-back "X\\.func") :to-be t)))
   (it "finds definition in pervasives"
       (with-current-buffer (eglot--find-file-noselect "test/Test1/Program.fs")
-	(eglot-shutdown-all)		;FIXME: Why is a restart required
 	(eglot--tests-connect 10)
 	(search-forward "printfn")
 	(eglot-fsharp--sniff-diagnostics "test/Test1/Program.fs")

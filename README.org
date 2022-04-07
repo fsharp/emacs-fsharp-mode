@@ -19,7 +19,7 @@ The current version of =fsharp-mode= installs =fsautocomplete.exe=
 automatically via =eglot-fsharp.el= (part of this mono repo, [[https://melpa.org/#/eglot-fsharp][eglot-fsharp
 on melpa]]) or [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]] (untested).
 
-=fsharp-mode= is tested with Emacs 26.1+ and NET Core 2.1 (LTS)
+=fsharp-mode= is tested with Emacs 27.1+ and NET Core 6 (LTS)
 
 ** Installation
 
