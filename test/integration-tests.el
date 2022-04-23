@@ -43,7 +43,7 @@
   (it "Can be invoked"
       ;; FIXME: Should use dotnet tool run
       (expect (car (process-lines (eglot-fsharp--path-to-server) "--version"))
-	      :to-match (rx line-start "FsAutoComplete" (1+ space) (eval (eglot-fsharp--installed-version)))))
+	      :to-match (rx line-start (? "FsAutoComplete" (1+ space)) (eval (eglot-fsharp--installed-version)))))
   (it "shows flymake errors"
     (with-current-buffer (eglot--find-file-noselect "test/Test1/Error.fs")
       (eglot--tests-connect 10)
