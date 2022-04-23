@@ -347,15 +347,7 @@ whole string."
 (defun fsharp-mode/find-sln-or-fsproj (dir-or-file)
   "Search for a solution or F# project file in any enclosing
 folders relative to DIR-OR-FILE."
-  (or (fsharp-mode/find-sln dir-or-file)
-      (fsharp-mode/find-fsproj dir-or-file)))
-
-(defun fsharp-mode/find-sln (dir-or-file)
-  (fsharp-mode-search-upwards (rx (0+ nonl) ".sln" eol)
-                              (file-name-directory dir-or-file)))
-
-(defun fsharp-mode/find-fsproj (dir-or-file)
-  (fsharp-mode-search-upwards (rx (0+ nonl) ".fsproj" eol)
+  (fsharp-mode-search-upwards (rx (0+ nonl) (or ".fsproj" ".sln") eol)
                               (file-name-directory dir-or-file)))
 
 (defun fsharp-mode-search-upwards (regex dir)
