@@ -11,3 +11,6 @@ fsautocomplete-*.zip
 # Development
 obj/
 .ionide/
+
+.eask
+/dist

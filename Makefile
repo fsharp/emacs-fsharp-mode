@@ -1,40 +1,47 @@
 all: build
-export EMACS ?= emacs
-EMACSFLAGS = -L .
-CASK = cask
-VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
-PKG = fsharp-mode
 
-elpa-$(EMACS):
-	$(CASK) install
-	$(CASK) update
-	touch $@
+export EMACS ?= emacs
+
+EMACSFLAGS = -L .
+
+EASK = eask
+
+VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
+
+PKG = fsharp-mode
 
 test/eglot-tests.el:
 	curl -o eglot-tests.el https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el
 
-elpa: elpa-$(EMACS)
+ci: build compile test
 
-build: elpa version
-	$(CASK) build
+build:
+	$(EASK) package
+	$(EASK) install
 
-version:
-	$(EMACS) --version
+compile:
+	$(EASK) compile
 
 test/Test1/restored:
 	dotnet restore test/Test1
 	touch test/Test1/restored
 
-test: version build test/eglot-tests.el test/Test1/restored
-	$(CASK) exec buttercup -L . -L ./test --traceback full
+test: test/eglot-tests.el test/Test1/restored
+	$(EASK) install-deps --dev
+	$(EASK) buttercup
+
+checkdoc:
+	$(EASK) checkdoc
+
+lint:
+	$(EASK) lint
 
 clean:
-	rm -f .depend elpa-$(EMACS) $(OBJECTS) $(PKG)-autoloads.el
+	rm -f .depend $(OBJECTS) $(PKG)-autoloads.el
+	$(EASK) clean-elc
 
 elpaclean: clean
-	rm -f elpa*
-	rm -rf .cask # Clean packages installed for development
+	$(EASK) clean # Clean packages installed for development
 
-run-$(PKG): elpa
+run-$(PKG):
 	cask exec $(EMACS) -Q -L . --eval "(require '$(PKG))"
-
