@@ -10,24 +10,23 @@ VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 PKG = fsharp-mode
 
-test/eglot-tests.el:
-	curl -o eglot-tests.el https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el
-
 ci: build compile test
 
 build:
 	$(EASK) package
-	$(EASK) install
+	$(EASK) install --dev
 
 compile:
 	$(EASK) compile
+
+test/eglot-tests.el:
+	curl -o eglot-tests.el https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el
 
 test/Test1/restored:
 	dotnet restore test/Test1
 	touch test/Test1/restored
 
 test: test/eglot-tests.el test/Test1/restored
-	$(EASK) install-deps --dev
 	$(EASK) buttercup
 
 checkdoc:
