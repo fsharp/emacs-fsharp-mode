@@ -8,6 +8,8 @@
 (source "melpa")
 
 (depends-on "emacs" "25")
+(depends-on "eglot")
+(depends-on "jsonrpc")
 
 ;; FIXME: Use multiple packages: https://github.com/melpa/melpa#example-multiple-packages-in-one-repository ?
 (development
