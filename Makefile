@@ -27,6 +27,7 @@ test/Test1/restored:
 	touch test/Test1/restored
 
 test: test/eglot-tests.el test/Test1/restored
+	$(EASK) install-deps --dev
 	$(EASK) buttercup --allow-error --verbose 4
 
 checkdoc:
