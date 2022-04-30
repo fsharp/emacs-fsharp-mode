@@ -6,7 +6,7 @@ on:
     branches:
       - master
 jobs:
-  gnu-build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
