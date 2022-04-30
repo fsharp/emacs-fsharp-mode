@@ -2,7 +2,11 @@
          "1.11"
          "Support for the F# programming language")
 
-(package-file "fsharp-mode.el")
+;; XXX: this is multiple-packages-in-one-repository situation, ignore/unset
+;; package main file.
+;;(package-file "fsharp-mode.el")
+
+(files "*.el")
 
 (source "gnu")
 (source "melpa")
@@ -11,7 +15,6 @@
 (depends-on "eglot")
 (depends-on "jsonrpc")
 
-;; FIXME: Use multiple packages: https://github.com/melpa/melpa#example-multiple-packages-in-one-repository ?
 (development
  (depends-on "buttercup"))
 

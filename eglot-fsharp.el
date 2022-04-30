@@ -85,21 +85,21 @@
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
   (seq-some (lambda (s) (and (string-match "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" s) (match-string 1 s)))
-	    (process-lines "dotnet"  "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))))
+            (process-lines "dotnet"  "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))))
 
 (defun eglot-fsharp-current-version-p ()
   "Return t if the installation is not outdated."
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (if (eq eglot-fsharp-server-version 'latest)
-	(equal (eglot-fsharp--latest-version)
-	       (eglot-fsharp--installed-version))
+        (equal (eglot-fsharp--latest-version)
+               (eglot-fsharp--installed-version))
       (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
 
 (defun eglot-fsharp--install-w32 (version)
   "Download and install the full framework version of F# compiler service at version VERSION in `eglot-fsharp-server-install-dir'."
   (let* ((url (format "https://github.com/fsharp/FsAutoComplete/releases/download/%s/fsautocomplete.zip"
                       version))
-	 (exe (eglot-fsharp--path-to-server))
+         (exe (eglot-fsharp--path-to-server))
          (zip (concat (file-name-directory exe) "fsautocomplete.zip"))
          (gnutls-algorithm-priority
           (if (and (not gnutls-algorithm-priority)
@@ -108,42 +108,42 @@
                    (version<= emacs-version "26.2"))
               "NORMAL:-VERS-TLS1.3"
             gnutls-algorithm-priority))))
-      (unless (eglot-fsharp-current-version-p)
-      (url-copy-file url zip t)
-      ;; FIXME: Windows (unzip preinstalled?)
-      (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
-        (unless (zerop (call-process "unzip" nil nil nil "-o" zip))
-          (error "Failed to unzip %s" zip))
-	(unless (eq system-type 'windows-nt)
-	  (dolist  (file (directory-files-recursively (file-name-directory (eglot-fsharp--path-to-server)) "." t))
-	    (if (file-directory-p file)
-		(chmod file #o755)
-	      (chmod file #o644)))))
-      (delete-file zip)))
+  (unless (eglot-fsharp-current-version-p)
+    (url-copy-file url zip t)
+    ;; FIXME: Windows (unzip preinstalled?)
+    (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
+      (unless (zerop (call-process "unzip" nil nil nil "-o" zip))
+        (error "Failed to unzip %s" zip))
+      (unless (eq system-type 'windows-nt)
+        (dolist  (file (directory-files-recursively (file-name-directory (eglot-fsharp--path-to-server)) "." t))
+          (if (file-directory-p file)
+              (chmod file #o755)
+            (chmod file #o644)))))
+    (delete-file zip)))
 
 
 (defun eglot-fsharp--process-tool-action (response)
   "Process the result of calling the dotnet tool installation returning RESPONSE code."
   (if (eq response 1)
       (let ((minibuffer-message-timeout 5)
-	    (msg (format "Error installing fsautocomplete see %s" (concat default-directory "error_output.txt")) ))
-	(minibuffer-message msg)
-	(error "Failed to install dotnet tool fsautocomplete"))))
+            (msg (format "Error installing fsautocomplete see %s" (concat default-directory "error_output.txt")) ))
+        (minibuffer-message msg)
+        (error "Failed to install dotnet tool fsautocomplete"))))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
   (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
     (unless (eglot-fsharp-current-version-p)
       (if (file-exists-p (eglot-fsharp--path-to-server))
-	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
-									       "error_output.txt")
-								nil "tool" "uninstall"
-								"fsautocomplete" "--tool-path"
-								default-directory)))
+          (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
+                                                                               "error_output.txt")
+                                                                nil "tool" "uninstall"
+                                                                "fsautocomplete" "--tool-path"
+                                                                default-directory)))
       (eglot-fsharp--process-tool-action (call-process "dotnet" nil '(nil "error_output.txt") nil
-						       "tool" "install" "fsautocomplete"
-						       "--tool-path" default-directory "--version"
-						       version)))))
+                                                       "tool" "install" "fsautocomplete"
+                                                       "--tool-path" default-directory "--version"
+                                                       version)))))
 
 (defun eglot-fsharp--maybe-install ()
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
@@ -152,7 +152,7 @@
                       (eglot-fsharp--latest-version)
                     eglot-fsharp-server-version)))
     (if (eq eglot-fsharp-server-runtime 'net-core)
-	(eglot-fsharp--install-core version)
+        (eglot-fsharp--install-core version)
       (eglot-fsharp--install-w32 version))))
 
  ;;;###autoload
@@ -163,14 +163,14 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when interactive (eglot-fsharp--maybe-install))
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (let ((cmd-list (cond ((eq eglot-fsharp-server-runtime 'net-core)
-			   `(,(eglot-fsharp--path-to-server)))
-			  ((eq window-system 'w32)
-			   `("" , (eglot-fsharp--path-to-server)))
-			  (t `("mono" ,(eglot-fsharp--path-to-server)))))
-	  (arg-list (if eglot-fsharp-server-verbose
-			`("--background-service-enabled" "-v")
-            	        `("--background-service-enabled")
-		      )))
+                           `(,(eglot-fsharp--path-to-server)))
+                          ((eq window-system 'w32)
+                           `("" , (eglot-fsharp--path-to-server)))
+                          (t `("mono" ,(eglot-fsharp--path-to-server)))))
+          (arg-list (if eglot-fsharp-server-verbose
+                        `("--background-service-enabled" "-v")
+                      `("--background-service-enabled")
+                      )))
       (cons 'eglot-fsautocomplete (append cmd-list arg-list)))))
 
 
