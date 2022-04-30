@@ -15,4 +15,4 @@ obj/
 .eask
 /dist
 
-/est/eglot-tests.el
+/test/eglot-tests.el
