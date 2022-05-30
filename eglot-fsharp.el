@@ -67,7 +67,7 @@
   "Return FsAutoComplete path."
   (file-truename (concat eglot-fsharp-server-install-dir
                          (if (eq eglot-fsharp-server-runtime 'net-core)
-                             "netcore/fsautocomplete"
+                             (concat "netcore/fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))
                            "netframework/fsautocomplete.exe"))))
 
 ;; cache to prevent repetitive queries
