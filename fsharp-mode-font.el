@@ -236,7 +236,7 @@ with initial value INITVALUE and optional DOCSTRING."
 
 ;; F# keywords (3.4)
 (def-fsharp-compiled-var fsharp-ui-fsharp-threefour-keywords
-  '("abstract" "and" "as" "assert" "base" "begin"
+  '("abstract" "and" "and!" "as" "assert" "base" "begin"
     "class" "default" "delegate" "do" "do!" "done"
     "downcast" "downto" "elif" "else" "end"
     "exception" "extern" "false" "finally" "for" "fun"
