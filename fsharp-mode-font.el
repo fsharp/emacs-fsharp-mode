@@ -234,7 +234,7 @@ with initial value INITVALUE and optional DOCSTRING."
 (def-fsharp-compiled-var fsharp-ui-identifier-replacements
   '("__SOURCE_DIRECTORY__" "__SOURCE_FILE__" "__LINE__"))
 
-;; F# keywords (3.4)
+;; F# keywords (5.0)
 (def-fsharp-compiled-var fsharp-ui-fsharp-threefour-keywords
   '("abstract" "and" "and!" "as" "assert" "base" "begin"
     "class" "default" "delegate" "do" "do!" "done"
