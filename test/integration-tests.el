@@ -37,6 +37,9 @@
                       (string-suffix-p file-name-suffix (plist-get params :uri))))))
 
 (describe "F# LSP server"
+  (it "can be installed @version 0.52.0"
+    (eglot-fsharp--maybe-install "0.52.0")
+    (expect (eglot-fsharp--installed-version) :to-equal "0.52.0"))
   (it "Can be installed"
     (eglot-fsharp--maybe-install)
     (expect (eglot-fsharp--installed-version) :to-equal (eglot-fsharp--latest-version)))

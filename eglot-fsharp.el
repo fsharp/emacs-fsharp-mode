@@ -87,10 +87,10 @@
   (seq-some (lambda (s) (and (string-match "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" s) (match-string 1 s)))
 	    (process-lines "dotnet"  "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))))
 
-(defun eglot-fsharp-current-version-p ()
+(defun eglot-fsharp-current-version-p (version)
   "Return t if the installation is not outdated."
   (when (file-exists-p (eglot-fsharp--path-to-server))
-    (if (eq eglot-fsharp-server-version 'latest)
+    (if (eq version 'latest)
 	(equal (eglot-fsharp--latest-version)
 	       (eglot-fsharp--installed-version))
       (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
@@ -108,7 +108,7 @@
                    (version<= emacs-version "26.2"))
               "NORMAL:-VERS-TLS1.3"
             gnutls-algorithm-priority))))
-      (unless (eglot-fsharp-current-version-p)
+      (unless (eglot-fsharp-current-version-p version)
       (url-copy-file url zip t)
       ;; FIXME: Windows (unzip preinstalled?)
       (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
@@ -133,7 +133,7 @@
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
   (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
-    (unless (eglot-fsharp-current-version-p)
+    (unless (eglot-fsharp-current-version-p version)
       (if (file-exists-p (eglot-fsharp--path-to-server))
 	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
 									       "error_output.txt")
@@ -145,12 +145,12 @@
 						       "--tool-path" default-directory "--version"
 						       version)))))
 
-(defun eglot-fsharp--maybe-install ()
+(defun eglot-fsharp--maybe-install (&optional version)
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
   (make-directory (file-name-directory (eglot-fsharp--path-to-server)) t)
-  (let* ((version (if (eq eglot-fsharp-server-version 'latest)
-                      (eglot-fsharp--latest-version)
-                    eglot-fsharp-server-version)))
+  (let* ((version (or version (if (eq eglot-fsharp-server-version 'latest)
+				  (eglot-fsharp--latest-version)
+				eglot-fsharp-server-version))))
     (if (eq eglot-fsharp-server-runtime 'net-core)
 	(eglot-fsharp--install-core version)
       (eglot-fsharp--install-w32 version))))
