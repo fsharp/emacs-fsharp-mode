@@ -24,19 +24,19 @@ then run BODY."
   (face-at-point))
 
 (describe "When locking operators"
-  (it "uses ui operator face for pipes"
-    (with-highlighted "<<| |>> |> ||> |||> <| <|| <||| <|> <<|!"
-      (should (equal (str-face " |> ") 'fsharp-ui-operator-face))
-      (should (equal (str-face " ||> ") 'fsharp-ui-operator-face))
-      (should (equal (str-face " |||> ") 'fsharp-ui-operator-face))
-      (should (equal (str-face " <| ") 'fsharp-ui-operator-face))
-      (should (equal (str-face " <|| ") 'fsharp-ui-operator-face))
-      (should (equal (str-face " <||| ") 'fsharp-ui-operator-face)))))
+          (it "uses ui operator face for pipes"
+              (with-highlighted "<<| |>> |> ||> |||> <| <|| <||| <|> <<|!"
+                                (should (equal (str-face " |> ") 'fsharp-ui-operator-face))
+                                (should (equal (str-face " ||> ") 'fsharp-ui-operator-face))
+                                (should (equal (str-face " |||> ") 'fsharp-ui-operator-face))
+                                (should (equal (str-face " <| ") 'fsharp-ui-operator-face))
+                                (should (equal (str-face " <|| ") 'fsharp-ui-operator-face))
+                                (should (equal (str-face " <||| ") 'fsharp-ui-operator-face)))))
 
 (describe "When locking operators"
-  (it "uses ui generic face for custom operators containing pipes"
-    (with-highlighted "<<| |>> |> ||> |||> <| <|| <||| <|> <<|!"
-      (should (equal (str-face "<<| ") 'fsharp-ui-generic-face))
-      (should (equal (str-face " |>> ") 'fsharp-ui-generic-face))
-      (should (equal (str-face " <|> ") 'fsharp-ui-generic-face))
-      (should (equal (str-face " <<|!") 'fsharp-ui-generic-face)))))
+          (it "uses ui generic face for custom operators containing pipes"
+              (with-highlighted "<<| |>> |> ||> |||> <| <|| <||| <|> <<|!"
+                                (should (equal (str-face "<<| ") 'fsharp-ui-generic-face))
+                                (should (equal (str-face " |>> ") 'fsharp-ui-generic-face))
+                                (should (equal (str-face " <|> ") 'fsharp-ui-generic-face))
+                                (should (equal (str-face " <<|!") 'fsharp-ui-generic-face)))))
