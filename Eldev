@@ -1,10 +1,4 @@
 ; -*- mode: emacs-lisp; lexical-binding: t -*-
-;; FIXME: Use if-modified-since header?
-(unless (and (file-exists-p "eglot-tests.el") (< (time-to-seconds (time-subtract (current-time)
-                                                                                 (file-attribute-modification-time (file-attributes "eglot-tests.el"))))
-                                                 86400))
-  (url-copy-file "https://raw.githubusercontent.com/joaotavora/eglot/master/eglot-tests.el" "eglot-tests.el" t))
-
 
 (setq package-lint-main-file "eglot-fsharp.el")
 (setq eldev-project-main-file "eglot-fsharp.el")
