@@ -61,97 +61,97 @@ with initial value INITVALUE and optional DOCSTRING."
      (defvar ,sym ,init ,docstring)))
 
 (def-fsharp-compiled-var fsharp-shebang-regexp
-  "\\(^#!.*?\\)\\([A-Za-z0-9_-]+\\)$"
-  "Capture the #! and path of a shebag in one group and the
+                         "\\(^#!.*?\\)\\([A-Za-z0-9_-]+\\)$"
+                         "Capture the #! and path of a shebag in one group and the
   executable in another.")
 
 (def-fsharp-compiled-var fsharp-access-control-regexp
-  "private\\s-+\\|internal\\s-+\\|public\\s-+"
-  "Match `private', `internal', or `public', followed by a space,
+                         "private\\s-+\\|internal\\s-+\\|public\\s-+"
+                         "Match `private', `internal', or `public', followed by a space,
   with no capture.")
 
 (def-fsharp-compiled-var fsharp-access-control-regexp-noncapturing
-  (format "\\(?:%s\\)" fsharp-access-control-regexp)
-  "Same as `fsharp-access-control-regexp', but captures")
+                         (format "\\(?:%s\\)" fsharp-access-control-regexp)
+                         "Same as `fsharp-access-control-regexp', but captures")
 
 (def-fsharp-compiled-var fsharp-inline-rec-regexp
-  "inline\\s-+\\|rec\\s-+"
-  "Match `inline' or `rec', followed by a space.")
+                         "inline\\s-+\\|rec\\s-+"
+                         "Match `inline' or `rec', followed by a space.")
 
 (def-fsharp-compiled-var fsharp-inline-rec-regexp-noncapturing
-  (format "\\(?:%s\\)" fsharp-inline-rec-regexp)
-  "Match `inline' or `rec', followed by a space, with no capture.")
+                         (format "\\(?:%s\\)" fsharp-inline-rec-regexp)
+                         "Match `inline' or `rec', followed by a space, with no capture.")
 
 (def-fsharp-compiled-var fsharp-valid-identifier-regexp
-  "[A-Za-z0-9_']+"
-  "Match a normal, valid F# identifier -- alphanumeric characters
+                         "[A-Za-z0-9_']+"
+                         "Match a normal, valid F# identifier -- alphanumeric characters
   plus ' and underbar. Does not capture")
 
 (def-fsharp-compiled-var fsharp-function-def-regexp
-  (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
-          fsharp-inline-rec-regexp-noncapturing "?"
-          fsharp-access-control-regexp-noncapturing "*"
-          (format "\\(%s\\)" fsharp-valid-identifier-regexp)
-          "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
-          ))
+                         (concat "\\<\\(?:let\\|and\\|with\\)\\s-+"
+                                 fsharp-inline-rec-regexp-noncapturing "?"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 (format "\\(%s\\)" fsharp-valid-identifier-regexp)
+                                 "\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)" ;; matches function arguments or open-paren; unclear why 0-9 not in class
+                                 ))
 
 (def-fsharp-compiled-var fsharp-pattern-function-regexp
-  (concat "\\<\\(?:let\\|and\\)\\s-+"
-          fsharp-inline-rec-regexp-noncapturing "?"
-          fsharp-access-control-regexp-noncapturing "*"
-          (format "\\(%s\\)" fsharp-valid-identifier-regexp)
-          "\\s-*=\\s-*function")
-  "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
+                         (concat "\\<\\(?:let\\|and\\)\\s-+"
+                                 fsharp-inline-rec-regexp-noncapturing "?"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 (format "\\(%s\\)" fsharp-valid-identifier-regexp)
+                                 "\\s-*=\\s-*function")
+                         "Matches an implicit matcher, eg let foo m = function | \"cat\" -> etc.")
 
 ;; Note that this regexp is used for iMenu. To font-lock active patterns, we
 ;; need to use an anchored match in fsharp-font-lock-keywords.
 (def-fsharp-compiled-var fsharp-active-pattern-regexp
-  (concat "\\<\\(?:let\\|and\\)\\s-+"
-          fsharp-inline-rec-regexp-noncapturing "?"
-          fsharp-access-control-regexp-noncapturing "*"
-          "(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)"))
+                         (concat "\\<\\(?:let\\|and\\)\\s-+"
+                                 fsharp-inline-rec-regexp-noncapturing "?"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 "(\\(|[A-Za-z0-9_'|]+|\\))\\(?:\\s-+[A-Za-z_]\\|\\s-*(\\)"))
 
 (def-fsharp-compiled-var fsharp-member-access-regexp
-  "\\<\\(?:override\\|member\\|abstract\\)\\s-+"
-  "Matches members declarations and modifiers on classes.")
+                         "\\<\\(?:override\\|member\\|abstract\\)\\s-+"
+                         "Matches members declarations and modifiers on classes.")
 
 (def-fsharp-compiled-var fsharp-member-function-regexp
-  (concat fsharp-member-access-regexp
-          fsharp-inline-rec-regexp-noncapturing "?"
-          fsharp-access-control-regexp-noncapturing "*"
-          "\\(?:" fsharp-valid-identifier-regexp "\\.\\)?"
-          "\\(" fsharp-valid-identifier-regexp "\\)")
-  "Captures the final identifier in a member function declaration.")
+                         (concat fsharp-member-access-regexp
+                                 fsharp-inline-rec-regexp-noncapturing "?"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 "\\(?:" fsharp-valid-identifier-regexp "\\.\\)?"
+                                 "\\(" fsharp-valid-identifier-regexp "\\)")
+                         "Captures the final identifier in a member function declaration.")
 
 (def-fsharp-compiled-var fsharp-overload-operator-regexp
-  (concat fsharp-member-access-regexp
-          fsharp-inline-rec-regexp-noncapturing "?"
-          fsharp-access-control-regexp-noncapturing "*"
-          "\\(([!%&*+-./<=>?@^|~]+)\\)")
-  "Match operators when overloaded by a type/class.")
+                         (concat fsharp-member-access-regexp
+                                 fsharp-inline-rec-regexp-noncapturing "?"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 "\\(([!%&*+-./<=>?@^|~]+)\\)")
+                         "Match operators when overloaded by a type/class.")
 
 (def-fsharp-compiled-var fsharp-constructor-regexp
-  (concat "^\\s-*"
-          fsharp-access-control-regexp-noncapturing "*"
-          "\\<\\(new\\) *(.*)[^=]*=")
-  "Matches the `new' keyword in a constructor")
+                         (concat "^\\s-*"
+                                 fsharp-access-control-regexp-noncapturing "*"
+                                 "\\<\\(new\\) *(.*)[^=]*=")
+                         "Matches the `new' keyword in a constructor")
 
 (def-fsharp-compiled-var fsharp-type-def-regexp
-  (concat "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+"
-          fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
-          "\\([A-Za-z0-9_'.]+\\)"))
+                         (concat "^\\s-*\\<\\(?:type\\|inherit\\)\\s-+"
+                                 fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
+                                 "\\([A-Za-z0-9_'.]+\\)"))
 
 (def-fsharp-compiled-var fsharp-var-or-arg-regexp
-  "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
+                         "\\_<\\([A-Za-z_][A-Za-z0-9_']*\\)\\_>")
 
 (def-fsharp-compiled-var fsharp-explicit-field-regexp
-  (concat "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?"
-          fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
-          "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
+                         (concat "^\\s-*\\(?:val\\|abstract\\)\\s-*\\(?:mutable\\s-+\\)?"
+                                 fsharp-access-control-regexp-noncapturing "*" ;; match access control 0 or more times
+                                 "\\([A-Za-z_][A-Za-z0-9_']*\\)\\s-*:\\s-*\\([A-Za-z_][A-Za-z0-9_'<> \t]*\\)"))
 
 (def-fsharp-compiled-var fsharp-attributes-regexp
-  "\\(\\[<[A-Za-z0-9_]+[( ]?\\)\\(\".*\"\\)?\\()?>\\]\\)"
-  "Match attributes like [<EntryPoint>]; separately groups contained strings in attributes like [<Attribute(\"property\")>]")
+                         "\\(\\[<[A-Za-z0-9_]+[( ]?\\)\\(\".*\"\\)?\\()?>\\]\\)"
+                         "Match attributes like [<EntryPoint>]; separately groups contained strings in attributes like [<Attribute(\"property\")>]")
 
 ;; F# makes extensive use of operators, many of which have some kind of
 ;; structural significance.
@@ -164,27 +164,27 @@ with initial value INITVALUE and optional DOCSTRING."
 ;; |                         -- match / type expressions
 
 (def-fsharp-compiled-var fsharp-operator-quote-regexp
-  "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)"
-  "Font lock <@/<@@ and @>/@@> operators.")
+                         "\\(<@\\{1,2\\}\\)\\(?:.*\\)\\(@\\{1,2\\}>\\)"
+                         "Font lock <@/<@@ and @>/@@> operators.")
 
 (def-fsharp-compiled-var fsharp-operator-pipe-regexp
-  "<|\\{1,3\\}\\||\\{1,3\\}>"
-  "Match the full range of pipe operators -- |>, ||>, |||>, etc.")
+                         "<|\\{1,3\\}\\||\\{1,3\\}>"
+                         "Match the full range of pipe operators -- |>, ||>, |||>, etc.")
 
 (def-fsharp-compiled-var fsharp-custom-operator-with-pipe-regexp
-  (let ((op-chars "!%&\\*\\+\\-\\./<=>@\\^~") ;; all F# custom operator chars except for `|`
-        (backward-pipe "<|\\{1,3\\}")
-        (forward-pipe "|\\{1,3\\}>")
-        (alt "\\|"))
-    (concat "[" op-chars "|]*" backward-pipe "[" op-chars  "]+"
-            alt "[" op-chars "|]+" backward-pipe "[" op-chars  "]*"
-            alt "[" op-chars  "]*" forward-pipe  "[" op-chars "|]+"
-            alt "[" op-chars  "]+" forward-pipe  "[" op-chars "|]*"))
-  "Match operators that contains pipe sequence -- <|>, |>>, <<|, etc.")
+                         (let ((op-chars "!%&\\*\\+\\-\\./<=>@\\^~") ;; all F# custom operator chars except for `|`
+                               (backward-pipe "<|\\{1,3\\}")
+                               (forward-pipe "|\\{1,3\\}>")
+                               (alt "\\|"))
+                           (concat "[" op-chars "|]*" backward-pipe "[" op-chars  "]+"
+                                   alt "[" op-chars "|]+" backward-pipe "[" op-chars  "]*"
+                                   alt "[" op-chars  "]*" forward-pipe  "[" op-chars "|]+"
+                                   alt "[" op-chars  "]+" forward-pipe  "[" op-chars "|]*"))
+                         "Match operators that contains pipe sequence -- <|>, |>>, <<|, etc.")
 
 (def-fsharp-compiled-var fsharp-operator-case-regexp
-  "\\s-+\\(|\\)[A-Za-z0-9_' ]"
-  "Match literal | in contexts like match and type declarations.")
+                         "\\s-+\\(|\\)[A-Za-z0-9_' ]"
+                         "Match literal | in contexts like match and type declarations.")
 
 (defvar fsharp-imenu-generic-expression
   `((nil                 ,(concat "^\\s-*" fsharp-function-def-regexp) 1)
@@ -215,52 +215,52 @@ with initial value INITVALUE and optional DOCSTRING."
 
 ;; Preprocessor directives (3.3)
 (def-fsharp-compiled-var fsharp-ui-preproessor-directives
-  '("#if" "#else" "#endif" "#light"))
+                         '("#if" "#else" "#endif" "#light"))
 
 ;; Compiler directives (12.4)
 (def-fsharp-compiled-var fsharp-ui-compiler-directives
-  '("#nowarn" "#load" "#r" "#reference" "#I"
-    "#Include" "#q" "#quit" "#time" "#help"))
+                         '("#nowarn" "#load" "#r" "#reference" "#I"
+                           "#Include" "#q" "#quit" "#time" "#help"))
 
 ;; Lexical matters (18.4)
 (def-fsharp-compiled-var fsharp-ui-lexical-matters
-  '("#indent"))
+                         '("#indent"))
 
 ;; Line Directives (3.9)
 (def-fsharp-compiled-var fsharp-ui-line-directives
-  '("#line"))
+                         '("#line"))
 
 ;; Identifier replacements (3.11)
 (def-fsharp-compiled-var fsharp-ui-identifier-replacements
-  '("__SOURCE_DIRECTORY__" "__SOURCE_FILE__" "__LINE__"))
+                         '("__SOURCE_DIRECTORY__" "__SOURCE_FILE__" "__LINE__"))
 
 ;; F# keywords (5.0)
 (def-fsharp-compiled-var fsharp-ui-fsharp-threefour-keywords
-  '("abstract" "and" "and!" "as" "assert" "base" "begin"
-    "class" "default" "delegate" "do" "do!" "done"
-    "downcast" "downto" "elif" "else" "end"
-    "exception" "extern" "false" "finally" "for" "fun"
-    "function" "global" "if" "in" "inherit" "inline"
-    "interface" "internal" "lazy" "let" "let!"
-    "match" "match!" "member" "module" "mutable" "namespace"
-    "new" "not" "null" "of" "open" "or" "override"
-    "private" "public" "rec" "return" "return!"
-    "select" "static" "struct" "then" "to" "true"
-    "try" "type" "upcast" "use" "use!"  "val" "void"
-    "when" "while" "with" "yield" "yield!"))
+                         '("abstract" "and" "and!" "as" "assert" "base" "begin"
+                           "class" "default" "delegate" "do" "do!" "done"
+                           "downcast" "downto" "elif" "else" "end"
+                           "exception" "extern" "false" "finally" "for" "fun"
+                           "function" "global" "if" "in" "inherit" "inline"
+                           "interface" "internal" "lazy" "let" "let!"
+                           "match" "match!" "member" "module" "mutable" "namespace"
+                           "new" "not" "null" "of" "open" "or" "override"
+                           "private" "public" "rec" "return" "return!"
+                           "select" "static" "struct" "then" "to" "true"
+                           "try" "type" "upcast" "use" "use!"  "val" "void"
+                           "when" "while" "with" "yield" "yield!"))
 
 ;; "Reserved because they are reserved in OCaml"
 (def-fsharp-compiled-var fsharp-ui-ocaml-reserved-words
-  '("asr" "land" "lor" "lsl" "lsr" "lxor" "mod" "sig"))
+                         '("asr" "land" "lor" "lsl" "lsr" "lxor" "mod" "sig"))
 
 ;; F# reserved words for future use
 (def-fsharp-compiled-var fsharp-ui-reserved-words
-  '("atomic" "break" "checked" "component" "const"
-    "constraint" "constructor" "continue" "eager"
-    "event" "external" "fixed" "functor" "include"
-    "method" "mixin" "object" "parallel" "process"
-    "protected" "pure" "sealed" "tailcall" "trait"
-    "virtual" "volatile"))
+                         '("atomic" "break" "checked" "component" "const"
+                           "constraint" "constructor" "continue" "eager"
+                           "event" "external" "fixed" "functor" "include"
+                           "method" "mixin" "object" "parallel" "process"
+                           "protected" "pure" "sealed" "tailcall" "trait"
+                           "virtual" "volatile"))
 
 ;; RMD 2016-09-30 -- This was pulled out separately with the following comment
 ;; when I got here. Not clear to me why it's on it's own, or even precisely what
@@ -270,21 +270,21 @@ with initial value INITVALUE and optional DOCSTRING."
 ;; Workflows not yet handled by fsautocomplete but async
 ;; always present
 (def-fsharp-compiled-var fsharp-ui-async-words
-  '("async")
-  "Just the word async, in a list.")
+                         '("async")
+                         "Just the word async, in a list.")
 
 (def-fsharp-compiled-var fsharp-ui-word-list-regexp
-  (regexp-opt
-   `(,@fsharp-ui-async-words
-     ,@fsharp-ui-compiler-directives
-     ,@fsharp-ui-fsharp-threefour-keywords
-     ,@fsharp-ui-identifier-replacements
-     ,@fsharp-ui-lexical-matters
-     ,@fsharp-ui-ocaml-reserved-words
-     ,@fsharp-ui-preproessor-directives
-     ,@fsharp-ui-reserved-words
-     ,@fsharp-ui-line-directives)
-   'symbols))
+                         (regexp-opt
+                          `(,@fsharp-ui-async-words
+                            ,@fsharp-ui-compiler-directives
+                            ,@fsharp-ui-fsharp-threefour-keywords
+                            ,@fsharp-ui-identifier-replacements
+                            ,@fsharp-ui-lexical-matters
+                            ,@fsharp-ui-ocaml-reserved-words
+                            ,@fsharp-ui-preproessor-directives
+                            ,@fsharp-ui-reserved-words
+                            ,@fsharp-ui-line-directives)
+                          'symbols))
 
 (defconst fsharp-font-lock-keywords
   (eval-when-compile

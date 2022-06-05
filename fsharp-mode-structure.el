@@ -3,7 +3,7 @@
 ;; Copyright (C) 2010 Laurent Le Brun
 
 ;; Author: 2010-2011 Laurent Le Brun <laurent@le-brun.eu>
-;; Maintainer: Robin Neatherway <robin.neatherway@gmail.com>
+;; Maintainer: Jürgen Hötzel <juergen@hoetzel.info>
 ;; Keywords: languages
 
 ;; This file is not part of GNU Emacs.
