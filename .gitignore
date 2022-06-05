@@ -1,6 +1,7 @@
 *.elc
 bin
 tmp
+*~
 
 # Useful for doing releases
 emacs-fsharp-mode-bin/
