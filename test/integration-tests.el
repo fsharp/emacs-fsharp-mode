@@ -24,6 +24,7 @@
 
 ;;; Code:
 
+(load "project")                        ;Emacs 27 workaround: https://github.com/joaotavora/eglot/issues/549
 (require 'buttercup)
 (require 'eglot-fsharp)
 (load "test/eglot-fsharp-integration-util.el")
