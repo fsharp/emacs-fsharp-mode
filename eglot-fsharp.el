@@ -134,6 +134,7 @@
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
   (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
     (unless (eglot-fsharp-current-version-p version)
+      (message "Installing fsautocomplete version %s" version)
       (if (file-exists-p (eglot-fsharp--path-to-server))
 	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
 									       "error_output.txt")
