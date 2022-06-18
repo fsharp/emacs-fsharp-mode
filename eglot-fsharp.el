@@ -75,12 +75,10 @@
 
 (defun eglot-fsharp--latest-version ()
   "Return latest fsautocomplete.exe version."
-  (let ((process-environment (cons  "LANG=C" process-environment))) ;FIXME: Doesn't work in Windows
-    (if eglot-fsharp--latest-version
-        eglot-fsharp--latest-version
-      (setq eglot-fsharp--latest-version
-            (seq-some (lambda (s) (and (string-match "^[[:alnum:]]* Version: \\(.*\\)$" s) (match-string 1 s)))
-                      (process-lines "dotnet"  "tool" "search" "fsautocomplete" "--detail"))))))
+  (let* ((json (with-temp-buffer (url-insert-file-contents "https://azuresearch-usnc.nuget.org/query?q=fsautocomplete&prerelease=false&packageType=DotnetTool")
+			         (json-parse-buffer)))
+         (versions (gethash "versions" (aref (gethash "data" json) 0))))
+    (gethash "version" (aref versions (1- (length versions))))))
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
