@@ -124,11 +124,11 @@
 
 (defun eglot-fsharp--process-tool-action (response)
   "Process the result of calling the dotnet tool installation returning RESPONSE code."
-  (if (eq response 1)
-      (let ((minibuffer-message-timeout 5)
-	    (msg (format "Error installing fsautocomplete see %s" (concat default-directory "error_output.txt")) ))
-	(minibuffer-message msg)
-	(error "Failed to install dotnet tool fsautocomplete"))))
+  (when (>= response 1)
+    (error "Failed to install dotnet tool fsautocomplete: %s"
+           (with-temp-buffer
+             (insert-file-contents "error_output.txt")
+             (buffer-string)))))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
