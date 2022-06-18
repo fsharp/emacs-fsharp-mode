@@ -46,15 +46,10 @@ jobs:
       fail-fast: false
     steps:
     - uses: actions/setup-dotnet@v1
-    - name: Install scoop-emacs
-      run: |
-        Set-ExecutionPolicy RemoteSigned -scope CurrentUser
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-        scoop update
-        scoop bucket add extras
-        scoop install emacs
-        scoop install make
-        echo "$env:PATH" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+    - name: Set up Emacs on Windows
+      uses: jcs090218/setup-emacs-windows@master
+      with:
+        version: 28.1
     - uses: actions/checkout@v2
     - name: Install Eldev
       run: curl.exe -fsSL https://raw.github.com/doublep/eldev/master/webinstall/eldev.bat | cmd /Q
