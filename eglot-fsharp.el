@@ -75,12 +75,10 @@
 
 (defun eglot-fsharp--latest-version ()
   "Return latest fsautocomplete.exe version."
-  (let ((process-environment (cons  "LANG=C" process-environment))) ;FIXME: Doesn't work in Windows
-    (if eglot-fsharp--latest-version
-        eglot-fsharp--latest-version
-      (setq eglot-fsharp--latest-version
-            (seq-some (lambda (s) (and (string-match "^[[:alnum:]]* Version: \\(.*\\)$" s) (match-string 1 s)))
-                      (process-lines "dotnet"  "tool" "search" "fsautocomplete" "--detail"))))))
+  (let* ((json (with-temp-buffer (url-insert-file-contents "https://azuresearch-usnc.nuget.org/query?q=fsautocomplete&prerelease=false&packageType=DotnetTool")
+			         (json-parse-buffer)))
+         (versions (gethash "versions" (aref (gethash "data" json) 0))))
+    (gethash "version" (aref versions (1- (length versions))))))
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
@@ -124,16 +122,17 @@
 
 (defun eglot-fsharp--process-tool-action (response)
   "Process the result of calling the dotnet tool installation returning RESPONSE code."
-  (if (eq response 1)
-      (let ((minibuffer-message-timeout 5)
-	    (msg (format "Error installing fsautocomplete see %s" (concat default-directory "error_output.txt")) ))
-	(minibuffer-message msg)
-	(error "Failed to install dotnet tool fsautocomplete"))))
+  (when (>= response 1)
+    (error "Failed to install dotnet tool fsautocomplete: %s"
+           (with-temp-buffer
+             (insert-file-contents "error_output.txt")
+             (buffer-string)))))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
   (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
     (unless (eglot-fsharp-current-version-p version)
+      (message "Installing fsautocomplete version %s" version)
       (if (file-exists-p (eglot-fsharp--path-to-server))
 	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
 									       "error_output.txt")

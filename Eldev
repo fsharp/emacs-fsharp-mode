@@ -1,0 +1,14 @@
+; -*- mode: emacs-lisp; lexical-binding: t -*-
+
+(setq package-lint-main-file "eglot-fsharp.el")
+(setq eldev-project-main-file "eglot-fsharp.el")
+
+(eldev-use-package-archive 'melpa-unstable)
+(eldev-use-package-archive 'gnu)
+(eldev-use-plugin 'autoloads)
+(setq package-archive-priorities
+      '(("melpa-unstable" . 400)
+	("gnu" . 300)))
+
+
+
