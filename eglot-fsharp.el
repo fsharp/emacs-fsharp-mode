@@ -119,30 +119,32 @@
 	    (chmod file #o644)))))
     (delete-file zip)))
 
-
-(defun eglot-fsharp--process-tool-action (response)
-  "Process the result of calling the dotnet tool installation returning RESPONSE code."
-  (when (>= response 1)
-    (error "Failed to install dotnet tool fsautocomplete: %s"
-           (with-temp-buffer
-             (insert-file-contents "error_output.txt")
-             (buffer-string)))))
-
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
-  (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
-    (unless (eglot-fsharp-current-version-p version)
-      (message "Installing fsautocomplete version %s" version)
-      (if (file-exists-p (eglot-fsharp--path-to-server))
-	  (eglot-fsharp--process-tool-action	  (call-process "dotnet" nil '(nil
-									       "error_output.txt")
-								nil "tool" "uninstall"
-								"fsautocomplete" "--tool-path"
-								default-directory)))
-      (eglot-fsharp--process-tool-action (call-process "dotnet" nil '(nil "error_output.txt") nil
-						       "tool" "install" "fsautocomplete"
-						       "--tool-path" default-directory "--version"
-						       version)))))
+  (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server)))
+        (stderr-file (make-temp-file "dotnet_stderr")))
+    (condition-case err
+        (progn
+          (unless (eglot-fsharp-current-version-p version)
+            (message "Installing fsautocomplete version %s" version)
+            (when (file-exists-p (eglot-fsharp--path-to-server))
+	      (unless (zerop (call-process "dotnet" nil `(nil
+							  ,stderr-file)
+					   nil "tool" "uninstall"
+					   "fsautocomplete" "--tool-path"
+					   default-directory))
+                (error  "'dotnet tool uninstall fsautocomplete --tool-path %s' failed" default-directory))))
+          (unless (zerop (call-process "dotnet" nil `(nil ,stderr-file) nil
+				       "tool" "install" "fsautocomplete"
+				       "--tool-path" default-directory "--version"
+				       version))
+            (error "'dotnet tool install fsautocomplete --tool-path %s --version ' failed" default-directory  version)))
+      (error
+       (let ((stderr (with-temp-buffer
+                       (insert-file-contents stderr-file)
+                       (buffer-string))))
+         (delete-file stderr-file)
+         (signal (car err) (format "%s: %s" (cdr err) stderr)))))))
 
 (defun eglot-fsharp--maybe-install (&optional version)
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
