@@ -100,7 +100,7 @@ If FILE is not a Tramp filename return FILENAME"
           (or cmd (read-from-minibuffer "fsharp toplevel to run: "
                                         inferior-fsharp-program)))
     (let ((cmdlist (inferior-fsharp-args-to-list inferior-fsharp-program))
-          (process-connection-type nil))
+          (process-connection-type 'pty))
       (with-current-buffer (apply (function make-comint)
                                   inferior-fsharp-buffer-subname
                                   (car cmdlist) nil
