@@ -138,7 +138,7 @@
 				       "tool" "install" "fsautocomplete"
 				       "--tool-path" default-directory "--version"
 				       version))
-            (error "'dotnet tool install fsautocomplete --tool-path %s --version ' failed" default-directory  version)))
+            (error "'dotnet tool install fsautocomplete --tool-path %s --version %s' failed" default-directory  version)))
       (error
        (let ((stderr (with-temp-buffer
                        (insert-file-contents stderr-file)
