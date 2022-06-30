@@ -55,21 +55,9 @@
   "If non-nil include debug output in the server logs."
   :type 'boolean)
 
-(defcustom eglot-fsharp-server-runtime
-  (if (executable-find "dotnet")
-      'net-core
-    'net-framework)
-  "The .NET runtime to use."
-  :group 'eglot-fsharp
-  :type '(choice (const :tag "Use .Net Core" net-core)
-                 (const :tag "Use .Net Framework" net-framework)))
-
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
-  (file-truename (concat eglot-fsharp-server-install-dir
-                         (if (eq eglot-fsharp-server-runtime 'net-core)
-                             (concat "netcore/fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))
-                           "netframework/fsautocomplete.exe"))))
+  (file-truename (concat eglot-fsharp-server-install-dir "netcore/fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))))
 
 ;; cache to prevent repetitive queries
 (defvar eglot-fsharp--latest-version nil "Latest fsautocomplete.exe version string.")
@@ -93,32 +81,6 @@
 	(equal (eglot-fsharp--latest-version)
 	       (eglot-fsharp--installed-version))
       (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
-
-(defun eglot-fsharp--install-w32 (version)
-  "Download and install the full framework version of F# compiler service at version VERSION in `eglot-fsharp-server-install-dir'."
-  (let* ((url (format "https://github.com/fsharp/FsAutoComplete/releases/download/%s/fsautocomplete.zip"
-                      version))
-	 (exe (eglot-fsharp--path-to-server))
-         (zip (concat (file-name-directory exe) "fsautocomplete.zip"))
-         (gnutls-algorithm-priority
-          (if (and (not gnutls-algorithm-priority)
-                   (boundp 'libgnutls-version)
-                   (>= libgnutls-version 30603)
-                   (version<= emacs-version "26.2"))
-              "NORMAL:-VERS-TLS1.3"
-            gnutls-algorithm-priority))))
-  (unless (eglot-fsharp-current-version-p version)
-    (url-copy-file url zip t)
-    ;; FIXME: Windows (unzip preinstalled?)
-    (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server))))
-      (unless (zerop (call-process "unzip" nil nil nil "-o" zip))
-        (error "Failed to unzip %s" zip))
-      (unless (eq system-type 'windows-nt)
-	(dolist  (file (directory-files-recursively (file-name-directory (eglot-fsharp--path-to-server)) "." t))
-	  (if (file-directory-p file)
-	      (chmod file #o755)
-	    (chmod file #o644)))))
-    (delete-file zip)))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
@@ -153,9 +115,7 @@
   (let* ((version (or version (if (eq eglot-fsharp-server-version 'latest)
 				  (eglot-fsharp--latest-version)
 				eglot-fsharp-server-version))))
-    (if (eq eglot-fsharp-server-runtime 'net-core)
-	(eglot-fsharp--install-core version)
-      (eglot-fsharp--install-w32 version))))
+    (eglot-fsharp--install-core version)))
 
  ;;;###autoload
 (defun eglot-fsharp
@@ -164,16 +124,10 @@
 Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when interactive (eglot-fsharp--maybe-install))
   (when (file-exists-p (eglot-fsharp--path-to-server))
-    (let ((cmd-list (cond ((eq eglot-fsharp-server-runtime 'net-core)
-			   `(,(eglot-fsharp--path-to-server)))
-			  ((eq window-system 'w32)
-			   `("" , (eglot-fsharp--path-to-server)))
-			  (t `("mono" ,(eglot-fsharp--path-to-server)))))
-	  (arg-list (if eglot-fsharp-server-verbose
-			`("--background-service-enabled" "-v")
-            	      `("--background-service-enabled")
-		      )))
-      (cons 'eglot-fsautocomplete (append cmd-list arg-list)))))
+    (cons 'eglot-fsautocomplete (cons (eglot-fsharp--path-to-server)
+                                      (if eglot-fsharp-server-verbose
+			                  `("--background-service-enabled" "-v")
+            	                        `("--background-service-enabled"))))))
 
 
 
