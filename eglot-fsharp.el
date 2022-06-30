@@ -52,7 +52,8 @@
           (string :tag "Version string")))
 
 (defcustom eglot-fsharp-server-verbose nil
-  "If non-nil include debug output in the server logs.")
+  "If non-nil include debug output in the server logs."
+  :type 'boolean)
 
 (defcustom eglot-fsharp-server-runtime
   (if (executable-find "dotnet")

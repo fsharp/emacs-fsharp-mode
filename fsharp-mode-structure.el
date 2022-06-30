@@ -268,7 +268,7 @@ This function preserves point and mark."
 (defun fsharp-in-literal-p (&optional lim)
   "Return non-nil if point is in a Fsharp literal (a comment or
 string). The return value is specifically one of the symbols
-'comment or 'string. Optional argument LIM indicates the
+\\='comment or \\='string. Optional argument LIM indicates the
 beginning of the containing form, i.e. the limit on how far back
 to scan."
   ;; NOTE: Watch out for infinite recursion between this function and
