@@ -29,10 +29,12 @@
 (require 'fsharp-mode)
 
 (defun fsi-tests-wait-for-regex (timeout regexp)
-  (while (and (> timeout 0) (not (progn (goto-char (point-min)) (search-forward-regexp regexp nil t))))
-    (message "[FSI Interactive] Waiting a bit...")
-    (accept-process-output (get-buffer-process (current-buffer)) 0.2 nil t)
-    (setq timeout (1- timeout))))
+  (let ((start-time (float-time)))
+    (while (and (< (- (float-time) start-time) timeout)
+                (not (progn (goto-char (point-min)) (search-forward-regexp regexp nil t))))
+      (if (accept-process-output (get-buffer-process (current-buffer)) 0.2)
+          (message "[FSI Interactive] received output...")
+        (message "[FSI Interactive] waiting for output...")))))
 
 
 (describe "F# interactive"
