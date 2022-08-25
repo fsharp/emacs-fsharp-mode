@@ -133,7 +133,21 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 
 (cl-defmethod eglot-initialization-options ((_server eglot-fsautocomplete))
   "Passes through required FsAutoComplete initialization options."
-  '(:automaticWorkspaceInit t))
+  '(
+    :automaticWorkspaceInit t
+    :keywordsAutocomplete t
+    :externalAutocomplete nil
+    :linter t
+    :unionCaseStubGeneration t
+    :recordStubGeneration t
+    :interfaceStubGeneration t
+    :interfaceStubGenerationObjectIdentifier "this"
+    :unusedOpensAnalyzer t
+    :unusedDeclarationsAnalyzer t
+    :useSdkScripts t
+    :simplifyNameAnalyzer nil
+    :resolveNamespaces t
+    :enableReferenceCodeLens t))
 
 ;; FIXME: this should be fixed in FsAutocomplete
 (cl-defmethod xref-backend-definitions :around ((_type symbol) _identifier)
