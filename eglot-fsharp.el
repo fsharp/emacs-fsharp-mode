@@ -126,8 +126,8 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (cons 'eglot-fsautocomplete (cons (eglot-fsharp--path-to-server)
                                       (if eglot-fsharp-server-verbose
-			                  `("--background-service-enabled" "-v")
-            	                        `("--background-service-enabled"))))))
+			                  `("--verbose" "--adaptive-lsp-server-enabled")
+            	                        `("--adaptive-lsp-server-enabled"))))))
 
 
 
