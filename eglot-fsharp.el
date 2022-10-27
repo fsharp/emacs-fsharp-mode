@@ -51,9 +51,9 @@
           (const :tag "Latest release" latest)
           (string :tag "Version string")))
 
-(defcustom eglot-fsharp-server-verbose nil
-  "If non-nil include debug output in the server logs."
-  :type 'boolean)
+(defcustom eglot-fsharp-server-args '("--adaptive-lsp-server-enabled")
+  "Arguments for the fsautocomplete command when using `eglot-fsharp'."
+  :type '(repeat string))
 
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
@@ -125,11 +125,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when interactive (eglot-fsharp--maybe-install))
   (when (file-exists-p (eglot-fsharp--path-to-server))
     (cons 'eglot-fsautocomplete (cons (eglot-fsharp--path-to-server)
-                                      (if eglot-fsharp-server-verbose
-			                  `("--verbose" "--adaptive-lsp-server-enabled")
-            	                        `("--adaptive-lsp-server-enabled"))))))
-
-
+                                      eglot-fsharp-server-args))))
 
 
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
