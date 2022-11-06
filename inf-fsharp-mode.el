@@ -73,7 +73,7 @@ be sent from another buffer in fsharp mode.
   (set (make-local-variable 'comment-column) 40)
   (set (make-local-variable 'comment-start-skip) "(\\*+ *")
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
-  (set (make-local-variable 'comint-process-echoes) nil)
+  (set (make-local-variable 'comint-process-echoes) t)
   (run-hooks 'inferior-fsharp-mode-hooks)
 
   ;; use compilation mode to parse errors, but RET and C-cC-c should still be from comint-mode
