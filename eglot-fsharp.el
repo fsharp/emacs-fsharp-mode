@@ -64,10 +64,11 @@
 
 (defun eglot-fsharp--latest-version ()
   "Return latest fsautocomplete.exe version."
-  (let* ((json (with-temp-buffer (url-insert-file-contents "https://azuresearch-usnc.nuget.org/query?q=fsautocomplete&prerelease=false&packageType=DotnetTool")
-			         (json-parse-buffer)))
-         (versions (gethash "versions" (aref (gethash "data" json) 0))))
-    (gethash "version" (aref versions (1- (length versions))))))
+  (or eglot-fsharp--latest-version
+      (let* ((json (with-temp-buffer (url-insert-file-contents "https://azuresearch-usnc.nuget.org/query?q=fsautocomplete&prerelease=false&packageType=DotnetTool")
+			             (json-parse-buffer)))
+             (versions (gethash "versions" (aref (gethash "data" json) 0))))
+        (setq eglot-fsharp--latest-version (gethash "version" (aref versions (1- (length versions))))))))
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
@@ -77,10 +78,10 @@
 (defun eglot-fsharp-current-version-p (version)
   "Return t if the installation is not outdated."
   (when (file-exists-p (eglot-fsharp--path-to-server))
-    (if (eq version 'latest)
+    (if (eq eglot-fsharp-server-version 'latest)
 	(equal (eglot-fsharp--latest-version)
 	       (eglot-fsharp--installed-version))
-      (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
+      (equal version (eglot-fsharp--installed-version)))))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
@@ -96,12 +97,12 @@
 					   nil "tool" "uninstall"
 					   "fsautocomplete" "--tool-path"
 					   default-directory))
-                (error  "'dotnet tool uninstall fsautocomplete --tool-path %s' failed" default-directory))))
-          (unless (zerop (call-process "dotnet" nil `(nil ,stderr-file) nil
-				       "tool" "install" "fsautocomplete"
-				       "--tool-path" default-directory "--version"
-				       version))
-            (error "'dotnet tool install fsautocomplete --tool-path %s --version %s' failed" default-directory  version)))
+                (error  "'dotnet tool uninstall fsautocomplete --tool-path %s' failed" default-directory)))
+           (unless (zerop (call-process "dotnet" nil `(nil ,stderr-file) nil
+				         "tool" "install" "fsautocomplete"
+				         "--tool-path" default-directory "--version"
+				         version))
+              (error "'dotnet tool install fsautocomplete --tool-path %s --version %s' failed" default-directory  version))))
       (error
        (let ((stderr (with-temp-buffer
                        (insert-file-contents stderr-file)
