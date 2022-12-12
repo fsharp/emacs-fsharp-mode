@@ -241,9 +241,7 @@ If set to t, the buffer will always be saved, silently."
 
   (let ((file (buffer-file-name)))
     (when file
-      (setq compile-command (fsharp-mode-choose-compile-command file))))
-
-  (run-hooks 'fsharp-mode-hook))
+      (setq compile-command (fsharp-mode-choose-compile-command file)))))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:
