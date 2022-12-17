@@ -17,15 +17,16 @@ jobs:
           - 27.1
           - 27.2
           - 28.1
+          - 28.2
           - snapshot
     steps:
     - uses: purcell/setup-emacs@master
       with:
         version: ${{ matrix.emacs_version }}
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ matrix.dotnet }}
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install Eldev
       run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
     - name: Show dotnet sdks
@@ -56,7 +57,7 @@ jobs:
       uses: jcs090218/setup-emacs-windows@master
       with:
         version: 28.1
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Install Eldev
       run: curl.exe -fsSL https://raw.github.com/doublep/eldev/master/webinstall/eldev.bat | cmd /Q
     - name: Test
