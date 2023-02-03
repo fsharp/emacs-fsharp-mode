@@ -147,7 +147,7 @@ Pass TIMEOUT to `eglot--with-timeout'."
 
 (defun eglot-fsharp--sniff-diagnostics (file-name-suffix)
   (eglot-fsharp--sniffing (:server-notifications s-notifs)
-                          (eglot-fsharp--wait-for (s-notifs 30)
+                          (eglot-fsharp--wait-for (s-notifs 20)
                                            (&key _id method params &allow-other-keys)
                                            (and
                                             (string= method "textDocument/publishDiagnostics")
@@ -155,7 +155,7 @@ Pass TIMEOUT to `eglot--with-timeout'."
 
 (defun eglot-fsharp--sniff-method (method-name)
   (eglot-fsharp--sniffing (:server-notifications s-notifs)
-                          (eglot-fsharp--wait-for (s-notifs 30)
+                          (eglot-fsharp--wait-for (s-notifs 20)
                                            (&key _id method params &allow-other-keys)
                                            (and
                                             (string= method method-name)))))
