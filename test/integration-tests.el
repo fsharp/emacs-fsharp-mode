@@ -61,11 +61,11 @@
     (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/Error.fs")
       (flymake-mode t)
       (flymake-start)
+      (eglot-fsharp--sniff-diagnostics "test/Test1/Error.fs")
       (goto-char (point-min))
       (search-forward "nonexisting")
       (insert "x")
       (eglot--signal-textDocument/didChange)
-      (eglot-fsharp--sniff-diagnostics "test/Test1/Error.fs")
       (flymake-goto-next-error 1 '() t)
       (expect (face-at-point) :to-be 'flymake-error )))
   (it "provides completion"
