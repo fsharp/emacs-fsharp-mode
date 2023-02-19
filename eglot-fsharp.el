@@ -55,6 +55,26 @@
   "Arguments for the fsautocomplete command when using `eglot-fsharp'."
   :type '(repeat string))
 
+(defcustom eglot-fsharp-fsautocomplete-args '(
+    :automaticWorkspaceInit t
+    :keywordsAutocomplete t
+    :externalAutocomplete nil
+    :linter t
+    :unionCaseStubGeneration t
+    :recordStubGeneration t
+    :interfaceStubGeneration t
+    :interfaceStubGenerationObjectIdentifier "this"
+    :unusedOpensAnalyzer t
+    :unusedDeclarationsAnalyzer t
+    :useSdkScripts t
+    :simplifyNameAnalyzer nil
+    :resolveNamespaces t
+    :enableReferenceCodeLens t)
+    "Arguments for the fsautocomplete initialization."
+    :group 'eglot-fsharp
+    :risky t
+  )
+
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
   (file-truename (concat eglot-fsharp-server-install-dir "netcore/fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))))
@@ -133,7 +153,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 
 (cl-defmethod eglot-initialization-options ((_server eglot-fsautocomplete))
   "Passes through required FsAutoComplete initialization options."
-  '(:automaticWorkspaceInit t))
+  `(:fSharp ,eglot-fsharp-fsautocomplete-args))
 
 ;; FIXME: this should be fixed in FsAutocomplete
 (cl-defmethod xref-backend-definitions :around ((_type symbol) _identifier)
