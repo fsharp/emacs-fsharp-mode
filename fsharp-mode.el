@@ -239,9 +239,8 @@ If set to t, the buffer will always be saved, silently."
   ;; has no deterministic indentation.
   (when (boundp 'electric-indent-inhibit) (setq electric-indent-inhibit t))
 
-  (let ((file (buffer-file-name)))
-    (when file
-      (setq compile-command (fsharp-mode-choose-compile-command file)))))
+  (when-let ((file (buffer-file-name)))
+    (setq compile-command (fsharp-mode-choose-compile-command file))))
 
 (defun fsharp-mode-choose-compile-command (file)
   "Format an appropriate compilation command, depending on several factors:
