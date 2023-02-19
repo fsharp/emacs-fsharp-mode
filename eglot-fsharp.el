@@ -1,6 +1,6 @@
 ;;; eglot-fsharp.el --- fsharp-mode eglot integration                     -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2022  Jürgen Hötzel
+;; Copyright (C) 2019-2023  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@hoetzel.info>
 ;; Package-Requires: ((emacs "27.1") (eglot "1.4") (fsharp-mode "1.10") (jsonrpc "1.0.14"))

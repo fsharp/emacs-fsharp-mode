@@ -1,6 +1,6 @@
 ;;; fsi-tests.el --- Tests for F# interactive        -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022  Jürgen Hötzel
+;; Copyright (C) 2022-2023  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@hoetzel.info>
 ;; Keywords: processes
