@@ -1,6 +1,6 @@
 ;;; integration-tests.el ---                         -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2022  Jürgen Hötzel
+;; Copyright (C) 2019-2023  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@hoetzel.info>
 ;; Keywords: abbrev, abbrev
