@@ -91,35 +91,38 @@
 
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
-  (seq-some (lambda (s) (and (string-match "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" s) (match-string 1 s)))
-	    (process-lines "dotnet"  "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))))
+  (with-temp-buffer
+    (process-file "dotnet" nil t nil "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))
+    (goto-char (point-min))
+    (when (search-forward-regexp "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" nil t)
+      (match-string 1))))
 
 (defun eglot-fsharp-current-version-p (version)
-  "Return t if the installation is not outdated."
-  (when (file-exists-p (eglot-fsharp--path-to-server))
-    (if (eq version 'latest)
-	(equal (eglot-fsharp--latest-version)
-	       (eglot-fsharp--installed-version))
-      (equal eglot-fsharp-server-version (eglot-fsharp--installed-version)))))
+  "Return t if the installation is up-to-date compared to VERSION string."
+  (and (file-exists-p (concat (file-remote-p default-directory) (eglot-fsharp--path-to-server)))
+       (equal version (eglot-fsharp--installed-version))))
 
 (defun eglot-fsharp--install-core (version)
   "Download and install fsautocomplete as a dotnet tool at version VERSION in `eglot-fsharp-server-install-dir'."
-  (let ((default-directory (file-name-directory (eglot-fsharp--path-to-server)))
-        (stderr-file (make-temp-file "dotnet_stderr")))
+  (let* ((default-directory (concat (file-remote-p default-directory)
+                                    (file-name-directory (eglot-fsharp--path-to-server))))
+         (stderr-file (make-temp-file "dotnet_stderr"))
+         (local-tool-path (or (file-remote-p default-directory 'localname) default-directory)))
     (condition-case err
         (progn
           (unless (eglot-fsharp-current-version-p version)
             (message "Installing fsautocomplete version %s" version)
-            (when (file-exists-p (eglot-fsharp--path-to-server))
-	      (unless (zerop (call-process "dotnet" nil `(nil
+            (when (file-exists-p (concat (file-remote-p default-directory)
+                                         (eglot-fsharp--path-to-server)))
+	      (unless (zerop (process-file "dotnet" nil `(nil
 							  ,stderr-file)
 					   nil "tool" "uninstall"
 					   "fsautocomplete" "--tool-path"
-					   default-directory))
+					   local-tool-path))
                 (error  "'dotnet tool uninstall fsautocomplete --tool-path %s' failed" default-directory))))
-          (unless (zerop (call-process "dotnet" nil `(nil ,stderr-file) nil
+          (unless (zerop (process-file "dotnet" nil `(nil ,stderr-file) nil
 				       "tool" "install" "fsautocomplete"
-				       "--tool-path" default-directory "--version"
+				       "--tool-path" local-tool-path "--version"
 				       version))
             (error "'dotnet tool install fsautocomplete --tool-path %s --version %s' failed" default-directory  version)))
       (error
@@ -131,21 +134,24 @@
 
 (defun eglot-fsharp--maybe-install (&optional version)
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
-  (make-directory (file-name-directory (eglot-fsharp--path-to-server)) t)
+  (make-directory (concat (file-remote-p default-directory)
+                          (file-name-directory (eglot-fsharp--path-to-server))) t)
   (let* ((version (or version (if (eq eglot-fsharp-server-version 'latest)
 				  (eglot-fsharp--latest-version)
 				eglot-fsharp-server-version))))
-    (eglot-fsharp--install-core version)))
+    (unless (eglot-fsharp-current-version-p version)
+      (eglot-fsharp--install-core version))))
 
  ;;;###autoload
-(defun eglot-fsharp
-    (interactive)
-  "Return `eglot' contact when FsAutoComplete is installed.
+(defun eglot-fsharp (interactive)
+    "Return `eglot' contact when FsAutoComplete is installed.
 Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when interactive (eglot-fsharp--maybe-install))
-  (when (file-exists-p (eglot-fsharp--path-to-server))
-    (cons 'eglot-fsautocomplete (cons (eglot-fsharp--path-to-server)
-                                      eglot-fsharp-server-args))))
+  (cons 'eglot-fsautocomplete
+        (if (file-remote-p default-directory)
+            `("sh" ,shell-command-switch ,(concat "cat|"  (mapconcat #'shell-quote-argument
+                                                                     (cons (eglot-fsharp--path-to-server) eglot-fsharp-server-args) " ")))
+          (cons (eglot-fsharp--path-to-server) eglot-fsharp-server-args))))
 
 
 (defclass eglot-fsautocomplete (eglot-lsp-server) ()
