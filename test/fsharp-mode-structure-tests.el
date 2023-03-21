@@ -271,3 +271,11 @@
                 (should (eq (fsharp--compute-indentation-relative-to-previous t) 4))
                 (should (eq (fsharp--compute-indentation-relative-to-previous t)
 		            (fsharp-compute-indentation t))))))
+
+(describe "The `fsharp-compute-indentation'"
+          :var ((file (concat fsharp-struct-test-files-dir "BracketIndent.fs")))
+          (it "indents on the first line after opening bracket"
+              (with-current-buffer (find-file-noselect file)
+                (goto-char (point-min))
+                (search-forward-regexp "let formatTwo = \\[\n")
+                (should (eq (fsharp-compute-indentation t) fsharp-indent-offset)))))
