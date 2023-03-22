@@ -341,16 +341,28 @@ whole string."
 
 ;;; Project
 
-(defun fsharp-mode/find-sln-or-fsproj (dir-or-file)
-  "Search for a solution or F# project file in any enclosing
-folders relative to DIR-OR-FILE."
-  (fsharp-mode-search-upwards (rx (0+ nonl) (or ".fsproj" ".sln") eol)
-                              (file-name-directory dir-or-file)))
-
 (defun fsharp-mode-search-upwards (regex dir)
   (when dir
     (or (car-safe (directory-files dir 'full regex))
         (fsharp-mode-search-upwards regex (fsharp-mode-parent-dir dir)))))
+
+(defun fsharp-mode/search-file (dir-or-file extension-regex)
+  "Search for the provided file-extension in any enclosing folder relative to dir."
+  (fsharp-mode-search-upwards (rx (0+ nonl) (regexp extension-regex)  eol)
+                              (file-name-directory dir-or-file)))
+
+(defun fsharp-mode/find-sln-or-fsproj (dir-or-file)
+  "Search for a solution or F# project file in any enclosing folders relative to DIR-OR-FILE."
+  (fsharp-mode/search-file (file-name-directory dir-or-file) (or ".fsproj" ".sln")))
+
+  
+(defun fsharp-mode/find-proj-context (dir-or-file)
+  "Search for a project, or a solution in DIR-OR-FILE but prefer a solution file when found."
+ (when-let (generic-project (fsharp-mode/find-sln-or-fsproj dir-or-file))
+     (if-let (sln-file (fsharp-mode/search-file dir-or-file (rx ".sln")))
+      sln-file
+      generic-project)))
+  
 
 (defun fsharp-mode-parent-dir (dir)
   (let ((p (file-name-directory (directory-file-name dir))))
@@ -359,7 +371,7 @@ folders relative to DIR-OR-FILE."
 
 ;; Make project.el aware of fsharp projects
 (defun fsharp-mode-project-root (dir)
-  (when-let (project-file (fsharp-mode/find-sln-or-fsproj dir))
+  (when-let (project-file (fsharp-mode/find-proj-context dir))
     (cons 'fsharp (file-name-directory project-file))))
 
 (cl-defmethod project-roots ((project (head fsharp)))

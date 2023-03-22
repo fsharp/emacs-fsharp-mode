@@ -163,7 +163,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 
 ;; FIXME: this should be fixed in FsAutocomplete
 (cl-defmethod xref-backend-definitions :around ((_type symbol) _identifier)
-  "FsAutoComplete breaks spec and and returns error instead of empty list."
+  "FsAutoComplete breaks spec and and return error instead of empty list."
   (if (eq major-mode 'fsharp-mode)
       (condition-case err
           (cl-call-next-method)
@@ -171,6 +171,15 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
          (not (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration")))))
     (when (cl-next-method-p)
       (cl-call-next-method))))
+
+;;; create buffer local settings for workspace reload based on mode hook
+
+(defun eglot-fsharp--set-workspace-args ()
+  "Set a buffer local variable with the workspace settings for eglot."
+  (make-local-variable 'eglot-workspace-configuration)
+  (let ((settings-json (json-serialize `(:fSharp ,eglot-fsharp-fsautocomplete-args))) )
+    (setq eglot-workspace-configuration settings-json ))
+  )
 
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
