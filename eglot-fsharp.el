@@ -56,23 +56,66 @@
   :type '(repeat string))
 
 (defcustom eglot-fsharp-fsautocomplete-args '(
-    :automaticWorkspaceInit t
-    :keywordsAutocomplete t
-    :externalAutocomplete nil
-    :linter t
-    :unionCaseStubGeneration t
-    :recordStubGeneration t
-    :interfaceStubGeneration t
-    :interfaceStubGenerationObjectIdentifier "this"
-    :unusedOpensAnalyzer t
-    :unusedDeclarationsAnalyzer t
-    :useSdkScripts t
-    :simplifyNameAnalyzer nil
-    :resolveNamespaces t
-    :enableReferenceCodeLens t)
-    "Arguments for the fsautocomplete initialization."
-    :group 'eglot-fsharp
-    :risky t
+                                              :automaticWorkspaceInit t
+                                              :abstractClassStubGeneration t
+				              :abstractClassStubGenerationMethodBody
+				              "failwith \"Not Implemented\""
+				              :abstractClassStubGenerationObjectIdentifier "this"
+				              :addFsiWatcher nil
+				              :codeLenses (:references (:enabled t)
+							   :signature (:enabled t))
+				              :disableFailedProjectNotifications nil
+				              :dotnetRoot ""
+				              :enableAdaptiveLspServer t
+				              :enableAnalyzers nil
+				              :enableMSBuildProjectGraph nil
+				              :enableReferenceCodeLens t
+				              :excludeProjectDirectories [".git" "paket-files" ".fable" "packages" "node_modules"]
+				              :externalAutocomplete nil
+				              :fsac (:attachDebugger nil
+                                                                     :cachedTypeCheckCount 200
+				                                     :conserveMemory nil
+				                                     :dotnetArgs nil
+				                                     :netCoreDllPath ""
+				                                     :parallelReferenceResolution nil
+				                                     :silencedLogs nil)
+				              :fsiExtraParameters nil
+				              :fsiSdkFilePath ""
+				              :generateBinlog nil
+				              :indentationSize 4
+				              :inlayHints (:disableLongTooltip nil
+								               :enabled t
+								               :parameterNames t
+								               :typeAnnotations t)
+				              :inlineValues (:enabled nil
+							              :prefix "//")
+				              :interfaceStubGeneration t
+				              :interfaceStubGenerationMethodBody "failwith \"Not Implemented\""
+				              :interfaceStubGenerationObjectIdentifier "this"
+				              :keywordsAutocomplete t
+				              :lineLens (:enabled "replaceCodeLens"
+					                          :prefix " // ")
+				              :linter t
+				              :pipelineHints (:enabled t
+							               :prefix " // ")
+				              :recordStubGeneration t
+				              :recordStubGenerationBody "failwith \"Not Implemented\""
+				              :resolveNamespaces t
+				              :saveOnSendLastSelection nil
+				              :simplifyNameAnalyzer t
+				              :smartIndent nil
+				              :suggestGitignore t
+				              :suggestSdkScripts t
+				              :unionCaseStubGeneration t
+				              :unionCaseStubGenerationBody "failwith \"Not Implemented\""
+				              :unusedDeclarationsAnalyzer t
+				              :unusedOpensAnalyzer t
+				              :verboseLogging nil
+				              :workspaceModePeekDeepLevel 4
+				              :workspacePath "")
+  "Arguments for the fsautocomplete workspace configuration."
+  :group 'eglot-fsharp
+  :risky t
   )
 
 (defun eglot-fsharp--path-to-server ()
@@ -142,11 +185,21 @@
     (unless (eglot-fsharp-current-version-p version)
       (eglot-fsharp--install-core version))))
 
- ;;;###autoload
+;;; create buffer local settings for workspace reload based on mode hook
+
+(defun eglot-fsharp--set-workspace-args ()
+  "Set a buffer local variable with the workspace settings for eglot."
+  (make-local-variable 'eglot-workspace-configuration)
+  (let ((settings-json (json-serialize eglot-fsharp-fsautocomplete-args)) )
+    (setq eglot-workspace-configuration settings-json ))
+  )
+
+;;;###autoload
 (defun eglot-fsharp (interactive)
-    "Return `eglot' contact when FsAutoComplete is installed.
+  "Return `eglot' contact when FsAutoComplete is installed.
 Ensure FsAutoComplete is installed (when called INTERACTIVE)."
   (when interactive (eglot-fsharp--maybe-install))
+  (eglot-fsharp--set-workspace-args)
   (cons 'eglot-fsautocomplete
         (if (file-remote-p default-directory)
             `("sh" ,shell-command-switch ,(concat "cat|"  (mapconcat #'shell-quote-argument
@@ -159,7 +212,7 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
 
 (cl-defmethod eglot-initialization-options ((_server eglot-fsautocomplete))
   "Passes through required FsAutoComplete initialization options."
-  `(:fSharp ,eglot-fsharp-fsautocomplete-args))
+  eglot-fsharp-fsautocomplete-args)
 
 ;; FIXME: this should be fixed in FsAutocomplete
 (cl-defmethod xref-backend-definitions :around ((_type symbol) _identifier)
@@ -171,15 +224,6 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
          (not (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration")))))
     (when (cl-next-method-p)
       (cl-call-next-method))))
-
-;;; create buffer local settings for workspace reload based on mode hook
-
-(defun eglot-fsharp--set-workspace-args ()
-  "Set a buffer local variable with the workspace settings for eglot."
-  (make-local-variable 'eglot-workspace-configuration)
-  (let ((settings-json (json-serialize `(:fSharp ,eglot-fsharp-fsautocomplete-args))) )
-    (setq eglot-workspace-configuration settings-json ))
-  )
 
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
