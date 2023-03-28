@@ -115,8 +115,7 @@
 				              :workspacePath "")
   "Arguments for the fsautocomplete workspace configuration."
   :group 'eglot-fsharp
-  :risky t
-  )
+  :risky t)
 
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
@@ -185,14 +184,51 @@
     (unless (eglot-fsharp-current-version-p version)
       (eglot-fsharp--install-core version))))
 
+;;; File manipulation
+
+(defun eglot-fsharp--get-relative-file-name ()
+  "Get a file object type from the current fs file."
+  (let* ((project-name (fsharp-mode/find-sln-or-fsproj (buffer-file-name)))
+         (file-name (string-remove-prefix (file-name-directory project-name)
+                                          (buffer-file-name))))
+    `(:fsProj ,project-name
+              :fileVirtualPath ,file-name)))
+
+(defun eglot-fsharp-add-to-project ()
+  "Add the current file to the closest project."
+  (interactive)
+  (jsonrpc-request (eglot--current-server-or-lose)
+                   :fsproj/addFile (eglot-fsharp--get-relative-file-name)))
+
+(defun eglot-fsharp-remove-from-project ()
+  "Remove the current file to the closest project."
+  (interactive)
+  (jsonrpc-request (eglot--current-server-or-lose)
+                   :fsproj/removeFile (eglot-fsharp--get-relative-file-name)))
+
+(defun eglot-fsharp-rename-file ()
+  "Rename the current file."
+  (interactive)
+  (let* ((partial-obj (eglot-fsharp--get-relative-file-name))
+         (new-name (read-file-name "rename: " (file-name-directory (buffer-file-name))))
+         (replacement-obj `(:fsProj ,(plist-get partial-obj :fsProj)
+                            :oldFileVirtualPath ,(plist-get partial-obj :fileVirtualPath)
+                            :newFileName , (file-name-nondirectory new-name))))
+    (progn (save-buffer)
+           (jsonrpc-request (eglot--current-server-or-lose)
+                            :fsproj/renameFile replacement-obj)
+           (find-alternate-file new-name)
+           )))
+
+
+
 ;;; create buffer local settings for workspace reload based on mode hook
 
 (defun eglot-fsharp--set-workspace-args ()
   "Set a buffer local variable with the workspace settings for eglot."
   (make-local-variable 'eglot-workspace-configuration)
   (let ((settings-json (json-serialize eglot-fsharp-fsautocomplete-args)) )
-    (setq eglot-workspace-configuration settings-json ))
-  )
+    (setq eglot-workspace-configuration settings-json )))
 
 ;;;###autoload
 (defun eglot-fsharp (interactive)
@@ -224,6 +260,8 @@ Ensure FsAutoComplete is installed (when called INTERACTIVE)."
          (not (equal (cadddr err) '(jsonrpc-error-message . "Could not find declaration")))))
     (when (cl-next-method-p)
       (cl-call-next-method))))
+
+
 
 (add-to-list 'eglot-server-programs `(fsharp-mode . eglot-fsharp))
 
