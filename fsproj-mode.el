@@ -85,11 +85,12 @@ fs file with an active eglot session."
   "fsproj"
   "Major mode for fsproj."
   (setq-local tabulated-list-format [("File Name" 10 nil) ])
-  (tabulated-list-init-header))
+  (tabulated-list-init-header)
+  (add-hook 'tabulated-list-revert-hook 'fsproj--set-tab-list nil t))
 
 (add-to-list 'auto-mode-alist '("\\.fsproj info?\\'" . fsproj-mode))
 
-(add-hook 'tabulated-list-revert-hook 'fsproj--set-tab-list)
+
 
 (provide 'fsproj-mode)
 ;;; fsproj-mode.el ends here
