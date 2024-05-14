@@ -1,6 +1,6 @@
 ;;; eglot-fsharp.el --- fsharp-mode eglot integration                     -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019-2023  Jürgen Hötzel
+;; Copyright (C) 2019-2024  Jürgen Hötzel
 
 ;; Author: Jürgen Hötzel <juergen@hoetzel.info>
 ;; Package-Requires: ((emacs "27.1") (eglot "1.4") (fsharp-mode "1.10") (jsonrpc "1.0.14"))
@@ -41,7 +41,7 @@
   "Install directory for FsAutoComplete."
   :group 'eglot-fsharp
   :risky t
-  :type 'directory)
+  :type '(choice directory (const :tag "Use dotnet default for tool-path" nil)))
 
 (defcustom eglot-fsharp-server-version 'latest
   "FsAutoComplete version to install or update."
@@ -63,7 +63,7 @@
 				              :abstractClassStubGenerationObjectIdentifier "this"
 				              :addFsiWatcher nil
 				              :codeLenses (:references (:enabled t)
-							   :signature (:enabled t))
+							               :signature (:enabled t))
 				              :disableFailedProjectNotifications nil
 				              :dotnetRoot ""
 				              :enableAdaptiveLspServer t
@@ -120,7 +120,10 @@
 
 (defun eglot-fsharp--path-to-server ()
   "Return FsAutoComplete path."
-  (file-truename (concat eglot-fsharp-server-install-dir "netcore/fsautocomplete" (if (eq system-type 'windows-nt) ".exe" ""))))
+  (let ((base (if eglot-fsharp-server-install-dir
+                  (concat eglot-fsharp-server-install-dir "netcore/")
+                "~/.dotnet/tools/")))
+    (expand-file-name (concat base "fsautocomplete" (if (eq system-type 'windows-nt) ".exe" "")))))
 
 ;; cache to prevent repetitive queries
 (defvar eglot-fsharp--latest-version nil "Latest fsautocomplete.exe version string.")
@@ -135,7 +138,9 @@
 (defun eglot-fsharp--installed-version ()
   "Return version string of fsautocomplete."
   (with-temp-buffer
-    (process-file "dotnet" nil t nil "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))
+    (if eglot-fsharp-server-install-dir
+        (process-file "dotnet" nil t nil "tool" "list" "--tool-path" (file-name-directory (eglot-fsharp--path-to-server)))
+      (process-file "dotnet" nil t nil "tool" "list" "-g"))
     (goto-char (point-min))
     (when (search-forward-regexp "^fsautocomplete[[:space:]]+\\([0-9\.]*\\)[[:space:]]+" nil t)
       (match-string 1))))
@@ -150,35 +155,35 @@
   (let* ((default-directory (concat (file-remote-p default-directory)
                                     (file-name-directory (eglot-fsharp--path-to-server))))
          (stderr-file (make-temp-file "dotnet_stderr"))
-         (local-tool-path (or (file-remote-p default-directory 'localname) default-directory)))
+         (local-tool-path (or (file-remote-p default-directory 'localname) default-directory))
+         (process-file-uninstall-args (if eglot-fsharp-server-install-dir
+                                          (list "dotnet" nil `(nil ,stderr-file) nil "tool" "uninstall" "fsautocomplete" "--tool-path" local-tool-path)
+                                        (list "dotnet" nil `(nil ,stderr-file) nil "tool" "uninstall" "-g" "fsautocomplete")))
+         (process-file-install-args (if eglot-fsharp-server-install-dir
+                                        (list "dotnet" nil `(nil ,stderr-file) nil "tool" "install" "fsautocomplete" "--tool-path" local-tool-path "--version" version)
+                                      (list "dotnet" nil `(nil ,stderr-file) nil "tool" "install" "fsautocomplete" "-g" "--version" version))))
+    (make-directory default-directory t)
     (condition-case err
         (progn
-          (unless (eglot-fsharp-current-version-p version)
-            (message "Installing fsautocomplete version %s" version)
-            (when (file-exists-p (concat (file-remote-p default-directory)
-                                         (eglot-fsharp--path-to-server)))
-	      (unless (zerop (process-file "dotnet" nil `(nil
-							  ,stderr-file)
-					   nil "tool" "uninstall"
-					   "fsautocomplete" "--tool-path"
-					   local-tool-path))
-                (error  "'dotnet tool uninstall fsautocomplete --tool-path %s' failed" default-directory))))
-          (unless (zerop (process-file "dotnet" nil `(nil ,stderr-file) nil
-				       "tool" "install" "fsautocomplete"
-				       "--tool-path" local-tool-path "--version"
-				       version))
+          (unless (or (eglot-fsharp-current-version-p version) (not (eglot-fsharp--installed-version)))
+            (message "Uninstalling fsautocomplete version %s" (eglot-fsharp--installed-version))
+            (unless (zerop (apply #'process-file process-file-uninstall-args))
+              (error  "'dotnet tool uninstall fsautocomplete ... failed")))
+          (unless (zerop (apply #'process-file process-file-install-args))
             (error "'dotnet tool install fsautocomplete --tool-path %s --version %s' failed" default-directory  version)))
       (error
        (let ((stderr (with-temp-buffer
                        (insert-file-contents stderr-file)
                        (buffer-string))))
          (delete-file stderr-file)
-         (signal (car err) (format "%s: %s" (cdr err) stderr)))))))
+         (signal (car err) (format "%s: %s" (cdr err) stderr)))))
+    (message "Installed fsautocomplete to %s" (eglot-fsharp--path-to-server))))
 
 (defun eglot-fsharp--maybe-install (&optional version)
   "Downloads F# compiler service, and install in `eglot-fsharp-server-install-dir'."
-  (make-directory (concat (file-remote-p default-directory)
-                          (file-name-directory (eglot-fsharp--path-to-server))) t)
+  (unless eglot-fsharp-server-install-dir
+    (make-directory (concat (file-remote-p default-directory)
+                            (file-name-directory (eglot-fsharp--path-to-server))) t))
   (let* ((version (or version (if (eq eglot-fsharp-server-version 'latest)
 				  (eglot-fsharp--latest-version)
 				eglot-fsharp-server-version))))

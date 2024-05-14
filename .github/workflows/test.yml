@@ -12,58 +12,58 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        dotnet: [6.0.200]
+        dotnet: [8.0.x]
         emacs_version:
           - 27.2
-          - 28.1
           - 28.2
+          - 29.3
           - snapshot
     steps:
-    - uses: purcell/setup-emacs@master
-      with:
-        version: ${{ matrix.emacs_version }}
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ matrix.dotnet }}
-    - uses: actions/checkout@v2
-    - name: Install Eldev
-      run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
-    - name: Show dotnet sdks
-      run: dotnet --list-sdks
-    - name: Show dotnet version
-      run: dotnet --info
-    - name: Test
-      run: |
-        echo "Archives:"
-        eldev archives
-        echo "Dependencies:"
-        eldev -v dependencies
-        echo "Testing:"
-        eldev -dtT test
+      - uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+      - uses: actions/checkout@v2
+      - name: Install Eldev
+        run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
+      - name: Show dotnet sdks
+        run: dotnet --list-sdks
+      - name: Show dotnet version
+        run: dotnet --info
+      - name: Test
+        run: |
+          echo "Archives:"
+          eldev archives
+          echo "Dependencies:"
+          eldev -v dependencies
+          echo "Testing:"
+          eldev -dtT test
   windows-build:
     runs-on: windows-latest
     strategy:
       fail-fast: false
     steps:
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.200
-    - name: Show dotnet sdks
-      run: dotnet --list-sdks
-    - name: Show dotnet version
-      run: dotnet --info
-    - name: Set up Emacs on Windows
-      uses: jcs090218/setup-emacs-windows@master
-      with:
-        version: 28.1
-    - uses: actions/checkout@v2
-    - name: Install Eldev
-      run: curl.exe -fsSL https://raw.github.com/doublep/eldev/master/webinstall/eldev.bat | cmd /Q
-    - name: Test
-      run: |
-        echo "Archives:"
-        ~/.local/bin/eldev.bat archives
-        echo "Dependencies:"
-        ~/.local/bin/eldev.bat dependencies
-        echo "Testing:"
-        ~/.local/bin/eldev.bat -p -dtT test
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.200
+      - name: Show dotnet sdks
+        run: dotnet --list-sdks
+      - name: Show dotnet version
+        run: dotnet --info
+      - name: Set up Emacs on Windows
+        uses: jcs090218/setup-emacs-windows@master
+        with:
+          version: 28.1
+      - uses: actions/checkout@v2
+      - name: Install Eldev
+        run: curl.exe -fsSL https://raw.github.com/doublep/eldev/master/webinstall/eldev.bat | cmd /Q
+      - name: Test
+        run: |
+          echo "Archives:"
+          ~/.local/bin/eldev.bat archives
+          echo "Dependencies:"
+          ~/.local/bin/eldev.bat dependencies
+          echo "Testing:"
+          ~/.local/bin/eldev.bat -p -dtT test
