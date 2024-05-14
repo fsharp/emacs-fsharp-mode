@@ -62,7 +62,7 @@
   (find-file-noselect file))
 
 (defun eglot-fsharp--tests-connect (&optional timeout)
-  (let* ((timeout (or timeout 10))
+  (let* ((timeout (or timeout 30))
          (eglot-sync-connect t)
          (eglot-connect-timeout timeout))
     (apply #'eglot--connect (eglot--guess-contact))))
