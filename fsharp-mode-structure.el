@@ -766,6 +766,10 @@ dedenting."
            (open-bracket-pos (fsharp-nesting-level)))
 
       (cond
+       ((and open-bracket-pos (eq (and (looking-back "[[:space:]\n\r]+" nil t)
+				       (match-beginning 0))
+				  (1+ open-bracket-pos)))
+	fsharp-indent-offset)
        ;; Continuation Lines
        ((fsharp-continuation-line-p)
         (if open-bracket-pos
