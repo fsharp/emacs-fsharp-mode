@@ -34,9 +34,9 @@
 (unless (eq system-type 'windows-nt)
   (describe "F# LSP Installation"
             :before-all (setq latest-version (eglot-fsharp--latest-version))
-            (it "succeeds using version 0.52.0"
-                (eglot-fsharp--maybe-install "0.52.0")
-                (expect (eglot-fsharp--installed-version) :to-equal "0.52.0"))
+            (it "succeeds using version 0.77.2"
+                (eglot-fsharp--maybe-install "0.77.2")
+                (expect (eglot-fsharp--installed-version) :to-equal "0.77.2"))
             (it (format "succeeds using latest version: %s)" latest-version)
                 (eglot-fsharp--maybe-install)
                 (expect (eglot-fsharp--installed-version) :to-equal latest-version))))
