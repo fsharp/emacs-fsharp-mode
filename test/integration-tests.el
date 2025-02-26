@@ -48,9 +48,7 @@
                      (eglot-fsharp--maybe-install)
                      (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/FileTwo.fs")
                        (eglot-fsharp--tests-connect 10)
-                       ;; (eglot-fsharp--sniff-method "fsharp/notifyWorkspace")
-                       )
-                     )
+                       (eglot-fsharp--sniff-method "fsharp/notifyWorkspace")))
 
   (it "Can be invoked"
     ;; FIXME: Should use dotnet tool run
@@ -59,17 +57,17 @@
   (it "is enabled on F# Files"
     (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/FileTwo.fs")
       (expect (type-of (eglot--current-server-or-lose)) :to-be 'eglot-fsautocomplete)))
-  ;; (it "shows flymake errors"
-  ;;   (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/Error.fs")
-  ;;     (flymake-mode t)
-  ;;     (flymake-start)
-  ;;     (eglot-fsharp--sniff-diagnostics "test/Test1/Error.fs")
-  ;;     (goto-char (point-min))
-  ;;     (search-forward "nonexisting")
-  ;;     (insert "x")
-  ;;     (eglot--signal-textDocument/didChange)
-  ;;     (flymake-goto-next-error 1 '() t)
-  ;;     (expect (face-at-point) :to-be 'flymake-error )))
+  (it "shows flymake errors"
+    (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/Error.fs")
+      (flymake-mode t)
+      (flymake-start)
+      (eglot-fsharp--sniff-diagnostics "test/Test1/Error.fs")
+      (goto-char (point-min))
+      (search-forward "nonexisting")
+      (insert "x")
+      (eglot--signal-textDocument/didChange)
+      (flymake-goto-next-error 1 '() t)
+      (expect (face-at-point) :to-be 'flymake-error )))
   (it "provides completion"
     (with-current-buffer (eglot-fsharp--find-file-noselect "test/Test1/FileTwo.fs")
       (expect (plist-get (eglot--capabilities (eglot--current-server-or-lose)) :completionProvider) :not :to-be nil)))
