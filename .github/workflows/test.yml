@@ -2,52 +2,56 @@ name: "CI"
 on:
   pull_request:
   push:
-    # Comment out this section to enable testing of all branches.
     branches:
       - master
 jobs:
   gnu-build:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        dotnet: [8.0.x]
+        dotnet: [9.0.x]
         emacs_version:
-          - 27.2
           - 28.2
-          - 29.3
+          - 29.4
           - snapshot
+    runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
       - uses: purcell/setup-emacs@master
         with:
           version: ${{ matrix.emacs_version }}
-      - uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ matrix.dotnet }}
-      - uses: actions/checkout@v2
       - name: Install Eldev
         run: curl -fsSL https://raw.github.com/doublep/eldev/master/webinstall/github-eldev | sh
       - name: Show dotnet sdks
         run: dotnet --list-sdks
       - name: Show dotnet version
         run: dotnet --info
-      - name: Test
+      - name: Eldev archives
         run: |
           echo "Archives:"
           eldev archives
+      - name: Eldev dependencies
+        run: |
           echo "Dependencies:"
           eldev -v dependencies
+      - name: Test
+        run: |
           echo "Testing:"
           eldev -dtT test
+          
   windows-build:
     runs-on: windows-latest
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.200
+          dotnet-version: 9.0.x
       - name: Show dotnet sdks
         run: dotnet --list-sdks
       - name: Show dotnet version
@@ -55,15 +59,18 @@ jobs:
       - name: Set up Emacs on Windows
         uses: jcs090218/setup-emacs-windows@master
         with:
-          version: 28.1
-      - uses: actions/checkout@v2
+          version: 29.4
       - name: Install Eldev
         run: curl.exe -fsSL https://raw.github.com/doublep/eldev/master/webinstall/eldev.bat | cmd /Q
-      - name: Test
+      - name: Eldev archives
         run: |
           echo "Archives:"
           ~/.local/bin/eldev.bat archives
+      - name: Eldev dependencies
+        run: |
           echo "Dependencies:"
           ~/.local/bin/eldev.bat dependencies
+      - name: Test
+        run: |
           echo "Testing:"
           ~/.local/bin/eldev.bat -p -dtT test
