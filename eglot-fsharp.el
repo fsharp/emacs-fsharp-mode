@@ -36,6 +36,11 @@
   :link '(url-link "https://github.com/fsharp/FsAutoComplete")
   :group 'eglot)
 
+(defcustom eglot-fsharp-server-path "~/.dotnet/tools/"
+  "Path to the location of FsAutoComplete."
+  :group 'eglot-fsharp
+  :risky t)
+
 (defcustom eglot-fsharp-server-install-dir
   (locate-user-emacs-file "FsAutoComplete/")
   "Install directory for FsAutoComplete."
@@ -122,7 +127,7 @@
   "Return FsAutoComplete path."
   (let ((base (if eglot-fsharp-server-install-dir
                   (concat eglot-fsharp-server-install-dir "netcore/")
-                "~/.dotnet/tools/")))
+                eglot-fsharp-server-path)))
     (expand-file-name (concat base "fsautocomplete" (if (eq system-type 'windows-nt) ".exe" "")))))
 
 ;; cache to prevent repetitive queries
