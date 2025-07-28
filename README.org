@@ -183,7 +183,7 @@ This project is maintained by the
 [[http://fsharp.org/][F# Software Foundation]], with the repository hosted
 on [[https://github.com/fsharp/emacs-fsharp-mode][GitHub]].
 
-Pull requests are welcome. Please run the test-suite with [Eldev](https://doublep.github.io/eldev/) =eldev -dtT test=
+Pull requests are welcome. Please run the test-suite with [[https://doublep.github.io/eldev/][Eldev]] =eldev -dtT test=
 before submitting a pull request.
 
 *** Maintainers
