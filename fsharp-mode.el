@@ -9,7 +9,7 @@
 ;; Maintainer: Jürgen Hötzel
 ;; Package-Requires: ((emacs "25"))
 ;; Keywords: languages
-;; Version: 1.11-snapshot
+;; Version: 2.0
 
 ;; This file is not part of GNU Emacs.
 
