@@ -13,6 +13,13 @@ Provides support for the F# language in Emacs. Includes the following features:
   - Completion
   - Jump to definition [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Xref.html][Find Identifier References]] (Xref)
 
+
+** Project Status
+
+This implementation is based on a very old OCaml-mode codebase and has become increasingly difficult to maintain.
+Future development efforts should focus on [[https://github.com/bbatsov/fsharp-ts-mode][fsharp-ts-mode · GitHub]]
+which is built on modern Emacs features, leveraging Tree-Sitter support.
+
 ** LSP mode
 
 The current version of =fsharp-mode= installs =fsautocomplete.exe=
